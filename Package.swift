@@ -28,6 +28,7 @@ let package = Package(
         .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
         .product(name: "JSONSchema", package: "swift-json-schema"),
         .product(name: "JSONSchemaBuilder", package: "swift-json-schema"),
+        "OpenAIModels",
       ]
     ),
     .testTarget(
@@ -39,9 +40,6 @@ let package = Package(
       name: "OpenAIModels",
       dependencies: [
         .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime")
-      ],
-      plugins: [
-        .plugin(name: "OpenAPIGenerator", package: "swift-openapi-generator")
       ]
     ),
   ]
