@@ -29,4 +29,15 @@ swift run swift-openapi-generator generate \
   --config "$CONFIG" \
   --output-directory "$OUT_DIR"
 
+# Prepend ignore directive to each Swift file
+echo "▶ Adding // swift-format-ignore-file to generated sources"
+find "$OUT_DIR" -type f -name "*.swift" | while read -r file; do
+  echo "  • $file"
+  tmp="$(mktemp)"
+  # write the ignore flag, then the original content
+  printf "%s\n" "// swift-format-ignore-file" > "$tmp"
+  cat "$file" >> "$tmp"
+  mv "$tmp" "$file"
+done
+
 echo "✅ Models generated into $OUT_DIR"
