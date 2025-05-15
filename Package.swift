@@ -40,6 +40,11 @@ let package = Package(
       name: "OpenAIModels",
       dependencies: [
         .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime")
+      ],
+      exclude: [
+        "openapi-generator-config.yaml",
+        "openapi.yaml",
+        "openapi.commit",
       ]
     ),
   ]
