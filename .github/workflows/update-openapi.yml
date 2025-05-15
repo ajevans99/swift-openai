@@ -1,0 +1,36 @@
+name: Weekly OpenAPI Refresh
+
+on:
+  schedule:
+    # Runs every Sunday at 00:00 UTC
+    - cron: '0 0 * * 0'
+
+jobs:
+  refresh-openapi:
+    name: Check & Refresh OpenAPI
+    runs-on: macos-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Verify spec is current
+        run: make check
+        continue-on-error: true
+        id: check
+
+      - name: Fetch, patch & generate
+        if: steps.check.outcome == 'failure'
+        run: make all
+
+      - name: Create Pull Request for updated spec
+        if: steps.check.outcome == 'failure'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: Update OpenAPI spec
+          branch: update/openapi-spec
+          title: Update OpenAPI spec to latest
+          body: |
+            This PR updates the OpenAPI spec and generated models to the latest upstream version.
+          labels: auto-update

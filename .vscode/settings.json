@@ -1,15 +1,19 @@
 {
     "[swift]": {
-        "editor.tabSize": 2,
-        "editor.insertSpaces": true,
-        "editor.detectIndentation": false
+      "editor.tabSize": 2,
+      "editor.insertSpaces": true,
+      "editor.detectIndentation": false
     },
+
     "editor.formatOnSave": true,
     "editor.formatOnPaste": true,
-    "editor.rulers": [
-        100
-    ],
+    "editor.rulers": [100],
     "files.trimTrailingWhitespace": true,
     "files.insertFinalNewline": true,
-    "scm.defaultViewMode": "tree"
-}
+    "scm.defaultViewMode": "tree",
+
+    // override for YAML (includes openapi.yaml)
+    "[yaml]": {
+      "files.trimTrailingWhitespace": false
+    }
+  }
