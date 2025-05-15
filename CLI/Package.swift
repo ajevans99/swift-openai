@@ -4,7 +4,7 @@
 import PackageDescription
 
 let package = Package(
-  name: "swift-openai-devtools",
+  name: "swift-openai-cli",
   platforms: [
     .macOS(.v14)
   ],
@@ -26,6 +26,6 @@ let package = Package(
         .product(name: "OpenAPIAsyncHTTPClient", package: "swift-openapi-async-http-client"),
         .product(name: "SwiftDotenv", package: "swift-dotenv"),
       ]
-    ),
+    )
   ]
 )

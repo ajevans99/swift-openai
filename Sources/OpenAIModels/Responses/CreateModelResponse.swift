@@ -8,7 +8,7 @@ public struct CreateResponse {
 
   public init(
     modelProperties: CreateModelResponseProperties = CreateModelResponseProperties(),
-    responseProperties: ResponseProperties = ResponseProperties(),
+    responseProperties: ResponseProperties,
     inputPayload: CreateResponseInputPayload
   ) {
     self.modelProperties = modelProperties
@@ -87,7 +87,7 @@ public struct ResponseProperties {
   }
 
   public var previousResponseId: String?
-  public var model: ModelIdsResponses
+  public var model: Components.Schemas.ModelIdsShared.Value2Payload
   public var reasoning: Reasoning?
   public var maxOutputTokens: Int?
   public var instructions: String?
@@ -98,7 +98,7 @@ public struct ResponseProperties {
 
   public init(
     previousResponseId: String? = nil,
-    model: ModelIdsResponses = ModelIdsResponses(),
+    model: Components.Schemas.ModelIdsShared.Value2Payload,
     reasoning: Reasoning? = nil,
     maxOutputTokens: Int? = nil,
     instructions: String? = nil,
@@ -121,7 +121,8 @@ public struct ResponseProperties {
   public func toOpenAPI() -> Components.Schemas.ResponseProperties {
     .init(
       previousResponseId: previousResponseId,
-      model: model.toOpenAPI(),
+      model: Components.Schemas.ModelIdsResponses(
+        value1: Components.Schemas.ModelIdsShared(value2: model)),
       reasoning: reasoning?.toOpenAPI(),
       maxOutputTokens: maxOutputTokens,
       instructions: instructions,

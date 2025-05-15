@@ -15,7 +15,7 @@ extension OpenAI {
 
   public func createResponse(
     input: InputPayload,
-    model: ResponseProperties.ModelIdsResponses,
+    model: Components.Schemas.ModelIdsShared.Value2Payload,
     include: [Includable]? = nil,
     instructions: String? = nil,
     maxOutputTokens: Int? = nil,
@@ -87,7 +87,7 @@ extension OpenAI {
 
   public func streamCreateResponse(
     input: InputPayload,
-    model: ResponseProperties.ModelIdsResponses,
+    model: Components.Schemas.ModelIdsShared.Value2Payload,
     include: [Includable]? = nil,
     instructions: String? = nil,
     maxOutputTokens: Int? = nil,

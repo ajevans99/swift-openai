@@ -488,8 +488,8 @@ public enum StreamingResponse {
       self = .reasoningSummaryText(ReasoningSummaryText(openAPI: event))
     } else if let event = openAPI.value14 {
       self = .error(message: event.message, code: event.code, param: event.param)
+    } else {
+      return nil
     }
-
-    return nil
   }
 }

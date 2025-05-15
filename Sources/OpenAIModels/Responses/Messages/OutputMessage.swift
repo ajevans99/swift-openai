@@ -94,11 +94,11 @@ public struct OutputMessage {
     self.status = status
   }
 
-  public init(_ message: Components.Schemas.OutputMessage) {
-    self.id = message.id
-    self.content = message.content.map { OutputContent($0) }
+  public init(_ openAPI: Components.Schemas.OutputMessage) {
+    self.id = openAPI.id
+    self.content = openAPI.content.map { OutputContent($0) }
     self.status =
-      switch message.status {
+      switch openAPI.status {
       case .inProgress: .inProgress
       case .completed: .completed
       case .incomplete: .incomplete

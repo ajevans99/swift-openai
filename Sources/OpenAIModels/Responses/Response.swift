@@ -46,6 +46,31 @@ public struct Response {
     }
   }
 
+  public enum TextFormat {
+    case text
+    case jsonObject
+    case jsonSchema(
+      name: String,
+      description: String?,
+      schema: OpenAPIRuntime.OpenAPIObjectContainer,
+      strict: Bool?
+    )
+
+    public init(openAPI: Components.Schemas.TextResponseFormatConfiguration) {
+      switch openAPI {
+      case .ResponseFormatText: self = .text
+      case .ResponseFormatJsonObject: self = .jsonObject
+      case .TextResponseFormatJsonSchema(let textResponse):
+        self = .jsonSchema(
+          name: textResponse.name,
+          description: textResponse.description,
+          schema: textResponse.schema.additionalProperties,
+          strict: textResponse.strict
+        )
+      }
+    }
+  }
+
   public let createdAt: Double
   public let error: ResponseError?
   public let id: String
@@ -55,13 +80,14 @@ public struct Response {
   public let metadata: [String: String]?
   public let model: String?
   public let object = "response"
+  public let output: [OutputItem]
   public let parallelToolCalls: Bool
   public let previousResponseId: String?
   public let reasoning: Reasoning?
   public let serviceTier: ServiceTier?
   public let status: Status?
   public let temperature: Double?
-  public let text: Components.Schemas.ResponseProperties.TextPayload?
+  public let textFormat: TextFormat?
   public let toolChoice: Components.Schemas.ResponseProperties.ToolChoicePayload?
   public let tools: [Components.Schemas.Tool]?
   public let topP: Double?
@@ -69,7 +95,26 @@ public struct Response {
   public let usage: Usage?
   public let user: String?
 
+  /// SDK only property based on official OpenAI Python SDK implementation
+  /// https://github.com/openai/openai-python/blob/c097025779fc0bdc3389c047d4c060b5d7349f16/src/openai/types/responses/response.py#L211C5-L225C30
+  public var outputText: String {
+    var texts = [String]()
+
+    for output in self.output {
+      if case .message(let message) = output {
+        for content in message.content {
+          if case .text(let textContent) = content {
+            texts.append(textContent.text)
+          }
+        }
+      }
+    }
+
+    return texts.joined()
+  }
+
   public init(openAPI: Components.Schemas.Response) {
+    self.output = openAPI.value3.output.compactMap { OutputItem($0) }
     self.createdAt = openAPI.value3.createdAt
     self.error = openAPI.value3.error.map(ResponseError.init)
     self.id = openAPI.value3.id
@@ -87,7 +132,7 @@ public struct Response {
     self.serviceTier = openAPI.value1.serviceTier.map(ServiceTier.init)
     self.status = openAPI.value3.status.map(Status.init)
     self.temperature = openAPI.value1.temperature
-    self.text = openAPI.value2.text
+    self.textFormat = openAPI.value2.text?.format.map(TextFormat.init)
     self.toolChoice = openAPI.value2.toolChoice
     self.tools = openAPI.value2.tools
     self.topP = openAPI.value1.topP
