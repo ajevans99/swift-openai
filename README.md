@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/ajevans99/swift-openai/actions/workflows/swift.yml/badge.svg)](https://github.com/ajevans99/swift-openai/actions/workflows/swift.yml)
 
-A modern Swift package for interacting with OpenAI’s API, built on top of the official OpenAPI spec.
+A modern Swift package for interacting with OpenAI’s API, built on top of the official OpenAI spec.
 
 This library is a thin, ergonomic layer over types and endpoints generated via [swift-openapi-generator](https://github.com/apple/swift-openapi-generator). It provides a more convenient and opinionated interface for Swift developers interacting with the [OpenAI REST endpoints](https://platform.openai.com/docs/api-reference).
 
