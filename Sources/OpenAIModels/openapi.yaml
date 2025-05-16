@@ -38310,6 +38310,11 @@ components:
         - $ref: "#/components/schemas/ComputerUsePreviewTool"
       discriminator:
         propertyName: type
+        mapping:
+          file_search: "#/components/schemas/FileSearchTool"
+          function: "#/components/schemas/FunctionTool"
+          web_search_preview: "#/components/schemas/WebSearchPreviewTool"
+          computer_use_preview: "#/components/schemas/ComputerUsePreviewTool"
     FileCitationBody:
       properties:
         type:

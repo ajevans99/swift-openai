@@ -1,4 +1,4 @@
-import OpenAIModels
+@_exported import OpenAIModels
 import OpenAPIRuntime
 
 public struct OpenAI {
@@ -13,6 +13,7 @@ public struct OpenAI {
       transport: transport,
       middlewares: [
         AuthenticationMiddleware(bearerToken: apiKey)
+        // DebugBodyMiddleware(),
       ]
     )
   }

@@ -7488,14 +7488,14 @@ public enum Components {
         }
         /// - Remark: Generated from `#/components/schemas/Tool`.
         @frozen public enum Tool: Codable, Hashable, Sendable {
-            /// - Remark: Generated from `#/components/schemas/Tool/FileSearchTool`.
-            case fileSearchTool(Components.Schemas.FileSearchTool)
-            /// - Remark: Generated from `#/components/schemas/Tool/FunctionTool`.
-            case functionTool(Components.Schemas.FunctionTool)
-            /// - Remark: Generated from `#/components/schemas/Tool/WebSearchPreviewTool`.
-            case webSearchPreviewTool(Components.Schemas.WebSearchPreviewTool)
             /// - Remark: Generated from `#/components/schemas/Tool/ComputerUsePreviewTool`.
-            case computerUsePreviewTool(Components.Schemas.ComputerUsePreviewTool)
+            case computerUsePreview(Components.Schemas.ComputerUsePreviewTool)
+            /// - Remark: Generated from `#/components/schemas/Tool/FileSearchTool`.
+            case fileSearch(Components.Schemas.FileSearchTool)
+            /// - Remark: Generated from `#/components/schemas/Tool/FunctionTool`.
+            case function(Components.Schemas.FunctionTool)
+            /// - Remark: Generated from `#/components/schemas/Tool/WebSearchPreviewTool`.
+            case webSearchPreview(Components.Schemas.WebSearchPreviewTool)
             public enum CodingKeys: String, CodingKey {
                 case _type = "type"
             }
@@ -7506,14 +7506,14 @@ public enum Components {
                     forKey: ._type
                 )
                 switch discriminator {
-                case "FileSearchTool", "#/components/schemas/FileSearchTool":
-                    self = .fileSearchTool(try .init(from: decoder))
-                case "FunctionTool", "#/components/schemas/FunctionTool":
-                    self = .functionTool(try .init(from: decoder))
-                case "WebSearchPreviewTool", "#/components/schemas/WebSearchPreviewTool":
-                    self = .webSearchPreviewTool(try .init(from: decoder))
-                case "ComputerUsePreviewTool", "#/components/schemas/ComputerUsePreviewTool":
-                    self = .computerUsePreviewTool(try .init(from: decoder))
+                case "computer_use_preview":
+                    self = .computerUsePreview(try .init(from: decoder))
+                case "file_search":
+                    self = .fileSearch(try .init(from: decoder))
+                case "function":
+                    self = .function(try .init(from: decoder))
+                case "web_search_preview":
+                    self = .webSearchPreview(try .init(from: decoder))
                 default:
                     throw Swift.DecodingError.unknownOneOfDiscriminator(
                         discriminatorKey: CodingKeys._type,
@@ -7524,13 +7524,13 @@ public enum Components {
             }
             public func encode(to encoder: any Encoder) throws {
                 switch self {
-                case let .fileSearchTool(value):
+                case let .computerUsePreview(value):
                     try value.encode(to: encoder)
-                case let .functionTool(value):
+                case let .fileSearch(value):
                     try value.encode(to: encoder)
-                case let .webSearchPreviewTool(value):
+                case let .function(value):
                     try value.encode(to: encoder)
-                case let .computerUsePreviewTool(value):
+                case let .webSearchPreview(value):
                     try value.encode(to: encoder)
                 }
             }

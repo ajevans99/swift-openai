@@ -18,6 +18,12 @@ extension InputPayload: ExpressibleByStringLiteral {
   }
 }
 
+extension InputPayload: ExpressibleByStringInterpolation {
+  public init(stringInterpolation: StringInterpolation) {
+    self = .text(stringInterpolation.description)
+  }
+}
+
 extension InputPayload: ExpressibleByArrayLiteral {
   public init(arrayLiteral elements: InputItem...) {
     self = .items(elements)

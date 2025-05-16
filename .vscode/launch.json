@@ -1,0 +1,26 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "name": "Debug OpenAIExample",
+            "program": "${workspaceFolder}/Example/.build/debug/OpenAIExample",
+            "args": [],
+            "cwd": "${workspaceFolder}/Example",
+            "preLaunchTask": "swift: Build Debug OpenAIExample",
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "name": "Debug Weather Command",
+            "program": "${workspaceFolder}/Example/.build/debug/OpenAIExample",
+            "args": [
+                "weather",
+                "Detroit"
+            ],
+            "cwd": "${workspaceFolder}/Example",
+            "preLaunchTask": "swift: Build Debug OpenAIExample",
+        }
+    ]
+}

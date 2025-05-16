@@ -2,12 +2,13 @@ public enum Item {
   case inputMessage(InputMessage)
   case outputMessage(OutputMessage)
 
+  case functionToolCall(FunctionToolCall)
+  case functionCallOutputItemParam(FunctionToolCallOutputItemParam)
+
   case fileSearchToolCall(Components.Schemas.FileSearchToolCall)
   case computerToolCall(Components.Schemas.ComputerToolCall)
   case computerCallOutputItemParam(Components.Schemas.ComputerCallOutputItemParam)
   case webSearchToolCall(Components.Schemas.WebSearchToolCall)
-  case functionToolCall(Components.Schemas.FunctionToolCall)
-  case functionCallOutputItemParam(Components.Schemas.FunctionCallOutputItemParam)
   case reasoningItem(Components.Schemas.ReasoningItem)
 
   public init(_ item: Components.Schemas.Item) {
@@ -25,9 +26,10 @@ public enum Item {
     case .webSearchToolCall(let webSearchToolCall):
       self = .webSearchToolCall(webSearchToolCall)
     case .functionToolCall(let functionToolCall):
-      self = .functionToolCall(functionToolCall)
+      self = .functionToolCall(FunctionToolCall(functionToolCall))
     case .functionCallOutputItemParam(let functionCallOutputItemParam):
-      self = .functionCallOutputItemParam(functionCallOutputItemParam)
+      self = .functionCallOutputItemParam(
+        FunctionToolCallOutputItemParam(functionCallOutputItemParam))
     case .reasoningItem(let reasoningItem):
       self = .reasoningItem(reasoningItem)
     }
@@ -48,9 +50,9 @@ public enum Item {
     case .webSearchToolCall(let webSearchToolCall):
       return .webSearchToolCall(webSearchToolCall)
     case .functionToolCall(let functionToolCall):
-      return .functionToolCall(functionToolCall)
+      return .functionToolCall(functionToolCall.toOpenAPI())
     case .functionCallOutputItemParam(let functionCallOutputItemParam):
-      return .functionCallOutputItemParam(functionCallOutputItemParam)
+      return .functionCallOutputItemParam(functionCallOutputItemParam.toOpenAPI())
     case .reasoningItem(let reasoningItem):
       return .reasoningItem(reasoningItem)
     }

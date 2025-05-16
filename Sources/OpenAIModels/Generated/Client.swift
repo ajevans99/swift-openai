@@ -113,6 +113,9 @@ public struct Client: APIProtocol {
                     }
                     return .ok(.init(body: body))
                 default:
+                    let data = try! await String(collecting: responseBody!, upTo: 1000)
+                    print("Response body: \(data)")
+
                     return .undocumented(
                         statusCode: response.status.code,
                         .init(

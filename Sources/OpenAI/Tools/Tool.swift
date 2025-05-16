@@ -1,16 +1,19 @@
+import JSONSchema
 import JSONSchemaBuilder
 import OpenAIModels
 import OpenAPIRuntime
 
 public protocol Tool {
-  associatedtype Parameters: JSONSchemaComponent
+  associatedtype Component: JSONSchemaComponent
 
   var name: String { get }
   var description: String? { get }
   var strict: Bool { get }
 
   @JSONSchemaBuilder
-  var parameters: Parameters { get }
+  var parameters: Component { get }
+
+  func call(parameters: Component.Output) async throws -> String
 }
 
 extension Tool {
@@ -27,5 +30,9 @@ extension Tool {
       },
       strict: strict
     )
+  }
+
+  public func toTool() -> Components.Schemas.Tool {
+    .function(toFunctionTool().toOpenAPI())
   }
 }
