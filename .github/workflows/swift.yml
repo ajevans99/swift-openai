@@ -1,4 +1,4 @@
-name: Swift
+name: Package - Swift
 
 on:
   push:
