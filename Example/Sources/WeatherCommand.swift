@@ -2,7 +2,8 @@ import ArgumentParser
 import Foundation
 import JSONSchema
 import JSONSchemaBuilder
-import OpenAI
+import OpenAICore
+import OpenAIKit
 import OpenAPIAsyncHTTPClient
 import OpenAPIRuntime
 import SwiftDotenv

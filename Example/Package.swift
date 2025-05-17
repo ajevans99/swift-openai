@@ -22,7 +22,9 @@ let package = Package(
       name: "OpenAIExample",
       dependencies: [
         .product(name: "ArgumentParser", package: "swift-argument-parser"),
-        .product(name: "OpenAI", package: "swift-openai"),
+        .product(name: "OpenAIFoundation", package: "swift-openai"),
+        .product(name: "OpenAICore", package: "swift-openai"),
+        .product(name: "OpenAIKit", package: "swift-openai"),
         .product(name: "OpenAPIAsyncHTTPClient", package: "swift-openapi-async-http-client"),
         .product(name: "SwiftDotenv", package: "swift-dotenv"),
       ]

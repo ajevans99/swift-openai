@@ -9,9 +9,17 @@ let package = Package(
   ],
   products: [
     .library(
-      name: "OpenAI",
-      targets: ["OpenAI"]
-    )
+      name: "OpenAIKit",
+      targets: ["OpenAIKit"]
+    ),
+    .library(
+      name: "OpenAICore",
+      targets: ["OpenAICore"]
+    ),
+    .library(
+      name: "OpenAIFoundation",
+      targets: ["OpenAIFoundation"]
+    ),
   ],
   dependencies: [
     // 📡 Swift OpenAPI Generator
@@ -23,21 +31,30 @@ let package = Package(
   ],
   targets: [
     .target(
-      name: "OpenAI",
+      name: "OpenAIKit",
       dependencies: [
+        "OpenAICore",
+        "OpenAIFoundation",
         .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
         .product(name: "JSONSchema", package: "swift-json-schema"),
         .product(name: "JSONSchemaBuilder", package: "swift-json-schema"),
-        "OpenAIModels",
       ]
     ),
     .testTarget(
-      name: "OpenAITests",
-      dependencies: ["OpenAI"]
+      name: "OpenAIKitTests",
+      dependencies: ["OpenAIKit"]
     ),
 
     .target(
-      name: "OpenAIModels",
+      name: "OpenAICore",
+      dependencies: [
+        .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
+        "OpenAIFoundation",
+      ]
+    ),
+
+    .target(
+      name: "OpenAIFoundation",
       dependencies: [
         .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime")
       ],

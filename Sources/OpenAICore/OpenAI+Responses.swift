@@ -1,4 +1,4 @@
-import OpenAIModels
+import OpenAIFoundation
 import OpenAPIRuntime
 
 extension OpenAI {
@@ -32,7 +32,7 @@ extension OpenAI {
     topP: Double? = nil,
     truncation: Truncation? = nil,
     user: String? = nil
-  ) async throws -> OpenAIModels.Response {
+  ) async throws -> Response {
     let requestData = CreateResponse(
       modelProperties: CreateModelResponseProperties(
         metadata: metadata,
@@ -63,7 +63,7 @@ extension OpenAI {
     return try await createResponse(requestData)
   }
 
-  public func createResponse(_ requestData: CreateResponse) async throws -> OpenAIModels.Response {
+  public func createResponse(_ requestData: CreateResponse) async throws -> Response {
     let input = Operations.CreateResponse.Input(
       headers: .init(),
       body: .json(requestData.toOpenAPI())
@@ -104,7 +104,7 @@ extension OpenAI {
     topP: Double? = nil,
     truncation: Truncation? = nil,
     user: String? = nil
-  ) async throws -> OpenAIModels.Response {
+  ) async throws -> Response {
     let requestData = CreateResponse(
       modelProperties: CreateModelResponseProperties(
         metadata: metadata,
@@ -168,7 +168,7 @@ extension OpenAI {
 
   // MARK: - Get Response
 
-  public func response(id: String) async throws -> OpenAIModels.Response {
+  public func response(id: String) async throws -> Response {
     let input = Operations.GetResponse.Input(
       path: .init(responseId: id),
       headers: .init()

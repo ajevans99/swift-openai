@@ -1,6 +1,6 @@
 import JSONSchema
 import JSONSchemaBuilder
-import OpenAIModels
+import OpenAICore
 import OpenAPIRuntime
 
 public protocol Tool {

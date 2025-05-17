@@ -1,4 +1,4 @@
-@_exported import OpenAIModels
+@_exported import OpenAIFoundation
 import OpenAPIRuntime
 
 public struct OpenAI {

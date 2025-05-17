@@ -6,7 +6,7 @@
 
 import ArgumentParser
 import Foundation
-import OpenAI
+import OpenAICore
 import OpenAPIAsyncHTTPClient
 import SwiftDotenv
 

@@ -1,4 +1,4 @@
-import OpenAIModels
+import OpenAICore
 
 extension OutputContent {
   var text: String {
