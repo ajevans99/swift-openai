@@ -10,7 +10,7 @@ RAW_URL="https://raw.githubusercontent.com/openai/openai-openapi/${REF}/openapi.
 GIT_ROOT="$(git rev-parse --show-toplevel)"
 
 # Destination directory under the repo
-TARGET_DIR="$GIT_ROOT/Sources/OpenAIModels"
+TARGET_DIR="$GIT_ROOT/Sources/OpenAIFoundation"
 
 # Output files
 OUTPUT="$TARGET_DIR/openapi.yaml"
