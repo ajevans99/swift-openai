@@ -55,11 +55,14 @@ public actor ResponseSession {
             }
           }
         case .functionToolCall(let toolCall):
+          client.logger.debug("Tool call: \(toolCall.name)")
           guard let tool = tools[toolCall.name] else {
+            client.logger.error("Unknown tool")
             throw ResponseSessionError.unknownTool(named: toolCall.name)
           }
-          group.addTask {
+          group.addTask { [logger = client.logger] in
             let result = try await tool.call(arguments: toolCall.arguments)
+            logger.debug("Tool call result: \(result)")
             return .functionCallOutputItemParam(
               .init(callId: toolCall.callId, output: result)
             )

@@ -3,7 +3,7 @@
 GIT_ROOT := $(shell git rev-parse --show-toplevel)
 
 # Paths
-SPEC_DIR         := $(GIT_ROOT)/Sources/OpenAIModels
+SPEC_DIR         := $(GIT_ROOT)/Sources/OpenAIFoundation
 SPEC_FILE        := $(SPEC_DIR)/openapi.yaml
 SPEC_COMMIT_FILE := $(SPEC_DIR)/openapi.commit
 GENERATED_DIR    := $(SPEC_DIR)/Generated

@@ -12,6 +12,22 @@ import struct Foundation.Date
 #endif
 /// A type that performs HTTP operations defined by the OpenAPI document.
 public protocol APIProtocol: Sendable {
+    /// Creates an edited or extended image given one or more source images and a prompt. This endpoint only supports `gpt-image-1` and `dall-e-2`.
+    ///
+    /// - Remark: HTTP `POST /images/edits`.
+    /// - Remark: Generated from `#/paths//images/edits/post(createImageEdit)`.
+    func createImageEdit(_ input: Operations.CreateImageEdit.Input) async throws -> Operations.CreateImageEdit.Output
+    /// Creates an image given a prompt. [Learn more](/docs/guides/images).
+    ///
+    ///
+    /// - Remark: HTTP `POST /images/generations`.
+    /// - Remark: Generated from `#/paths//images/generations/post(createImage)`.
+    func createImage(_ input: Operations.CreateImage.Input) async throws -> Operations.CreateImage.Output
+    /// Creates a variation of a given image. This endpoint only supports `dall-e-2`.
+    ///
+    /// - Remark: HTTP `POST /images/variations`.
+    /// - Remark: Generated from `#/paths//images/variations/post(createImageVariation)`.
+    func createImageVariation(_ input: Operations.CreateImageVariation.Input) async throws -> Operations.CreateImageVariation.Output
     /// Creates a model response. Provide [text](/docs/guides/text) or
     /// [image](/docs/guides/images) inputs to generate [text](/docs/guides/text)
     /// or [JSON](/docs/guides/structured-outputs) outputs. Have the model call
@@ -45,6 +61,46 @@ public protocol APIProtocol: Sendable {
 
 /// Convenience overloads for operation inputs.
 extension APIProtocol {
+    /// Creates an edited or extended image given one or more source images and a prompt. This endpoint only supports `gpt-image-1` and `dall-e-2`.
+    ///
+    /// - Remark: HTTP `POST /images/edits`.
+    /// - Remark: Generated from `#/paths//images/edits/post(createImageEdit)`.
+    public func createImageEdit(
+        headers: Operations.CreateImageEdit.Input.Headers = .init(),
+        body: Operations.CreateImageEdit.Input.Body
+    ) async throws -> Operations.CreateImageEdit.Output {
+        try await createImageEdit(Operations.CreateImageEdit.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Creates an image given a prompt. [Learn more](/docs/guides/images).
+    ///
+    ///
+    /// - Remark: HTTP `POST /images/generations`.
+    /// - Remark: Generated from `#/paths//images/generations/post(createImage)`.
+    public func createImage(
+        headers: Operations.CreateImage.Input.Headers = .init(),
+        body: Operations.CreateImage.Input.Body
+    ) async throws -> Operations.CreateImage.Output {
+        try await createImage(Operations.CreateImage.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Creates a variation of a given image. This endpoint only supports `dall-e-2`.
+    ///
+    /// - Remark: HTTP `POST /images/variations`.
+    /// - Remark: Generated from `#/paths//images/variations/post(createImageVariation)`.
+    public func createImageVariation(
+        headers: Operations.CreateImageVariation.Input.Headers = .init(),
+        body: Operations.CreateImageVariation.Input.Body
+    ) async throws -> Operations.CreateImageVariation.Output {
+        try await createImageVariation(Operations.CreateImageVariation.Input(
+            headers: headers,
+            body: body
+        ))
+    }
     /// Creates a model response. Provide [text](/docs/guides/text) or
     /// [image](/docs/guides/images) inputs to generate [text](/docs/guides/text)
     /// or [JSON](/docs/guides/structured-outputs) outputs. Have the model call
@@ -1074,6 +1130,444 @@ public enum Components {
                 case y
             }
         }
+        /// - Remark: Generated from `#/components/schemas/CreateImageEditRequest`.
+        @frozen public enum CreateImageEditRequest: Sendable, Hashable {
+            /// - Remark: Generated from `#/components/schemas/CreateImageEditRequest/image`.
+            public struct ImagePayload: Sendable, Hashable {
+                public var body: OpenAPIRuntime.HTTPBody
+                /// Creates a new `ImagePayload`.
+                ///
+                /// - Parameters:
+                ///   - body:
+                public init(body: OpenAPIRuntime.HTTPBody) {
+                    self.body = body
+                }
+            }
+            case image(OpenAPIRuntime.MultipartPart<Components.Schemas.CreateImageEditRequest.ImagePayload>)
+            /// - Remark: Generated from `#/components/schemas/CreateImageEditRequest/prompt`.
+            public struct PromptPayload: Sendable, Hashable {
+                public var body: OpenAPIRuntime.HTTPBody
+                /// Creates a new `PromptPayload`.
+                ///
+                /// - Parameters:
+                ///   - body:
+                public init(body: OpenAPIRuntime.HTTPBody) {
+                    self.body = body
+                }
+            }
+            case prompt(OpenAPIRuntime.MultipartPart<Components.Schemas.CreateImageEditRequest.PromptPayload>)
+            /// - Remark: Generated from `#/components/schemas/CreateImageEditRequest/mask`.
+            public struct MaskPayload: Sendable, Hashable {
+                public var body: OpenAPIRuntime.HTTPBody
+                /// Creates a new `MaskPayload`.
+                ///
+                /// - Parameters:
+                ///   - body:
+                public init(body: OpenAPIRuntime.HTTPBody) {
+                    self.body = body
+                }
+            }
+            case mask(OpenAPIRuntime.MultipartPart<Components.Schemas.CreateImageEditRequest.MaskPayload>)
+            /// - Remark: Generated from `#/components/schemas/CreateImageEditRequest/model`.
+            public struct ModelPayload: Sendable, Hashable {
+                public var body: OpenAPIRuntime.HTTPBody
+                /// Creates a new `ModelPayload`.
+                ///
+                /// - Parameters:
+                ///   - body:
+                public init(body: OpenAPIRuntime.HTTPBody) {
+                    self.body = body
+                }
+            }
+            case model(OpenAPIRuntime.MultipartPart<Components.Schemas.CreateImageEditRequest.ModelPayload>)
+            /// - Remark: Generated from `#/components/schemas/CreateImageEditRequest/n`.
+            public struct NPayload: Sendable, Hashable {
+                public var body: OpenAPIRuntime.HTTPBody
+                /// Creates a new `NPayload`.
+                ///
+                /// - Parameters:
+                ///   - body:
+                public init(body: OpenAPIRuntime.HTTPBody) {
+                    self.body = body
+                }
+            }
+            case n(OpenAPIRuntime.MultipartPart<Components.Schemas.CreateImageEditRequest.NPayload>)
+            /// - Remark: Generated from `#/components/schemas/CreateImageEditRequest/size`.
+            public struct SizePayload: Sendable, Hashable {
+                public var body: OpenAPIRuntime.HTTPBody
+                /// Creates a new `SizePayload`.
+                ///
+                /// - Parameters:
+                ///   - body:
+                public init(body: OpenAPIRuntime.HTTPBody) {
+                    self.body = body
+                }
+            }
+            case size(OpenAPIRuntime.MultipartPart<Components.Schemas.CreateImageEditRequest.SizePayload>)
+            /// - Remark: Generated from `#/components/schemas/CreateImageEditRequest/response_format`.
+            public struct ResponseFormatPayload: Sendable, Hashable {
+                public var body: OpenAPIRuntime.HTTPBody
+                /// Creates a new `ResponseFormatPayload`.
+                ///
+                /// - Parameters:
+                ///   - body:
+                public init(body: OpenAPIRuntime.HTTPBody) {
+                    self.body = body
+                }
+            }
+            case responseFormat(OpenAPIRuntime.MultipartPart<Components.Schemas.CreateImageEditRequest.ResponseFormatPayload>)
+            /// - Remark: Generated from `#/components/schemas/CreateImageEditRequest/user`.
+            public struct UserPayload: Sendable, Hashable {
+                public var body: OpenAPIRuntime.HTTPBody
+                /// Creates a new `UserPayload`.
+                ///
+                /// - Parameters:
+                ///   - body:
+                public init(body: OpenAPIRuntime.HTTPBody) {
+                    self.body = body
+                }
+            }
+            case user(OpenAPIRuntime.MultipartPart<Components.Schemas.CreateImageEditRequest.UserPayload>)
+            /// - Remark: Generated from `#/components/schemas/CreateImageEditRequest/quality`.
+            public struct QualityPayload: Sendable, Hashable {
+                public var body: OpenAPIRuntime.HTTPBody
+                /// Creates a new `QualityPayload`.
+                ///
+                /// - Parameters:
+                ///   - body:
+                public init(body: OpenAPIRuntime.HTTPBody) {
+                    self.body = body
+                }
+            }
+            case quality(OpenAPIRuntime.MultipartPart<Components.Schemas.CreateImageEditRequest.QualityPayload>)
+            case undocumented(OpenAPIRuntime.MultipartRawPart)
+        }
+        /// - Remark: Generated from `#/components/schemas/CreateImageRequest`.
+        public struct CreateImageRequest: Codable, Hashable, Sendable {
+            /// A text description of the desired image(s). The maximum length is 32000 characters for `gpt-image-1`, 1000 characters for `dall-e-2` and 4000 characters for `dall-e-3`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CreateImageRequest/prompt`.
+            public var prompt: Swift.String
+            /// The model to use for image generation. One of `dall-e-2`, `dall-e-3`, or `gpt-image-1`. Defaults to `dall-e-2` unless a parameter specific to `gpt-image-1` is used.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CreateImageRequest/model`.
+            public struct ModelPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/CreateImageRequest/model/value1`.
+                public var value1: Swift.String?
+                /// - Remark: Generated from `#/components/schemas/CreateImageRequest/model/value2`.
+                @frozen public enum Value2Payload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case dallE2 = "dall-e-2"
+                    case dallE3 = "dall-e-3"
+                    case gptImage1 = "gpt-image-1"
+                }
+                /// - Remark: Generated from `#/components/schemas/CreateImageRequest/model/value2`.
+                public var value2: Components.Schemas.CreateImageRequest.ModelPayload.Value2Payload?
+                /// Creates a new `ModelPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                ///   - value2:
+                public init(
+                    value1: Swift.String? = nil,
+                    value2: Components.Schemas.CreateImageRequest.ModelPayload.Value2Payload? = nil
+                ) {
+                    self.value1 = value1
+                    self.value2 = value2
+                }
+                public init(from decoder: any Decoder) throws {
+                    var errors: [any Error] = []
+                    do {
+                        self.value1 = try decoder.decodeFromSingleValueContainer()
+                    } catch {
+                        errors.append(error)
+                    }
+                    do {
+                        self.value2 = try decoder.decodeFromSingleValueContainer()
+                    } catch {
+                        errors.append(error)
+                    }
+                    try Swift.DecodingError.verifyAtLeastOneSchemaIsNotNil(
+                        [
+                            self.value1,
+                            self.value2
+                        ],
+                        type: Self.self,
+                        codingPath: decoder.codingPath,
+                        errors: errors
+                    )
+                }
+                public func encode(to encoder: any Encoder) throws {
+                    try encoder.encodeFirstNonNilValueToSingleValueContainer([
+                        self.value1,
+                        self.value2
+                    ])
+                }
+            }
+            /// The model to use for image generation. One of `dall-e-2`, `dall-e-3`, or `gpt-image-1`. Defaults to `dall-e-2` unless a parameter specific to `gpt-image-1` is used.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CreateImageRequest/model`.
+            public var model: Components.Schemas.CreateImageRequest.ModelPayload?
+            /// The number of images to generate. Must be between 1 and 10. For `dall-e-3`, only `n=1` is supported.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CreateImageRequest/n`.
+            public var n: Swift.Int?
+            /// The quality of the image that will be generated. 
+            ///
+            /// - `auto` (default value) will automatically select the best quality for the given model.
+            /// - `high`, `medium` and `low` are supported for `gpt-image-1`.
+            /// - `hd` and `standard` are supported for `dall-e-3`.
+            /// - `standard` is the only option for `dall-e-2`.
+            ///
+            ///
+            /// - Remark: Generated from `#/components/schemas/CreateImageRequest/quality`.
+            @frozen public enum QualityPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case standard = "standard"
+                case hd = "hd"
+                case low = "low"
+                case medium = "medium"
+                case high = "high"
+                case auto = "auto"
+            }
+            /// The quality of the image that will be generated. 
+            ///
+            /// - `auto` (default value) will automatically select the best quality for the given model.
+            /// - `high`, `medium` and `low` are supported for `gpt-image-1`.
+            /// - `hd` and `standard` are supported for `dall-e-3`.
+            /// - `standard` is the only option for `dall-e-2`.
+            ///
+            ///
+            /// - Remark: Generated from `#/components/schemas/CreateImageRequest/quality`.
+            public var quality: Components.Schemas.CreateImageRequest.QualityPayload?
+            /// The format in which generated images with `dall-e-2` and `dall-e-3` are returned. Must be one of `url` or `b64_json`. URLs are only valid for 60 minutes after the image has been generated. This parameter isn't supported for `gpt-image-1` which will always return base64-encoded images.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CreateImageRequest/response_format`.
+            @frozen public enum ResponseFormatPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case url = "url"
+                case b64Json = "b64_json"
+            }
+            /// The format in which generated images with `dall-e-2` and `dall-e-3` are returned. Must be one of `url` or `b64_json`. URLs are only valid for 60 minutes after the image has been generated. This parameter isn't supported for `gpt-image-1` which will always return base64-encoded images.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CreateImageRequest/response_format`.
+            public var responseFormat: Components.Schemas.CreateImageRequest.ResponseFormatPayload?
+            /// The format in which the generated images are returned. This parameter is only supported for `gpt-image-1`. Must be one of `png`, `jpeg`, or `webp`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CreateImageRequest/output_format`.
+            @frozen public enum OutputFormatPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case png = "png"
+                case jpeg = "jpeg"
+                case webp = "webp"
+            }
+            /// The format in which the generated images are returned. This parameter is only supported for `gpt-image-1`. Must be one of `png`, `jpeg`, or `webp`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CreateImageRequest/output_format`.
+            public var outputFormat: Components.Schemas.CreateImageRequest.OutputFormatPayload?
+            /// The compression level (0-100%) for the generated images. This parameter is only supported for `gpt-image-1` with the `webp` or `jpeg` output formats, and defaults to 100.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CreateImageRequest/output_compression`.
+            public var outputCompression: Swift.Int?
+            /// The size of the generated images. Must be one of `1024x1024`, `1536x1024` (landscape), `1024x1536` (portrait), or `auto` (default value) for `gpt-image-1`, one of `256x256`, `512x512`, or `1024x1024` for `dall-e-2`, and one of `1024x1024`, `1792x1024`, or `1024x1792` for `dall-e-3`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CreateImageRequest/size`.
+            @frozen public enum SizePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case auto = "auto"
+                case _1024x1024 = "1024x1024"
+                case _1536x1024 = "1536x1024"
+                case _1024x1536 = "1024x1536"
+                case _256x256 = "256x256"
+                case _512x512 = "512x512"
+                case _1792x1024 = "1792x1024"
+                case _1024x1792 = "1024x1792"
+            }
+            /// The size of the generated images. Must be one of `1024x1024`, `1536x1024` (landscape), `1024x1536` (portrait), or `auto` (default value) for `gpt-image-1`, one of `256x256`, `512x512`, or `1024x1024` for `dall-e-2`, and one of `1024x1024`, `1792x1024`, or `1024x1792` for `dall-e-3`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CreateImageRequest/size`.
+            public var size: Components.Schemas.CreateImageRequest.SizePayload?
+            /// Control the content-moderation level for images generated by `gpt-image-1`. Must be either `low` for less restrictive filtering or `auto` (default value).
+            ///
+            /// - Remark: Generated from `#/components/schemas/CreateImageRequest/moderation`.
+            @frozen public enum ModerationPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case low = "low"
+                case auto = "auto"
+            }
+            /// Control the content-moderation level for images generated by `gpt-image-1`. Must be either `low` for less restrictive filtering or `auto` (default value).
+            ///
+            /// - Remark: Generated from `#/components/schemas/CreateImageRequest/moderation`.
+            public var moderation: Components.Schemas.CreateImageRequest.ModerationPayload?
+            /// Allows to set transparency for the background of the generated image(s). 
+            /// This parameter is only supported for `gpt-image-1`. Must be one of 
+            /// `transparent`, `opaque` or `auto` (default value). When `auto` is used, the 
+            /// model will automatically determine the best background for the image.
+            ///
+            /// If `transparent`, the output format needs to support transparency, so it 
+            /// should be set to either `png` (default value) or `webp`.
+            ///
+            ///
+            /// - Remark: Generated from `#/components/schemas/CreateImageRequest/background`.
+            @frozen public enum BackgroundPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case transparent = "transparent"
+                case opaque = "opaque"
+                case auto = "auto"
+            }
+            /// Allows to set transparency for the background of the generated image(s). 
+            /// This parameter is only supported for `gpt-image-1`. Must be one of 
+            /// `transparent`, `opaque` or `auto` (default value). When `auto` is used, the 
+            /// model will automatically determine the best background for the image.
+            ///
+            /// If `transparent`, the output format needs to support transparency, so it 
+            /// should be set to either `png` (default value) or `webp`.
+            ///
+            ///
+            /// - Remark: Generated from `#/components/schemas/CreateImageRequest/background`.
+            public var background: Components.Schemas.CreateImageRequest.BackgroundPayload?
+            /// The style of the generated images. This parameter is only supported for `dall-e-3`. Must be one of `vivid` or `natural`. Vivid causes the model to lean towards generating hyper-real and dramatic images. Natural causes the model to produce more natural, less hyper-real looking images.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CreateImageRequest/style`.
+            @frozen public enum StylePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case vivid = "vivid"
+                case natural = "natural"
+            }
+            /// The style of the generated images. This parameter is only supported for `dall-e-3`. Must be one of `vivid` or `natural`. Vivid causes the model to lean towards generating hyper-real and dramatic images. Natural causes the model to produce more natural, less hyper-real looking images.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CreateImageRequest/style`.
+            public var style: Components.Schemas.CreateImageRequest.StylePayload?
+            /// A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse. [Learn more](/docs/guides/safety-best-practices#end-user-ids).
+            ///
+            ///
+            /// - Remark: Generated from `#/components/schemas/CreateImageRequest/user`.
+            public var user: Swift.String?
+            /// Creates a new `CreateImageRequest`.
+            ///
+            /// - Parameters:
+            ///   - prompt: A text description of the desired image(s). The maximum length is 32000 characters for `gpt-image-1`, 1000 characters for `dall-e-2` and 4000 characters for `dall-e-3`.
+            ///   - model: The model to use for image generation. One of `dall-e-2`, `dall-e-3`, or `gpt-image-1`. Defaults to `dall-e-2` unless a parameter specific to `gpt-image-1` is used.
+            ///   - n: The number of images to generate. Must be between 1 and 10. For `dall-e-3`, only `n=1` is supported.
+            ///   - quality: The quality of the image that will be generated. 
+            ///   - responseFormat: The format in which generated images with `dall-e-2` and `dall-e-3` are returned. Must be one of `url` or `b64_json`. URLs are only valid for 60 minutes after the image has been generated. This parameter isn't supported for `gpt-image-1` which will always return base64-encoded images.
+            ///   - outputFormat: The format in which the generated images are returned. This parameter is only supported for `gpt-image-1`. Must be one of `png`, `jpeg`, or `webp`.
+            ///   - outputCompression: The compression level (0-100%) for the generated images. This parameter is only supported for `gpt-image-1` with the `webp` or `jpeg` output formats, and defaults to 100.
+            ///   - size: The size of the generated images. Must be one of `1024x1024`, `1536x1024` (landscape), `1024x1536` (portrait), or `auto` (default value) for `gpt-image-1`, one of `256x256`, `512x512`, or `1024x1024` for `dall-e-2`, and one of `1024x1024`, `1792x1024`, or `1024x1792` for `dall-e-3`.
+            ///   - moderation: Control the content-moderation level for images generated by `gpt-image-1`. Must be either `low` for less restrictive filtering or `auto` (default value).
+            ///   - background: Allows to set transparency for the background of the generated image(s). 
+            ///   - style: The style of the generated images. This parameter is only supported for `dall-e-3`. Must be one of `vivid` or `natural`. Vivid causes the model to lean towards generating hyper-real and dramatic images. Natural causes the model to produce more natural, less hyper-real looking images.
+            ///   - user: A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse. [Learn more](/docs/guides/safety-best-practices#end-user-ids).
+            public init(
+                prompt: Swift.String,
+                model: Components.Schemas.CreateImageRequest.ModelPayload? = nil,
+                n: Swift.Int? = nil,
+                quality: Components.Schemas.CreateImageRequest.QualityPayload? = nil,
+                responseFormat: Components.Schemas.CreateImageRequest.ResponseFormatPayload? = nil,
+                outputFormat: Components.Schemas.CreateImageRequest.OutputFormatPayload? = nil,
+                outputCompression: Swift.Int? = nil,
+                size: Components.Schemas.CreateImageRequest.SizePayload? = nil,
+                moderation: Components.Schemas.CreateImageRequest.ModerationPayload? = nil,
+                background: Components.Schemas.CreateImageRequest.BackgroundPayload? = nil,
+                style: Components.Schemas.CreateImageRequest.StylePayload? = nil,
+                user: Swift.String? = nil
+            ) {
+                self.prompt = prompt
+                self.model = model
+                self.n = n
+                self.quality = quality
+                self.responseFormat = responseFormat
+                self.outputFormat = outputFormat
+                self.outputCompression = outputCompression
+                self.size = size
+                self.moderation = moderation
+                self.background = background
+                self.style = style
+                self.user = user
+            }
+            public enum CodingKeys: String, CodingKey {
+                case prompt
+                case model
+                case n
+                case quality
+                case responseFormat = "response_format"
+                case outputFormat = "output_format"
+                case outputCompression = "output_compression"
+                case size
+                case moderation
+                case background
+                case style
+                case user
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CreateImageVariationRequest`.
+        @frozen public enum CreateImageVariationRequest: Sendable, Hashable {
+            /// - Remark: Generated from `#/components/schemas/CreateImageVariationRequest/image`.
+            public struct ImagePayload: Sendable, Hashable {
+                public var body: OpenAPIRuntime.HTTPBody
+                /// Creates a new `ImagePayload`.
+                ///
+                /// - Parameters:
+                ///   - body:
+                public init(body: OpenAPIRuntime.HTTPBody) {
+                    self.body = body
+                }
+            }
+            case image(OpenAPIRuntime.MultipartPart<Components.Schemas.CreateImageVariationRequest.ImagePayload>)
+            /// - Remark: Generated from `#/components/schemas/CreateImageVariationRequest/model`.
+            public struct ModelPayload: Sendable, Hashable {
+                public var body: OpenAPIRuntime.HTTPBody
+                /// Creates a new `ModelPayload`.
+                ///
+                /// - Parameters:
+                ///   - body:
+                public init(body: OpenAPIRuntime.HTTPBody) {
+                    self.body = body
+                }
+            }
+            case model(OpenAPIRuntime.MultipartPart<Components.Schemas.CreateImageVariationRequest.ModelPayload>)
+            /// - Remark: Generated from `#/components/schemas/CreateImageVariationRequest/n`.
+            public struct NPayload: Sendable, Hashable {
+                public var body: OpenAPIRuntime.HTTPBody
+                /// Creates a new `NPayload`.
+                ///
+                /// - Parameters:
+                ///   - body:
+                public init(body: OpenAPIRuntime.HTTPBody) {
+                    self.body = body
+                }
+            }
+            case n(OpenAPIRuntime.MultipartPart<Components.Schemas.CreateImageVariationRequest.NPayload>)
+            /// - Remark: Generated from `#/components/schemas/CreateImageVariationRequest/response_format`.
+            public struct ResponseFormatPayload: Sendable, Hashable {
+                public var body: OpenAPIRuntime.HTTPBody
+                /// Creates a new `ResponseFormatPayload`.
+                ///
+                /// - Parameters:
+                ///   - body:
+                public init(body: OpenAPIRuntime.HTTPBody) {
+                    self.body = body
+                }
+            }
+            case responseFormat(OpenAPIRuntime.MultipartPart<Components.Schemas.CreateImageVariationRequest.ResponseFormatPayload>)
+            /// - Remark: Generated from `#/components/schemas/CreateImageVariationRequest/size`.
+            public struct SizePayload: Sendable, Hashable {
+                public var body: OpenAPIRuntime.HTTPBody
+                /// Creates a new `SizePayload`.
+                ///
+                /// - Parameters:
+                ///   - body:
+                public init(body: OpenAPIRuntime.HTTPBody) {
+                    self.body = body
+                }
+            }
+            case size(OpenAPIRuntime.MultipartPart<Components.Schemas.CreateImageVariationRequest.SizePayload>)
+            /// - Remark: Generated from `#/components/schemas/CreateImageVariationRequest/user`.
+            public struct UserPayload: Sendable, Hashable {
+                public var body: OpenAPIRuntime.HTTPBody
+                /// Creates a new `UserPayload`.
+                ///
+                /// - Parameters:
+                ///   - body:
+                public init(body: OpenAPIRuntime.HTTPBody) {
+                    self.body = body
+                }
+            }
+            case user(OpenAPIRuntime.MultipartPart<Components.Schemas.CreateImageVariationRequest.UserPayload>)
+            case undocumented(OpenAPIRuntime.MultipartRawPart)
+        }
         /// - Remark: Generated from `#/components/schemas/CreateModelResponseProperties`.
         public struct CreateModelResponseProperties: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/CreateModelResponseProperties/value1`.
@@ -1930,6 +2424,156 @@ public enum Components {
             public func encode(to encoder: any Encoder) throws {
                 try self.value1.encode(to: encoder)
                 try self.value2.encode(to: encoder)
+            }
+        }
+        /// Represents the content or the URL of an image generated by the OpenAI API.
+        ///
+        /// - Remark: Generated from `#/components/schemas/Image`.
+        public struct Image: Codable, Hashable, Sendable {
+            /// The base64-encoded JSON of the generated image. Default value for `gpt-image-1`, and only present if `response_format` is set to `b64_json` for `dall-e-2` and `dall-e-3`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Image/b64_json`.
+            public var b64Json: Swift.String?
+            /// When using `dall-e-2` or `dall-e-3`, the URL of the generated image if `response_format` is set to `url` (default value). Unsupported for `gpt-image-1`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Image/url`.
+            public var url: Swift.String?
+            /// For `dall-e-3` only, the revised prompt that was used to generate the image.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Image/revised_prompt`.
+            public var revisedPrompt: Swift.String?
+            /// Creates a new `Image`.
+            ///
+            /// - Parameters:
+            ///   - b64Json: The base64-encoded JSON of the generated image. Default value for `gpt-image-1`, and only present if `response_format` is set to `b64_json` for `dall-e-2` and `dall-e-3`.
+            ///   - url: When using `dall-e-2` or `dall-e-3`, the URL of the generated image if `response_format` is set to `url` (default value). Unsupported for `gpt-image-1`.
+            ///   - revisedPrompt: For `dall-e-3` only, the revised prompt that was used to generate the image.
+            public init(
+                b64Json: Swift.String? = nil,
+                url: Swift.String? = nil,
+                revisedPrompt: Swift.String? = nil
+            ) {
+                self.b64Json = b64Json
+                self.url = url
+                self.revisedPrompt = revisedPrompt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case b64Json = "b64_json"
+                case url
+                case revisedPrompt = "revised_prompt"
+            }
+        }
+        /// The response from the image generation endpoint.
+        ///
+        /// - Remark: Generated from `#/components/schemas/ImagesResponse`.
+        public struct ImagesResponse: Codable, Hashable, Sendable {
+            /// The Unix timestamp (in seconds) of when the image was created.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ImagesResponse/created`.
+            public var created: Swift.Int
+            /// The list of generated images.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ImagesResponse/data`.
+            public var data: [Components.Schemas.Image]?
+            /// For `gpt-image-1` only, the token usage information for the image generation.
+            ///
+            ///
+            /// - Remark: Generated from `#/components/schemas/ImagesResponse/usage`.
+            public struct UsagePayload: Codable, Hashable, Sendable {
+                /// The total number of tokens (images and text) used for the image generation.
+                ///
+                /// - Remark: Generated from `#/components/schemas/ImagesResponse/usage/total_tokens`.
+                public var totalTokens: Swift.Int
+                /// The number of tokens (images and text) in the input prompt.
+                ///
+                /// - Remark: Generated from `#/components/schemas/ImagesResponse/usage/input_tokens`.
+                public var inputTokens: Swift.Int
+                /// The number of image tokens in the output image.
+                ///
+                /// - Remark: Generated from `#/components/schemas/ImagesResponse/usage/output_tokens`.
+                public var outputTokens: Swift.Int
+                /// The input tokens detailed information for the image generation.
+                ///
+                /// - Remark: Generated from `#/components/schemas/ImagesResponse/usage/input_tokens_details`.
+                public struct InputTokensDetailsPayload: Codable, Hashable, Sendable {
+                    /// The number of text tokens in the input prompt.
+                    ///
+                    /// - Remark: Generated from `#/components/schemas/ImagesResponse/usage/input_tokens_details/text_tokens`.
+                    public var textTokens: Swift.Int
+                    /// The number of image tokens in the input prompt.
+                    ///
+                    /// - Remark: Generated from `#/components/schemas/ImagesResponse/usage/input_tokens_details/image_tokens`.
+                    public var imageTokens: Swift.Int
+                    /// Creates a new `InputTokensDetailsPayload`.
+                    ///
+                    /// - Parameters:
+                    ///   - textTokens: The number of text tokens in the input prompt.
+                    ///   - imageTokens: The number of image tokens in the input prompt.
+                    public init(
+                        textTokens: Swift.Int,
+                        imageTokens: Swift.Int
+                    ) {
+                        self.textTokens = textTokens
+                        self.imageTokens = imageTokens
+                    }
+                    public enum CodingKeys: String, CodingKey {
+                        case textTokens = "text_tokens"
+                        case imageTokens = "image_tokens"
+                    }
+                }
+                /// The input tokens detailed information for the image generation.
+                ///
+                /// - Remark: Generated from `#/components/schemas/ImagesResponse/usage/input_tokens_details`.
+                public var inputTokensDetails: Components.Schemas.ImagesResponse.UsagePayload.InputTokensDetailsPayload
+                /// Creates a new `UsagePayload`.
+                ///
+                /// - Parameters:
+                ///   - totalTokens: The total number of tokens (images and text) used for the image generation.
+                ///   - inputTokens: The number of tokens (images and text) in the input prompt.
+                ///   - outputTokens: The number of image tokens in the output image.
+                ///   - inputTokensDetails: The input tokens detailed information for the image generation.
+                public init(
+                    totalTokens: Swift.Int,
+                    inputTokens: Swift.Int,
+                    outputTokens: Swift.Int,
+                    inputTokensDetails: Components.Schemas.ImagesResponse.UsagePayload.InputTokensDetailsPayload
+                ) {
+                    self.totalTokens = totalTokens
+                    self.inputTokens = inputTokens
+                    self.outputTokens = outputTokens
+                    self.inputTokensDetails = inputTokensDetails
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case totalTokens = "total_tokens"
+                    case inputTokens = "input_tokens"
+                    case outputTokens = "output_tokens"
+                    case inputTokensDetails = "input_tokens_details"
+                }
+            }
+            /// For `gpt-image-1` only, the token usage information for the image generation.
+            ///
+            ///
+            /// - Remark: Generated from `#/components/schemas/ImagesResponse/usage`.
+            public var usage: Components.Schemas.ImagesResponse.UsagePayload?
+            /// Creates a new `ImagesResponse`.
+            ///
+            /// - Parameters:
+            ///   - created: The Unix timestamp (in seconds) of when the image was created.
+            ///   - data: The list of generated images.
+            ///   - usage: For `gpt-image-1` only, the token usage information for the image generation.
+            public init(
+                created: Swift.Int,
+                data: [Components.Schemas.Image]? = nil,
+                usage: Components.Schemas.ImagesResponse.UsagePayload? = nil
+            ) {
+                self.created = created
+                self.data = data
+                self.usage = usage
+            }
+            public enum CodingKeys: String, CodingKey {
+                case created
+                case data
+                case usage
             }
         }
         /// Specify additional output data to include in the model response. Currently
@@ -8247,6 +8891,370 @@ public enum Components {
 
 /// API operations, with input and output types, generated from `#/paths` in the OpenAPI document.
 public enum Operations {
+    /// Creates an edited or extended image given one or more source images and a prompt. This endpoint only supports `gpt-image-1` and `dall-e-2`.
+    ///
+    /// - Remark: HTTP `POST /images/edits`.
+    /// - Remark: Generated from `#/paths//images/edits/post(createImageEdit)`.
+    public enum CreateImageEdit {
+        public static let id: Swift.String = "createImageEdit"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/images/edits/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CreateImageEdit.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CreateImageEdit.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CreateImageEdit.Input.Headers
+            /// - Remark: Generated from `#/paths/images/edits/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/images/edits/POST/requestBody/content/multipart\/form-data`.
+                case multipartForm(OpenAPIRuntime.MultipartBody<Components.Schemas.CreateImageEditRequest>)
+            }
+            public var body: Operations.CreateImageEdit.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.CreateImageEdit.Input.Headers = .init(),
+                body: Operations.CreateImageEdit.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/images/edits/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/images/edits/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.ImagesResponse)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.ImagesResponse {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CreateImageEdit.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CreateImageEdit.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            /// OK
+            ///
+            /// - Remark: Generated from `#/paths//images/edits/post(createImageEdit)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.CreateImageEdit.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.CreateImageEdit.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Creates an image given a prompt. [Learn more](/docs/guides/images).
+    ///
+    ///
+    /// - Remark: HTTP `POST /images/generations`.
+    /// - Remark: Generated from `#/paths//images/generations/post(createImage)`.
+    public enum CreateImage {
+        public static let id: Swift.String = "createImage"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/images/generations/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CreateImage.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CreateImage.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CreateImage.Input.Headers
+            /// - Remark: Generated from `#/paths/images/generations/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/images/generations/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.CreateImageRequest)
+            }
+            public var body: Operations.CreateImage.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.CreateImage.Input.Headers = .init(),
+                body: Operations.CreateImage.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/images/generations/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/images/generations/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.ImagesResponse)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.ImagesResponse {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CreateImage.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CreateImage.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            /// OK
+            ///
+            /// - Remark: Generated from `#/paths//images/generations/post(createImage)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.CreateImage.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.CreateImage.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Creates a variation of a given image. This endpoint only supports `dall-e-2`.
+    ///
+    /// - Remark: HTTP `POST /images/variations`.
+    /// - Remark: Generated from `#/paths//images/variations/post(createImageVariation)`.
+    public enum CreateImageVariation {
+        public static let id: Swift.String = "createImageVariation"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/images/variations/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CreateImageVariation.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CreateImageVariation.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CreateImageVariation.Input.Headers
+            /// - Remark: Generated from `#/paths/images/variations/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/images/variations/POST/requestBody/content/multipart\/form-data`.
+                case multipartForm(OpenAPIRuntime.MultipartBody<Components.Schemas.CreateImageVariationRequest>)
+            }
+            public var body: Operations.CreateImageVariation.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.CreateImageVariation.Input.Headers = .init(),
+                body: Operations.CreateImageVariation.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/images/variations/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/images/variations/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.ImagesResponse)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.ImagesResponse {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CreateImageVariation.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CreateImageVariation.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            /// OK
+            ///
+            /// - Remark: Generated from `#/paths//images/variations/post(createImageVariation)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.CreateImageVariation.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.CreateImageVariation.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
     /// Creates a model response. Provide [text](/docs/guides/text) or
     /// [image](/docs/guides/images) inputs to generate [text](/docs/guides/text)
     /// or [JSON](/docs/guides/structured-outputs) outputs. Have the model call

@@ -1,7 +1,7 @@
-diff --git a/Sources/OpenAIModels/openapi.yaml b/Sources/OpenAIModels/openapi.yaml
+diff --git a/Sources/OpenAIFoundation/openapi.yaml b/Sources/OpenAIFoundation/openapi.yaml
 index 2e3e33f..786d92b 100644
---- a/Sources/OpenAIModels/openapi.yaml
-+++ b/Sources/OpenAIModels/openapi.yaml
+--- a/Sources/OpenAIFoundation/openapi.yaml
++++ b/Sources/OpenAIFoundation/openapi.yaml
 @@ -38075,12 +38075,10 @@ components:
              - type: string
                description: The URL of the image to be sent to the model. A fully qualified URL

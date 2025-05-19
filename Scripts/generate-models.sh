@@ -7,9 +7,9 @@ if [[ -z "$GIT_ROOT" ]]; then
   exit 1
 fi
 
-SPEC="$GIT_ROOT/Sources/OpenAIModels/openapi.yaml"
-CONFIG="$GIT_ROOT/Sources/OpenAIModels/openapi-generator-config.yaml"
-OUT_DIR="$GIT_ROOT/Sources/OpenAIModels/Generated"
+SPEC="$GIT_ROOT/Sources/OpenAIFoundation/openapi.yaml"
+CONFIG="$GIT_ROOT/Sources/OpenAIFoundation/openapi-generator-config.yaml"
+OUT_DIR="$GIT_ROOT/Sources/OpenAIFoundation/Generated"
 
 # Sanity checks
 if [[ ! -f "$SPEC" ]]; then

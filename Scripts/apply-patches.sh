@@ -6,7 +6,7 @@ GIT_ROOT="$(git rev-parse --show-toplevel)"
 
 # Define where patches live and where the spec lives
 PATCH_DIR="$GIT_ROOT/Patches"
-TARGET_DIR="$GIT_ROOT/Sources/OpenAIModels"
+TARGET_DIR="$GIT_ROOT/Sources/OpenAIFoundation"
 TARGET_FILE="openapi.yaml"
 
 # Sanity checks

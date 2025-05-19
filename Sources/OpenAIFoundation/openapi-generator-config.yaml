@@ -5,4 +5,5 @@ accessModifier: public
 filter:
   tags:
     - Responses
+    - Images
 namingStrategy: idiomatic

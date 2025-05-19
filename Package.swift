@@ -9,6 +9,10 @@ let package = Package(
   ],
   products: [
     .library(
+      name: "OpenAI",
+      targets: ["OpenAIKit", "OpenAICore", "OpenAIFoundation"]
+    ),
+    .library(
       name: "OpenAIKit",
       targets: ["OpenAIKit"]
     ),
@@ -28,6 +32,8 @@ let package = Package(
     .package(url: "https://github.com/apple/swift-openapi-runtime.git", from: "1.8.2"),
     // 📦 JSON Schema Builder for tools
     .package(url: "https://github.com/ajevans99/swift-json-schema.git", from: "0.5.0"),
+    // 🪵 Logging
+    .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
   ],
   targets: [
     .target(
@@ -50,6 +56,7 @@ let package = Package(
       dependencies: [
         .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
         "OpenAIFoundation",
+        .product(name: "Logging", package: "swift-log"),
       ]
     ),
 

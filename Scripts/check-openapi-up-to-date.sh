@@ -5,7 +5,7 @@ REPO="https://github.com/openai/openai-openapi.git"
 REF="refs/heads/master"
 
 GIT_ROOT="$(git rev-parse --show-toplevel)"
-COMMIT_FILE="$GIT_ROOT/Sources/OpenAIModels/openapi.commit"
+COMMIT_FILE="$GIT_ROOT/Sources/OpenAIFoundation/openapi.commit"
 
 # Ensure we have a local commit recorded
 if [[ ! -f "$COMMIT_FILE" ]]; then

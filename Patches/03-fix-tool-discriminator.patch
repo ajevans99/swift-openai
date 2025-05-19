@@ -1,7 +1,7 @@
-diff --git a/Sources/OpenAIModels/openapi.yaml b/Sources/OpenAIModels/openapi.yaml
+diff --git a/Sources/OpenAIFoundation/openapi.yaml b/Sources/OpenAIFoundation/openapi.yaml
 index 786d92b..bf5f0c0 100644
---- a/Sources/OpenAIModels/openapi.yaml
-+++ b/Sources/OpenAIModels/openapi.yaml
+--- a/Sources/OpenAIFoundation/openapi.yaml
++++ b/Sources/OpenAIFoundation/openapi.yaml
 @@ -38310,6 +38310,11 @@ components:
          - $ref: "#/components/schemas/ComputerUsePreviewTool"
        discriminator:

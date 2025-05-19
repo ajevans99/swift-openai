@@ -1,7 +1,7 @@
-diff --git a/Sources/OpenAIModels/openapi.yaml b/Sources/OpenAIModels/openapi.yaml
+diff --git a/Sources/OpenAIFoundation/openapi.yaml b/Sources/OpenAIFoundation/openapi.yaml
 index 2e3e33f..87d6d4e 100644
---- a/Sources/OpenAIModels/openapi.yaml
-+++ b/Sources/OpenAIModels/openapi.yaml
+--- a/Sources/OpenAIFoundation/openapi.yaml
++++ b/Sources/OpenAIFoundation/openapi.yaml
 @@ -19568,8 +19568,8 @@ components:
                  - $ref: "#/components/schemas/PredictionContent"
              seed:

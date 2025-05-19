@@ -43,5 +43,5 @@ To ensure the generated code compiles and behaves correctly in Swift, we apply a
 To generate patches, make changes to the yaml and run:
 
 ```sh
-git diff Sources/OpenAIModels/openapi.yaml > Patches/<two-digit-sort-number-here>-<patch-description-here>.patch
+git diff Sources/OpenAIFoundation/openapi.yaml > Patches/<two-digit-sort-number-here>-<patch-description-here>.patch
 ```
