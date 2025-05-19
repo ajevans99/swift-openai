@@ -33,7 +33,7 @@ struct WeatherCommand: AsyncParsableCommand {
 
     let response = try await openAI.createResponse(
       input: "What's the current weather in \(location)? Please provide a brief summary.",
-      model: .gpt4o,
+      model: .standard(.gpt4o),
       tools: tools.map { $0.toTool() }
     )
 
@@ -84,7 +84,7 @@ struct WeatherCommand: AsyncParsableCommand {
 
     let newResponse = try await openAI.createResponse(
       input: .items(newInputItems.map { .item($0) }),
-      model: .gpt4o,
+      model: .standard(.gpt4o),
       previousResponseId: response.id
     )
 

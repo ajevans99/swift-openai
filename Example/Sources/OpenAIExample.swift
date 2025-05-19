@@ -14,7 +14,7 @@ import SwiftDotenv
 struct OpenAIExample: AsyncParsableCommand {
   static let configuration = CommandConfiguration(
     abstract: "OpenAI CLI example",
-    subcommands: [WeatherCommand.self]
+    subcommands: [WeatherCommand.self, WeatherV2Command.self]
   )
 
   mutating func run() async throws {
@@ -31,7 +31,7 @@ struct OpenAIExample: AsyncParsableCommand {
 
     let response = try await openAI.createResponse(
       input: "Hello, world!",
-      model: .gpt4o
+      model: .standard(.gpt4o)
     )
 
     dump(response)

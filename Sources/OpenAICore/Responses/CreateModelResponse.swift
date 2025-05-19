@@ -60,34 +60,8 @@ public struct CreateModelResponseProperties {
 }
 
 public struct ResponseProperties {
-  public enum ModelIdsShared {
-    public enum Value2Payload: String, Codable {
-      case o3
-
-      public func toOpenAPI() -> Components.Schemas.ModelIdsShared.Value2Payload {
-        switch self {
-        case .o3: return .o3
-        }
-      }
-    }
-  }
-
-  public struct ModelIdsResponses {
-    public var value1: String?
-    public var value2: ModelIdsShared.Value2Payload
-
-    public init(value1: String? = nil, value2: ModelIdsShared.Value2Payload = .o3) {
-      self.value1 = value1
-      self.value2 = value2
-    }
-
-    public func toOpenAPI() -> Components.Schemas.ModelIdsResponses {
-      .init(value1: .init(value1: value1, value2: value2.toOpenAPI()))
-    }
-  }
-
   public var previousResponseId: String?
-  public var model: Components.Schemas.ModelIdsShared.Value2Payload
+  public var model: Model
   public var reasoning: Reasoning?
   public var maxOutputTokens: Int?
   public var instructions: String?
@@ -98,7 +72,7 @@ public struct ResponseProperties {
 
   public init(
     previousResponseId: String? = nil,
-    model: Components.Schemas.ModelIdsShared.Value2Payload,
+    model: Model,
     reasoning: Reasoning? = nil,
     maxOutputTokens: Int? = nil,
     instructions: String? = nil,
@@ -121,8 +95,7 @@ public struct ResponseProperties {
   public func toOpenAPI() -> Components.Schemas.ResponseProperties {
     .init(
       previousResponseId: previousResponseId,
-      model: Components.Schemas.ModelIdsResponses(
-        value1: Components.Schemas.ModelIdsShared(value2: model)),
+      model: model.toOpenAPI(),
       reasoning: reasoning?.toOpenAPI(),
       maxOutputTokens: maxOutputTokens,
       instructions: instructions,
