@@ -1,8 +1,8 @@
 import Foundation
 import OpenAPIRuntime
 
-public struct ImagesResponse {
-  public struct Image {
+public struct ImagesResponse: Sendable {
+  public struct Image: Sendable {
     public let url: String?
     public let b64Json: String?
     public let revisedPrompt: String?
@@ -14,8 +14,8 @@ public struct ImagesResponse {
     }
   }
 
-  public struct Usage {
-    public struct InputTokensDetails {
+  public struct Usage: Sendable {
+    public struct InputTokensDetails: Sendable {
       public let textTokens: Int
       public let imageTokens: Int
 

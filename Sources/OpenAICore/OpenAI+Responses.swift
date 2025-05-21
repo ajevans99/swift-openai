@@ -85,6 +85,7 @@ extension OpenAI {
 
   // MARK: Streaming
 
+  @available(macOS 15.0, *)
   public func streamCreateResponse(
     input: InputPayload,
     model: Model,
@@ -104,7 +105,7 @@ extension OpenAI {
     topP: Double? = nil,
     truncation: Truncation? = nil,
     user: String? = nil
-  ) async throws -> Response {
+  ) async throws -> any AsyncSequence<StreamingResponse, any Error> {
     let requestData = CreateResponse(
       modelProperties: CreateModelResponseProperties(
         metadata: metadata,
@@ -132,7 +133,7 @@ extension OpenAI {
         stream: true
       )
     )
-    return try await createResponse(requestData)
+    return try await streamCreateResponse(requestData)
   }
 
   @available(macOS 15.0, *)
@@ -160,9 +161,10 @@ extension OpenAI {
 
     return
       body
-      .asDecodedJSONSequence(of: Components.Schemas.ResponseStreamEvent.self)
+      .asDecodedServerSentEventsWithJSONData(of: Components.Schemas.ResponseStreamEvent.self)
       .compactMap { event in
-        StreamingResponse(openAPI: event)
+        guard let data = event.data else { return nil }
+        return StreamingResponse(openAPI: data)
       }
   }
 

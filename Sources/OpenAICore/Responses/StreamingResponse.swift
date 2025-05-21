@@ -1,9 +1,9 @@
 public enum StreamingResponse {
   public enum OutputItem {
-    case added(item: Components.Schemas.OutputItem, outputIndex: Int)
-    case done(item: Components.Schemas.OutputItem, outputIndex: Int)
+    case added(item: OpenAICore.OutputItem, outputIndex: Int)
+    case done(item: OpenAICore.OutputItem, outputIndex: Int)
 
-    var value: String {
+    public var value: String {
       switch self {
       case .added: "added"
       case .done: "done"
@@ -11,11 +11,11 @@ public enum StreamingResponse {
     }
 
     public init(openAPI: Components.Schemas.ResponseOutputItemAddedEvent) {
-      self = .added(item: openAPI.item, outputIndex: openAPI.outputIndex)
+      self = .added(item: OpenAICore.OutputItem(openAPI.item)!, outputIndex: openAPI.outputIndex)
     }
 
     public init(openAPI: Components.Schemas.ResponseOutputItemDoneEvent) {
-      self = .done(item: openAPI.item, outputIndex: openAPI.outputIndex)
+      self = .done(item: OpenAICore.OutputItem(openAPI.item)!, outputIndex: openAPI.outputIndex)
     }
   }
 
@@ -23,7 +23,7 @@ public enum StreamingResponse {
     case added(part: OutputContent, contentIndex: Int, itemId: String, outputIndex: Int)
     case done(part: OutputContent, contentIndex: Int, itemId: String, outputIndex: Int)
 
-    var value: String {
+    public var value: String {
       switch self {
       case .added: "added"
       case .done: "done"
@@ -59,7 +59,7 @@ public enum StreamingResponse {
         outputIndex: Int
       )
 
-      var value: String {
+      public var value: String {
         switch self {
         case .added: "added"
         }
@@ -80,7 +80,7 @@ public enum StreamingResponse {
     case annotation(Annotation)
     case done(text: String, contentIndex: Int, itemId: String, outputIndex: Int)
 
-    var value: String {
+    public var value: String {
       switch self {
       case .delta: "delta"
       case .annotation(let annotation): "annotation.\(annotation.value)"
@@ -115,7 +115,7 @@ public enum StreamingResponse {
     case delta(delta: String, contentIndex: Int, itemId: String, outputIndex: Int)
     case done(refusal: String, contentIndex: Int, itemId: String, outputIndex: Int)
 
-    var value: String {
+    public var value: String {
       switch self {
       case .delta: "delta"
       case .done: "done"
@@ -145,7 +145,7 @@ public enum StreamingResponse {
     case delta(delta: String, itemId: String, outputIndex: Int)
     case done(arguments: String, itemId: String, outputIndex: Int)
 
-    var value: String {
+    public var value: String {
       switch self {
       case .delta: "delta"
       case .done: "done"
@@ -170,7 +170,7 @@ public enum StreamingResponse {
     case searching(itemId: String, outputIndex: Int)
     case completed(itemId: String, outputIndex: Int)
 
-    var value: String {
+    public var value: String {
       switch self {
       case .inProgress: "in_progress"
       case .searching: "searching"
@@ -196,7 +196,7 @@ public enum StreamingResponse {
     case searching(itemId: String, outputIndex: Int)
     case completed(itemId: String, outputIndex: Int)
 
-    var value: String {
+    public var value: String {
       switch self {
       case .inProgress: "in_progress"
       case .searching: "searching"
@@ -221,7 +221,7 @@ public enum StreamingResponse {
     case delta(part: String, summaryIndex: Int, itemId: String, outputIndex: Int)
     case done(part: String, summaryIndex: Int, itemId: String, outputIndex: Int)
 
-    var value: String {
+    public var value: String {
       switch self {
       case .delta: "delta"
       case .done: "done"
@@ -251,7 +251,7 @@ public enum StreamingResponse {
     case delta(delta: String, summaryIndex: Int, itemId: String, outputIndex: Int)
     case done(text: String, summaryIndex: Int, itemId: String, outputIndex: Int)
 
-    var value: String {
+    public var value: String {
       switch self {
       case .delta: "delta"
       case .done: "done"
@@ -281,7 +281,7 @@ public enum StreamingResponse {
     case delta(delta: String)
     case done
 
-    var value: String {
+    public var value: String {
       switch self {
       case .delta: "delta"
       case .done: "done"
@@ -301,7 +301,7 @@ public enum StreamingResponse {
     case delta(delta: String)
     case done
 
-    var value: String {
+    public var value: String {
       switch self {
       case .delta: "delta"
       case .done: "done"
@@ -333,7 +333,7 @@ public enum StreamingResponse {
       codeInterpreterCall: Components.Schemas.CodeInterpreterToolCall
     )
 
-    var value: String {
+    public var value: String {
       switch self {
       case .codeDelta: "code_delta"
       case .codeDone: "code_done"
@@ -392,7 +392,7 @@ public enum StreamingResponse {
   case audioTranscript(AudioTranscript)
   case codeInterpreterCall(CodeInterpreterCall)
 
-  var value: String {
+  public var value: String {
     switch self {
     case .created: "response.created"
     case .inProgress: "response.in_progress"
