@@ -9,3 +9,4 @@ DerivedData/
 .env
 generated-images/
 ImagePrompt.md
+logs/

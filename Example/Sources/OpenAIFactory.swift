@@ -1,11 +1,12 @@
 import ArgumentParser
+import Logging
 import OpenAICore
 import OpenAIKit
 import OpenAPIAsyncHTTPClient
 import SwiftDotenv
 
 enum OpenAIFactory {
-  static func create() throws -> OpenAI {
+  static func create(logger: Logger? = nil) throws -> OpenAI {
     try Dotenv.configure()
 
     guard let apiKey = Dotenv["OPENAI_API_KEY"]?.stringValue else {
@@ -14,7 +15,8 @@ enum OpenAIFactory {
 
     let client = try OpenAI(
       transport: AsyncHTTPClientTransport(configuration: .init(timeout: .hours(1))),
-      apiKey: apiKey
+      apiKey: apiKey,
+      logger: logger
     )
 
     return client

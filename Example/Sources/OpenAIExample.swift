@@ -16,7 +16,7 @@ struct OpenAIExample: AsyncParsableCommand {
     abstract: "OpenAI CLI example",
     subcommands: [
       WeatherCommand.self, WeatherV2Command.self, WeatherV3Command.self, WeatherV4Command.self,
-      ImageAssistantCommand.self,
+      ImageAssistantCommand.self, ChatCommand.self,
     ]
   )
 

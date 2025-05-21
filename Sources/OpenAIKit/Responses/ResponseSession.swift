@@ -7,22 +7,20 @@ public actor ResponseSession {
   public enum StreamEvent: Sendable {
     case output(String, isFinal: Bool)
     case toolCalled(name: String, arguments: String)
+    case completed(responseID: String)
   }
 
   private let client: OpenAI
   private let model: Model
   private let errorPolicy: ToolErrorPolicy
-  private var history: any HistoryBuffer
 
   private var tools: [String: any Tool] = [:]
 
   public init(
-    client: OpenAI, model: Model, history: HistoryBuffer = RolllingHistoryBuffer(capacity: 100),
-    errorPolicy: ToolErrorPolicy = .failFast
+    client: OpenAI, model: Model, errorPolicy: ToolErrorPolicy = .failFast
   ) {
     self.client = client
     self.model = model
-    self.history = history
     self.errorPolicy = errorPolicy
   }
 
@@ -31,21 +29,27 @@ public actor ResponseSession {
   }
 
   @discardableResult
-  public func send(_ userText: String) async throws -> String {
-    history.appendUser(userText)
+  public func send(_ userText: String, previousResponseID: String? = nil) async throws -> String {
+    let item = Item.inputMessage(InputMessage(role: .user, content: [.text(.init(text: userText))]))
 
-    return try await advance()
+    return try await advance(newItems: [item], previousResponseID: previousResponseID)
   }
 
   @available(macOS 15.0, *)
-  public func stream(_ userText: String) async throws -> AsyncThrowingStream<StreamEvent, Error> {
-    history.appendUser(userText)
+  public func stream(_ userText: String, previousResponseID: String? = nil) async throws
+    -> AsyncThrowingStream<StreamEvent, Error>
+  {
+    let item = Item.inputMessage(InputMessage(role: .user, content: [.text(.init(text: userText))]))
     client.logger.debug("Starting stream for user text: \(userText)")
 
     return AsyncThrowingStream { continuation in
       Task {
         do {
-          try await streamAdvance(continuation: continuation)
+          try await streamAdvance(
+            newItems: [item],
+            previousResponseID: previousResponseID,
+            continuation: continuation
+          )
         } catch {
           client.logger.error("Stream failed with error: \(error)")
           continuation.finish(throwing: error)
@@ -54,9 +58,9 @@ public actor ResponseSession {
     }
   }
 
-  private func advance(previousResponseID: String? = nil) async throws -> String {
+  private func advance(newItems: [Item], previousResponseID: String? = nil) async throws -> String {
     let response = try await client.createResponse(
-      input: .items(history.entries.map { .item($0) }),
+      input: .items(newItems.map { .item($0) }),
       model: model,
       previousResponseId: previousResponseID,
       tools: Array(tools.values).map { $0.toTool() }
@@ -101,8 +105,7 @@ public actor ResponseSession {
     // If we had tool calls, append their outputs to history,
     // then recurse until the assistant produces a plain reply.
     if !newItems.isEmpty {
-      history.appendResponse(responseID: response.id, items: newItems)
-      return try await advance(previousResponseID: response.id)
+      return try await advance(newItems: newItems, previousResponseID: response.id)
     }
 
     return generatedText
@@ -110,14 +113,15 @@ public actor ResponseSession {
 
   @available(macOS 15.0, *)
   private func streamAdvance(
-    continuation: AsyncThrowingStream<StreamEvent, Error>.Continuation,
-    previousResponseID: String? = nil
+    newItems: [Item],
+    previousResponseID: String?,
+    continuation: AsyncThrowingStream<StreamEvent, Error>.Continuation
   ) async throws {
     client.logger.debug(
       "Starting streamAdvance with previousResponseID: \(previousResponseID ?? "none")")
 
     let stream = try await client.streamCreateResponse(
-      input: .items(history.entries.map { .item($0) }),
+      input: .items(newItems.map { .item($0) }),
       model: model,
       previousResponseId: previousResponseID,
       tools: Array(tools.values).map { $0.toTool() }
@@ -170,6 +174,7 @@ public actor ResponseSession {
       case .completed(let response):
         client.logger.debug("Stream completed with response ID: \(response.id)")
         responseID = response.id
+        continuation.yield(.completed(responseID: response.id))
         break
 
       case .error(let message, let code, let param):
@@ -185,10 +190,10 @@ public actor ResponseSession {
 
     // Handle recursion if we have tool call results
     if !newItems.isEmpty, let responseID {
-      client.logger.debug("Appending \(newItems.count) new items to history")
-      history.appendResponse(responseID: responseID, items: newItems)
       // Recursively stream the next response with tool call results
-      try await streamAdvance(continuation: continuation, previousResponseID: responseID)
+      try await streamAdvance(
+        newItems: newItems, previousResponseID: responseID, continuation: continuation
+      )
     } else {
       continuation.finish()
     }

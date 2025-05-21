@@ -50,6 +50,8 @@ struct WeatherV4Command: AsyncParsableCommand {
       case .toolCalled(let name, let arguments):
         print("\n[Tool Called: \(name)]")
         print("[Arguments: \(arguments)]")
+      case .completed:
+        break
       }
     }
     print("\n----------------------------------------")
