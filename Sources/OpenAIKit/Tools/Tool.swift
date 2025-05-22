@@ -49,6 +49,6 @@ extension Tool {
   }
 
   public func toTool() -> Components.Schemas.Tool {
-    .function(toFunctionTool().toOpenAPI())
+    .init(value1: toFunctionTool().toOpenAPI())
   }
 }

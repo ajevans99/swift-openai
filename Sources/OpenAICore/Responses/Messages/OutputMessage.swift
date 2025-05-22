@@ -42,26 +42,29 @@ public enum OutputContent: Sendable {
   case refusal(RefusalContent)
 
   public init(_ content: Components.Schemas.OutputContent) {
-    switch content {
-    case .OutputTextContent(let textContent):
+    if let textContent = content.value1 {
       self = .text(
         OutputTextContent(
           text: textContent.text,
           annotations: textContent.annotations
         )
       )
-    case .RefusalContent(let refusalContent):
+    } else if let refusalContent = content.value2 {
       self = .refusal(RefusalContent(refusal: refusalContent.refusal))
+    } else {
+      fatalError("No content found in OutputContent")
     }
   }
 
   public func toOpenAPI() -> Components.Schemas.OutputContent {
+    var content = Components.Schemas.OutputContent()
     switch self {
     case .text(let textContent):
-      return .OutputTextContent(textContent.toOpenAPI())
+      content.value1 = textContent.toOpenAPI()
     case .refusal(let refusalContent):
-      return .RefusalContent(refusalContent.toOpenAPI())
+      content.value2 = refusalContent.toOpenAPI()
     }
+    return content
   }
 }
 
