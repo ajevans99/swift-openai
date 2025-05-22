@@ -2,58 +2,43 @@ import Foundation
 import OpenAPIRuntime
 
 public struct CreateImageEditRequest {
-  public enum Model {
-    case dallE2
-    case gptImage1
+  public enum Model: String {
+    case dallE2 = "dall-e-2"
+    case gptImage1 = "gpt-image-1"
 
     public func toOpenAPI() -> Components.Schemas.CreateImageEditRequest.ModelPayload {
-      let value2: Components.Schemas.CreateImageEditRequest.ModelPayload.Value2Payload =
-        switch self {
-        case .dallE2: .dallE2
-        case .gptImage1: .gptImage1
-        }
-      return .init(value2: .init(stringLiteral: String))
+      return .init(body: .init(rawValue))
     }
   }
 
-  public enum Size {
+  public enum Size: String {
     // Dall-E 2
-    case size256x256
-    case size512x512
+    case size256x256 = "256x256"
+    case size512x512 = "512x512"
 
     // Both
-    case size1024x1024
+    case size1024x1024 = "1024x1024"
 
     // GPT Image 1
-    case size1536x1024
-    case size1024x1536
-    case auto
+    case size1536x1024 = "1536x1024"
+    case size1024x1536 = "1024x1536"
+    case auto = "auto"
 
     public func toOpenAPI() -> Components.Schemas.CreateImageEditRequest.SizePayload {
-      switch self {
-      case .size256x256: ._256x256
-      case .size512x512: ._512x512
-      case .size1024x1024: ._1024x1024
-      case .size1536x1024: ._1536x1024
-      case .size1024x1536: ._1024x1536
-      case .auto: .auto
-      }
+      .init(body: .init(rawValue))
     }
   }
 
-  public enum ResponseFormat {
+  public enum ResponseFormat: String {
     case url
-    case b64Json
+    case b64Json = "b64_json"
 
     public func toOpenAPI() -> Components.Schemas.CreateImageEditRequest.ResponseFormatPayload {
-      switch self {
-      case .url: .url
-      case .b64Json: .b64Json
-      }
+      .init(body: .init(rawValue))
     }
   }
 
-  public enum Quality {
+  public enum Quality: String {
     // Dall-E 2
     case standard
 
@@ -64,24 +49,27 @@ public struct CreateImageEditRequest {
     case auto
 
     public func toOpenAPI() -> Components.Schemas.CreateImageEditRequest.QualityPayload {
-      switch self {
-      case .standard: .standard
-      case .low: .low
-      case .medium: .medium
-      case .high: .high
-      case .auto: .auto
-      }
+      .init(body: .init(rawValue))
     }
   }
 
   public enum ImageData {
-    case single(Data)
-    case multiple([Data])
+    case single(String)  // Base64 encoded
+    case multiple([String])  // Base64 encoded
+
+    public func toOpenAPI() -> [Components.Schemas.CreateImageEditRequest.ImagePayload] {
+      switch self {
+      case .single(let image):
+        return [.init(body: .init(image))]
+      case .multiple(let images):
+        return images.map { .init(body: .init($0)) }
+      }
+    }
   }
 
   public let image: ImageData
   public let prompt: String
-  public let mask: Data?
+  public let mask: String?  // Base64 encoded
   public let model: Model?
   public let n: Int?
   public let size: Size?
@@ -92,7 +80,7 @@ public struct CreateImageEditRequest {
   public init(
     image: ImageData,
     prompt: String,
-    mask: Data? = nil,
+    mask: String? = nil,
     model: Model? = nil,
     n: Int? = nil,
     size: Size? = nil,
@@ -112,44 +100,20 @@ public struct CreateImageEditRequest {
   }
 
   public func toOpenAPI() -> [Components.Schemas.CreateImageEditRequest] {
-    var parts: [Components.Schemas.CreateImageEditRequest] = [
-      .image(
-        .init(
-          filename: "image.png",
-          payload: .init(body: .init(image))
-        )),
-      .prompt(
-        .init(
-          filename: "prompt.txt",
-          payload: .init(body: .init(prompt.data(using: .utf8)!))
-        )),
-    ]
-
-    if let mask = mask {
-      parts.append(
-        .mask(
-          .init(
-            filename: "mask.png",
-            payload: .init(body: .init(mask))
-          )))
+    var parts: [Components.Schemas.CreateImageEditRequest] = image.toOpenAPI().map {
+      .image(.init(payload: $0))
     }
 
-    if let model = model {
+    parts.append(.prompt(.init(payload: .init(body: .init(prompt)))))
+
+    if let model {
       parts.append(
-        .model(
-          .init(
-            filename: "model.txt",
-            payload: .init(body: .init(model.toOpenAPI().value2.rawValue.data(using: .utf8)!))
-          )))
+        .model(.init(payload: model.toOpenAPI()))
+      )
     }
 
-    if let n = n {
-      parts.append(
-        .n(
-          .init(
-            filename: "n.txt",
-            payload: .init(body: .init(String(n).data(using: .utf8)!))
-          )))
+    if let n {
+      parts.append(.n(.init(payload: .init(Data(n)))))
     }
 
     if let size = size {
