@@ -1,4 +1,4 @@
-public struct Reasoning {
+public struct Reasoning: Sendable {
   public var effort: ReasoningEffort?
   public var summary: ReasoningSummary?
 
@@ -15,7 +15,7 @@ public struct Reasoning {
   }
 }
 
-public enum ReasoningSummary: String, Codable {
+public enum ReasoningSummary: String, Codable, Sendable {
   case auto
   case concise
   case detailed
@@ -37,7 +37,7 @@ public enum ReasoningSummary: String, Codable {
   }
 }
 
-public enum ReasoningEffort: String, Codable {
+public enum ReasoningEffort: String, Codable, Sendable {
   case low
   case medium
   case high

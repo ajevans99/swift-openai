@@ -1,5 +1,5 @@
-public enum StreamingResponse {
-  public enum OutputItem {
+public enum StreamingResponse: Sendable {
+  public enum OutputItem: Sendable {
     case added(item: OpenAICore.OutputItem, outputIndex: Int)
     case done(item: OpenAICore.OutputItem, outputIndex: Int)
 
@@ -19,7 +19,7 @@ public enum StreamingResponse {
     }
   }
 
-  public enum ContentPart {
+  public enum ContentPart: Sendable {
     case added(part: OutputContent, contentIndex: Int, itemId: String, outputIndex: Int)
     case done(part: OutputContent, contentIndex: Int, itemId: String, outputIndex: Int)
 
@@ -49,8 +49,8 @@ public enum StreamingResponse {
     }
   }
 
-  public enum OutputText {
-    public enum Annotation {
+  public enum OutputText: Sendable {
+    public enum Annotation: Sendable {
       case added(
         annotation: Components.Schemas.Annotation,
         annotationIndex: Int,
@@ -111,7 +111,7 @@ public enum StreamingResponse {
     }
   }
 
-  public enum Refusal {
+  public enum Refusal: Sendable {
     case delta(delta: String, contentIndex: Int, itemId: String, outputIndex: Int)
     case done(refusal: String, contentIndex: Int, itemId: String, outputIndex: Int)
 
@@ -141,7 +141,7 @@ public enum StreamingResponse {
     }
   }
 
-  public enum FunctionCallArguments {
+  public enum FunctionCallArguments: Sendable {
     case delta(delta: String, itemId: String, outputIndex: Int)
     case done(arguments: String, itemId: String, outputIndex: Int)
 
@@ -165,7 +165,7 @@ public enum StreamingResponse {
     }
   }
 
-  public enum FileSearchCall {
+  public enum FileSearchCall: Sendable {
     case inProgress(itemId: String, outputIndex: Int)
     case searching(itemId: String, outputIndex: Int)
     case completed(itemId: String, outputIndex: Int)
@@ -191,7 +191,7 @@ public enum StreamingResponse {
     }
   }
 
-  public enum WebSearchCall {
+  public enum WebSearchCall: Sendable {
     case inProgress(itemId: String, outputIndex: Int)
     case searching(itemId: String, outputIndex: Int)
     case completed(itemId: String, outputIndex: Int)
@@ -217,7 +217,7 @@ public enum StreamingResponse {
     }
   }
 
-  public enum ReasoningSummaryPart {
+  public enum ReasoningSummaryPart: Sendable {
     case delta(part: String, summaryIndex: Int, itemId: String, outputIndex: Int)
     case done(part: String, summaryIndex: Int, itemId: String, outputIndex: Int)
 
@@ -247,7 +247,7 @@ public enum StreamingResponse {
     }
   }
 
-  public enum ReasoningSummaryText {
+  public enum ReasoningSummaryText: Sendable {
     case delta(delta: String, summaryIndex: Int, itemId: String, outputIndex: Int)
     case done(text: String, summaryIndex: Int, itemId: String, outputIndex: Int)
 
@@ -277,7 +277,7 @@ public enum StreamingResponse {
     }
   }
 
-  public enum Audio {
+  public enum Audio: Sendable {
     case delta(delta: String)
     case done
 
@@ -297,7 +297,7 @@ public enum StreamingResponse {
     }
   }
 
-  public enum AudioTranscript {
+  public enum AudioTranscript: Sendable {
     case delta(delta: String)
     case done
 
@@ -317,7 +317,7 @@ public enum StreamingResponse {
     }
   }
 
-  public enum CodeInterpreterCall {
+  public enum CodeInterpreterCall: Sendable {
     case codeDelta(delta: String, outputIndex: Int)
     case codeDone(code: String, outputIndex: Int)
     case completed(

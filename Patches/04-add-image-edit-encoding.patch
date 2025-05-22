@@ -1,0 +1,16 @@
+diff --git a/Sources/OpenAIFoundation/openapi.yaml b/Sources/OpenAIFoundation/openapi.yaml
+index bf5f0c0..62726b4 100644
+--- a/Sources/OpenAIFoundation/openapi.yaml
++++ b/Sources/OpenAIFoundation/openapi.yaml
+@@ -6002,6 +6002,11 @@ paths:
+           multipart/form-data:
+             schema:
+               $ref: "#/components/schemas/CreateImageEditRequest"
++            encoding:
++              image:
++                contentType: image/png
++              mask:
++                contentType: image/png
+       responses:
+         "200":
+           description: OK

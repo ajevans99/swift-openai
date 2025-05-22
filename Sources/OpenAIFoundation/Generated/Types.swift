@@ -8912,8 +8912,120 @@ public enum Operations {
             public var headers: Operations.CreateImageEdit.Input.Headers
             /// - Remark: Generated from `#/paths/images/edits/POST/requestBody`.
             @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/images/edits/POST/requestBody/multipartForm`.
+                @frozen public enum MultipartFormPayload: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/images/edits/POST/requestBody/multipartForm/image`.
+                    public struct ImagePayload: Sendable, Hashable {
+                        public var body: OpenAPIRuntime.HTTPBody
+                        /// Creates a new `ImagePayload`.
+                        ///
+                        /// - Parameters:
+                        ///   - body:
+                        public init(body: OpenAPIRuntime.HTTPBody) {
+                            self.body = body
+                        }
+                    }
+                    case image(OpenAPIRuntime.MultipartPart<Operations.CreateImageEdit.Input.Body.MultipartFormPayload.ImagePayload>)
+                    /// - Remark: Generated from `#/paths/images/edits/POST/requestBody/multipartForm/prompt`.
+                    public struct PromptPayload: Sendable, Hashable {
+                        public var body: OpenAPIRuntime.HTTPBody
+                        /// Creates a new `PromptPayload`.
+                        ///
+                        /// - Parameters:
+                        ///   - body:
+                        public init(body: OpenAPIRuntime.HTTPBody) {
+                            self.body = body
+                        }
+                    }
+                    case prompt(OpenAPIRuntime.MultipartPart<Operations.CreateImageEdit.Input.Body.MultipartFormPayload.PromptPayload>)
+                    /// - Remark: Generated from `#/paths/images/edits/POST/requestBody/multipartForm/mask`.
+                    public struct MaskPayload: Sendable, Hashable {
+                        public var body: OpenAPIRuntime.HTTPBody
+                        /// Creates a new `MaskPayload`.
+                        ///
+                        /// - Parameters:
+                        ///   - body:
+                        public init(body: OpenAPIRuntime.HTTPBody) {
+                            self.body = body
+                        }
+                    }
+                    case mask(OpenAPIRuntime.MultipartPart<Operations.CreateImageEdit.Input.Body.MultipartFormPayload.MaskPayload>)
+                    /// - Remark: Generated from `#/paths/images/edits/POST/requestBody/multipartForm/model`.
+                    public struct ModelPayload: Sendable, Hashable {
+                        public var body: OpenAPIRuntime.HTTPBody
+                        /// Creates a new `ModelPayload`.
+                        ///
+                        /// - Parameters:
+                        ///   - body:
+                        public init(body: OpenAPIRuntime.HTTPBody) {
+                            self.body = body
+                        }
+                    }
+                    case model(OpenAPIRuntime.MultipartPart<Operations.CreateImageEdit.Input.Body.MultipartFormPayload.ModelPayload>)
+                    /// - Remark: Generated from `#/paths/images/edits/POST/requestBody/multipartForm/n`.
+                    public struct NPayload: Sendable, Hashable {
+                        public var body: OpenAPIRuntime.HTTPBody
+                        /// Creates a new `NPayload`.
+                        ///
+                        /// - Parameters:
+                        ///   - body:
+                        public init(body: OpenAPIRuntime.HTTPBody) {
+                            self.body = body
+                        }
+                    }
+                    case n(OpenAPIRuntime.MultipartPart<Operations.CreateImageEdit.Input.Body.MultipartFormPayload.NPayload>)
+                    /// - Remark: Generated from `#/paths/images/edits/POST/requestBody/multipartForm/size`.
+                    public struct SizePayload: Sendable, Hashable {
+                        public var body: OpenAPIRuntime.HTTPBody
+                        /// Creates a new `SizePayload`.
+                        ///
+                        /// - Parameters:
+                        ///   - body:
+                        public init(body: OpenAPIRuntime.HTTPBody) {
+                            self.body = body
+                        }
+                    }
+                    case size(OpenAPIRuntime.MultipartPart<Operations.CreateImageEdit.Input.Body.MultipartFormPayload.SizePayload>)
+                    /// - Remark: Generated from `#/paths/images/edits/POST/requestBody/multipartForm/response_format`.
+                    public struct ResponseFormatPayload: Sendable, Hashable {
+                        public var body: OpenAPIRuntime.HTTPBody
+                        /// Creates a new `ResponseFormatPayload`.
+                        ///
+                        /// - Parameters:
+                        ///   - body:
+                        public init(body: OpenAPIRuntime.HTTPBody) {
+                            self.body = body
+                        }
+                    }
+                    case responseFormat(OpenAPIRuntime.MultipartPart<Operations.CreateImageEdit.Input.Body.MultipartFormPayload.ResponseFormatPayload>)
+                    /// - Remark: Generated from `#/paths/images/edits/POST/requestBody/multipartForm/user`.
+                    public struct UserPayload: Sendable, Hashable {
+                        public var body: OpenAPIRuntime.HTTPBody
+                        /// Creates a new `UserPayload`.
+                        ///
+                        /// - Parameters:
+                        ///   - body:
+                        public init(body: OpenAPIRuntime.HTTPBody) {
+                            self.body = body
+                        }
+                    }
+                    case user(OpenAPIRuntime.MultipartPart<Operations.CreateImageEdit.Input.Body.MultipartFormPayload.UserPayload>)
+                    /// - Remark: Generated from `#/paths/images/edits/POST/requestBody/multipartForm/quality`.
+                    public struct QualityPayload: Sendable, Hashable {
+                        public var body: OpenAPIRuntime.HTTPBody
+                        /// Creates a new `QualityPayload`.
+                        ///
+                        /// - Parameters:
+                        ///   - body:
+                        public init(body: OpenAPIRuntime.HTTPBody) {
+                            self.body = body
+                        }
+                    }
+                    case quality(OpenAPIRuntime.MultipartPart<Operations.CreateImageEdit.Input.Body.MultipartFormPayload.QualityPayload>)
+                    case undocumented(OpenAPIRuntime.MultipartRawPart)
+                }
                 /// - Remark: Generated from `#/paths/images/edits/POST/requestBody/content/multipart\/form-data`.
-                case multipartForm(OpenAPIRuntime.MultipartBody<Components.Schemas.CreateImageEditRequest>)
+                case multipartForm(OpenAPIRuntime.MultipartBody<Operations.CreateImageEdit.Input.Body.MultipartFormPayload>)
             }
             public var body: Operations.CreateImageEdit.Input.Body
             /// Creates a new `Input`.

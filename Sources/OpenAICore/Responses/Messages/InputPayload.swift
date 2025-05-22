@@ -1,4 +1,4 @@
-public enum InputPayload {
+public enum InputPayload: Sendable {
   case text(String)
   case items([InputItem])
 

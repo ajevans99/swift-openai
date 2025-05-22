@@ -6002,6 +6002,11 @@ paths:
           multipart/form-data:
             schema:
               $ref: "#/components/schemas/CreateImageEditRequest"
+            encoding:
+              image:
+                contentType: image/png
+              mask:
+                contentType: image/png
       responses:
         "200":
           description: OK

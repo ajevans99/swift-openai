@@ -1,4 +1,4 @@
-public struct Usage {
+public struct Usage: Sendable {
   public let inputTokens: Int
   public let inputTokensDetails: InputTokensDetails
   public let outputTokens: Int
@@ -24,7 +24,7 @@ public struct Usage {
   }
 }
 
-public struct InputTokensDetails {
+public struct InputTokensDetails: Sendable {
   public let cachedTokens: Int
 
   public init(openAPI: Components.Schemas.ResponseUsage.InputTokensDetailsPayload) {
@@ -36,7 +36,7 @@ public struct InputTokensDetails {
   }
 }
 
-public struct OutputTokensDetails {
+public struct OutputTokensDetails: Sendable {
   public let reasoningTokens: Int
 
   public init(openAPI: Components.Schemas.ResponseUsage.OutputTokensDetailsPayload) {

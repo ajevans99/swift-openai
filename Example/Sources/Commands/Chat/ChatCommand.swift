@@ -54,7 +54,8 @@ struct ChatCommand: AsyncParsableCommand {
       print("\nAssistant: ", terminator: "")
 
       do {
-        let stream = try await session.stream(input, previousResponseID: currentResponseID)
+        let stream = try await session.stream(
+          input, additionalItems: [], previousResponseID: currentResponseID)
 
         for try await event in stream {
           switch event {

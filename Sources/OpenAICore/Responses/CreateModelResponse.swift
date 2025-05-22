@@ -1,7 +1,7 @@
 import Foundation
 import OpenAPIRuntime
 
-public struct CreateResponse {
+public struct CreateResponse: Sendable {
   public var modelProperties: CreateModelResponseProperties
   public var responseProperties: ResponseProperties
   public var inputPayload: CreateResponseInputPayload
@@ -25,7 +25,7 @@ public struct CreateResponse {
   }
 }
 
-public struct CreateModelResponseProperties {
+public struct CreateModelResponseProperties: Sendable {
   public var metadata: [String: String]?
   public var temperature: Double?
   public var topP: Double?
@@ -59,7 +59,7 @@ public struct CreateModelResponseProperties {
   }
 }
 
-public struct ResponseProperties {
+public struct ResponseProperties: Sendable {
   public var previousResponseId: String?
   public var model: Model
   public var reasoning: Reasoning?
@@ -107,7 +107,7 @@ public struct ResponseProperties {
   }
 }
 
-public struct CreateResponseInputPayload {
+public struct CreateResponseInputPayload: Sendable {
   public var input: InputPayload
   public var include: [Includable]?
   public var parallelToolCalls: Bool?
@@ -139,7 +139,7 @@ public struct CreateResponseInputPayload {
   }
 }
 
-public enum Includable {
+public enum Includable: Sendable {
   case fileSearchResults
   case messageInputImage
   case computerCallOutputImage

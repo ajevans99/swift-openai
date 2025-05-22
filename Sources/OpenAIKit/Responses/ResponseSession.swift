@@ -29,16 +29,23 @@ public actor ResponseSession {
   }
 
   @discardableResult
-  public func send(_ userText: String, previousResponseID: String? = nil) async throws -> String {
+  public func send(
+    _ userText: String,
+    additionalItems: [Item] = [],
+    previousResponseID: String? = nil
+  ) async throws -> String {
     let item = Item.inputMessage(InputMessage(role: .user, content: [.text(.init(text: userText))]))
 
-    return try await advance(newItems: [item], previousResponseID: previousResponseID)
+    return try await advance(
+      newItems: [item] + additionalItems, previousResponseID: previousResponseID)
   }
 
   @available(macOS 15.0, *)
-  public func stream(_ userText: String, previousResponseID: String? = nil) async throws
-    -> AsyncThrowingStream<StreamEvent, Error>
-  {
+  public func stream(
+    _ userText: String,
+    additionalItems: [Item] = [],
+    previousResponseID: String? = nil
+  ) async throws -> AsyncThrowingStream<StreamEvent, Error> {
     let item = Item.inputMessage(InputMessage(role: .user, content: [.text(.init(text: userText))]))
     client.logger.debug("Starting stream for user text: \(userText)")
 
@@ -46,7 +53,7 @@ public actor ResponseSession {
       Task {
         do {
           try await streamAdvance(
-            newItems: [item],
+            newItems: [item] + additionalItems,
             previousResponseID: previousResponseID,
             continuation: continuation
           )

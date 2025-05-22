@@ -1,56 +1,16 @@
-import ArgumentParser
 import Foundation
 import JSONSchema
 import JSONSchemaBuilder
 import OpenAICore
 import OpenAIKit
-import SwiftDotenv
-
-struct ImageAssistantCommand: AsyncParsableCommand {
-  static let configuration = CommandConfiguration(
-    commandName: "image",
-    abstract: "Demonstrate image assistant tool calling with swift-openai"
-  )
-
-  @Argument(help: "The prompt to send to the assistant (or pipe input via stdin)")
-  var prompt: String?
-
-  mutating func run() async throws {
-    let prompt =
-      self.prompt
-      ?? {
-        let input = FileHandle.standardInput.readDataToEndOfFile()
-        return String(data: input, encoding: .utf8)
-      }()
-
-    guard let prompt = prompt else {
-      throw ValidationError("Prompt is required")
-    }
-
-    let client = try OpenAIFactory.create()
-    let session = ResponseSession(client: client, model: .standard(.gpt4o))
-
-    await session.register(tool: ImageGenerationTool(client: client))
-    let response = try await session.send(prompt)
-    print(response)
-  }
-}
 
 struct ImageGenerationTool: Tool {
   let client: OpenAI
   let imagesDirectory: URL
 
-  init(client: OpenAI) {
+  init(client: OpenAI) throws {
     self.client = client
-    // Create images directory in the repository
-    let repoDirectory = URL(fileURLWithPath: #file)
-      .deletingLastPathComponent()  // Sources
-      .deletingLastPathComponent()  // Example
-    self.imagesDirectory = repoDirectory.appendingPathComponent(
-      "generated-images", isDirectory: true)
-
-    // Create the directory if it doesn't exist
-    try? FileManager.default.createDirectory(at: imagesDirectory, withIntermediateDirectories: true)
+    self.imagesDirectory = try ImagesDirectory.create()
   }
 
   let name = "generate_image"

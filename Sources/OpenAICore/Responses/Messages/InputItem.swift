@@ -1,4 +1,4 @@
-public enum Item {
+public enum Item: Sendable {
   case inputMessage(InputMessage)
   case outputMessage(OutputMessage)
 
@@ -59,8 +59,8 @@ public enum Item {
   }
 }
 
-public struct EasyInputMessage {
-  public enum Role {
+public struct EasyInputMessage: Sendable {
+  public enum Role: Sendable {
     case user
     case assistant
     case system
@@ -76,7 +76,7 @@ public struct EasyInputMessage {
     }
   }
 
-  public enum Content {
+  public enum Content: Sendable {
     case text(String)
     case contentList([InputContent])
 
@@ -128,7 +128,7 @@ public struct EasyInputMessage {
   }
 }
 
-public enum InputItem {
+public enum InputItem: Sendable {
   case easyInputMessage(EasyInputMessage)
   case item(Item)
   case itemReferenceParam(Components.Schemas.ItemReferenceParam)

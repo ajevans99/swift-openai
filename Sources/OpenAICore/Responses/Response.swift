@@ -1,8 +1,8 @@
 import Foundation
 import OpenAPIRuntime
 
-public struct Response {
-  public struct ResponseError: Error {
+public struct Response: Sendable {
+  public struct ResponseError: Error, Sendable {
     public let code: String
     public let message: String
 
@@ -12,8 +12,8 @@ public struct Response {
     }
   }
 
-  public struct IncompleteDetails {
-    public enum Reason: String, Codable {
+  public struct IncompleteDetails: Sendable {
+    public enum Reason: String, Codable, Sendable {
       case maxOutputTokens
       case contentFilter
     }
@@ -30,7 +30,7 @@ public struct Response {
     }
   }
 
-  public enum Status: String {
+  public enum Status: String, Sendable {
     case completed
     case failed
     case inProgress
@@ -46,7 +46,7 @@ public struct Response {
     }
   }
 
-  public enum TextFormat {
+  public enum TextFormat: Sendable {
     case text
     case jsonObject
     case jsonSchema(

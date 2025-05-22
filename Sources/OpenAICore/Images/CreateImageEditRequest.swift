@@ -1,17 +1,19 @@
 import Foundation
 import OpenAPIRuntime
 
-public struct CreateImageEditRequest {
-  public enum Model: String {
+public struct CreateImageEditRequest: Sendable {
+  public enum Model: String, Sendable {
     case dallE2 = "dall-e-2"
     case gptImage1 = "gpt-image-1"
 
-    public func toOpenAPI() -> Components.Schemas.CreateImageEditRequest.ModelPayload {
+    public func toOpenAPI()
+      -> Operations.CreateImageEdit.Input.Body.MultipartFormPayload.ModelPayload
+    {
       return .init(body: .init(rawValue))
     }
   }
 
-  public enum Size: String {
+  public enum Size: String, Sendable {
     // Dall-E 2
     case size256x256 = "256x256"
     case size512x512 = "512x512"
@@ -24,21 +26,25 @@ public struct CreateImageEditRequest {
     case size1024x1536 = "1024x1536"
     case auto = "auto"
 
-    public func toOpenAPI() -> Components.Schemas.CreateImageEditRequest.SizePayload {
+    public func toOpenAPI()
+      -> Operations.CreateImageEdit.Input.Body.MultipartFormPayload.SizePayload
+    {
       .init(body: .init(rawValue))
     }
   }
 
-  public enum ResponseFormat: String {
+  public enum ResponseFormat: String, Sendable {
     case url
     case b64Json = "b64_json"
 
-    public func toOpenAPI() -> Components.Schemas.CreateImageEditRequest.ResponseFormatPayload {
+    public func toOpenAPI()
+      -> Operations.CreateImageEdit.Input.Body.MultipartFormPayload.ResponseFormatPayload
+    {
       .init(body: .init(rawValue))
     }
   }
 
-  public enum Quality: String {
+  public enum Quality: String, Sendable {
     // Dall-E 2
     case standard
 
@@ -48,23 +54,16 @@ public struct CreateImageEditRequest {
     case high
     case auto
 
-    public func toOpenAPI() -> Components.Schemas.CreateImageEditRequest.QualityPayload {
+    public func toOpenAPI()
+      -> Operations.CreateImageEdit.Input.Body.MultipartFormPayload.QualityPayload
+    {
       .init(body: .init(rawValue))
     }
   }
 
-  public enum ImageData {
-    case single(String)  // Base64 encoded
-    case multiple([String])  // Base64 encoded
-
-    public func toOpenAPI() -> [Components.Schemas.CreateImageEditRequest.ImagePayload] {
-      switch self {
-      case .single(let image):
-        return [.init(body: .init(image))]
-      case .multiple(let images):
-        return images.map { .init(body: .init($0)) }
-      }
-    }
+  public enum ImageData: Sendable {
+    case single(File)  // Base64 encoded
+    case multiple([File])  // Base64 encoded
   }
 
   public let image: ImageData
@@ -99,10 +98,10 @@ public struct CreateImageEditRequest {
     self.quality = quality
   }
 
-  public func toOpenAPI() -> [Components.Schemas.CreateImageEditRequest] {
-    var parts: [Components.Schemas.CreateImageEditRequest] = image.toOpenAPI().map {
-      .image(.init(payload: $0))
-    }
+  public func toOpenAPI()
+    -> OpenAPIRuntime.MultipartBody<Operations.CreateImageEdit.Input.Body.MultipartFormPayload>
+  {
+    var parts: [Operations.CreateImageEdit.Input.Body.MultipartFormPayload] = []
 
     parts.append(.prompt(.init(payload: .init(body: .init(prompt)))))
 
@@ -113,45 +112,62 @@ public struct CreateImageEditRequest {
     }
 
     if let n {
-      parts.append(.n(.init(payload: .init(Data(n)))))
+      parts.append(.n(.init(payload: .init(body: .init("\(n)")))))
     }
 
     if let size = size {
-      parts.append(
-        .size(
-          .init(
-            filename: "size.txt",
-            payload: .init(body: .init(size.toOpenAPI().rawValue.data(using: .utf8)!))
-          )))
+      parts.append(.size(.init(payload: size.toOpenAPI())))
     }
 
     if let responseFormat = responseFormat {
-      parts.append(
-        .responseFormat(
-          .init(
-            filename: "response_format.txt",
-            payload: .init(body: .init(responseFormat.toOpenAPI().rawValue.data(using: .utf8)!))
-          )))
+      parts.append(.responseFormat(.init(payload: responseFormat.toOpenAPI())))
     }
 
     if let user = user {
-      parts.append(
-        .user(
-          .init(
-            filename: "user.txt",
-            payload: .init(body: .init(user.data(using: .utf8)!))
-          )))
+      parts.append(.user(.init(payload: .init(body: .init(user)))))
     }
 
     if let quality = quality {
-      parts.append(
-        .quality(
-          .init(
-            filename: "quality.txt",
-            payload: .init(body: .init(quality.toOpenAPI().rawValue.data(using: .utf8)!))
-          )))
+      parts.append(.quality(.init(payload: quality.toOpenAPI())))
     }
 
-    return parts
+    switch image {
+    case .single(let file):
+      parts.append(
+        .image(
+          .init(
+            payload: .init(body: file.toHTTPBody()),
+            filename: file.filename
+          )
+        )
+      )
+    case .multiple(let files):
+      for file in files {
+        parts.append(
+          .image(
+            .init(payload: .init(body: file.toHTTPBody()), filename: file.filename)))
+      }
+    }
+    return .init(parts)
+  }
+}
+
+public struct File: Sendable {
+  public let filename: String
+  public let content: Data
+
+  public init(filename: String, content: Data) {
+    self.filename = filename
+    self.content = content
+  }
+
+  func toHTTPBody() -> OpenAPIRuntime.HTTPBody {
+    return .init(content)
+  }
+}
+
+extension CreateImageEditRequest.ImageData: ExpressibleByArrayLiteral {
+  public init(arrayLiteral elements: File...) {
+    self = .multiple(elements)
   }
 }

@@ -1,6 +1,6 @@
 import OpenAPIRuntime
 
-public struct FunctionTool {
+public struct FunctionTool: Sendable {
   public let name: String
   public let description: String?
   public let parameters: [String: OpenAPIValueContainer]
@@ -42,8 +42,8 @@ public struct FunctionTool {
   }
 }
 
-public struct FunctionToolCall {
-  public enum Status {
+public struct FunctionToolCall: Sendable {
+  public enum Status: Sendable {
     case inProgress
     case completed
     case incomplete
@@ -109,8 +109,8 @@ public struct FunctionToolCall {
   }
 }
 
-public struct FunctionToolCallOutputItemParam {
-  public enum Status {
+public struct FunctionToolCallOutputItemParam: Sendable {
+  public enum Status: Sendable {
     case inProgress
     case completed
     case incomplete

@@ -92,7 +92,7 @@ public struct Client: APIProtocol {
                                 let body = try converter.setRequiredRequestBodyAsBinary(
                                     value.body,
                                     headerFields: &headerFields,
-                                    contentType: "application/octet-stream"
+                                    contentType: "image/png"
                                 )
                                 return .init(
                                     name: "image",
@@ -120,7 +120,7 @@ public struct Client: APIProtocol {
                                 let body = try converter.setRequiredRequestBodyAsBinary(
                                     value.body,
                                     headerFields: &headerFields,
-                                    contentType: "application/octet-stream"
+                                    contentType: "image/png"
                                 )
                                 return .init(
                                     name: "mask",

@@ -1,4 +1,4 @@
-public struct InputTextContent {
+public struct InputTextContent: Sendable {
   public let text: String
 
   public init(text: String) {
@@ -13,8 +13,8 @@ public struct InputTextContent {
   }
 }
 
-public struct InputImageContent {
-  public enum Detail {
+public struct InputImageContent: Sendable {
+  public enum Detail: Sendable {
     case low
     case high
     case auto
@@ -52,7 +52,7 @@ public struct InputImageContent {
   }
 }
 
-public struct InputFileContent {
+public struct InputFileContent: Sendable {
   public let fileId: String?
   public let filename: String?
   public let fileData: String?
@@ -77,7 +77,7 @@ public struct InputFileContent {
   }
 }
 
-public enum InputContent {
+public enum InputContent: Sendable {
   case text(InputTextContent)
   case image(InputImageContent)
   case file(InputFileContent)
@@ -123,8 +123,8 @@ public enum InputContent {
   }
 }
 
-public struct InputMessage {
-  public enum Role: String {
+public struct InputMessage: Sendable {
+  public enum Role: String, Sendable {
     case user
     case system
     case developer
@@ -138,7 +138,7 @@ public struct InputMessage {
     }
   }
 
-  public enum Status: String {
+  public enum Status: String, Sendable {
     case inProgress
     case completed
     case incomplete
@@ -164,6 +164,14 @@ public struct InputMessage {
     self.role = role
     self.status = status
     self.content = content
+  }
+
+  /// Convenience initializer for a message with text content.
+  public init(
+    role: Role,
+    text: String
+  ) {
+    self.init(role: role, content: [.text(.init(text: text))])
   }
 
   public init(_ message: Components.Schemas.InputMessage) {

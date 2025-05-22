@@ -1,4 +1,4 @@
-public enum OutputItem {
+public enum OutputItem: Sendable {
   case message(OutputMessage)
   case fileSearchToolCall(Components.Schemas.FileSearchToolCall)
   case functionToolCall(Components.Schemas.FunctionToolCall)

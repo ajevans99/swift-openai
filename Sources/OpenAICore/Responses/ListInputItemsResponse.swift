@@ -1,7 +1,7 @@
 import OpenAPIRuntime
 
-public struct ListQueryItems {
-  public enum Order: String {
+public struct ListQueryItems: Sendable {
+  public enum Order: String, Sendable {
     case asc
     case desc
 
@@ -44,7 +44,7 @@ public struct ListQueryItems {
   }
 }
 
-public struct ListInputItemsResponse {
+public struct ListInputItemsResponse: Sendable {
   public let data: [Components.Schemas.ItemResource]
   public let firstId: String
   public let hasMore: Bool

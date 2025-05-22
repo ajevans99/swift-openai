@@ -1,7 +1,7 @@
 import Foundation
 import OpenAPIRuntime
 
-public struct OutputTextContent {
+public struct OutputTextContent: Sendable {
   public let text: String
   public let annotations: [Components.Schemas.Annotation]
 
@@ -22,7 +22,7 @@ public struct OutputTextContent {
   }
 }
 
-public struct RefusalContent {
+public struct RefusalContent: Sendable {
   public let refusal: String
 
   public init(refusal: String) {
@@ -37,7 +37,7 @@ public struct RefusalContent {
   }
 }
 
-public enum OutputContent {
+public enum OutputContent: Sendable {
   case text(OutputTextContent)
   case refusal(RefusalContent)
 
@@ -65,8 +65,8 @@ public enum OutputContent {
   }
 }
 
-public struct OutputMessage {
-  public enum Status {
+public struct OutputMessage: Sendable {
+  public enum Status: Sendable {
     case inProgress
     case completed
     case incomplete

@@ -1,8 +1,8 @@
 import Foundation
 import OpenAPIRuntime
 
-public struct CreateImageRequest {
-  public enum Model {
+public struct CreateImageRequest: Sendable {
+  public enum Model: Sendable {
     case dallE2
     case dallE3
     case gptImage1
@@ -18,7 +18,7 @@ public struct CreateImageRequest {
     }
   }
 
-  public enum Quality {
+  public enum Quality: Sendable {
     // Dall-E 2/3
     case standard
 
@@ -45,7 +45,7 @@ public struct CreateImageRequest {
     }
   }
 
-  public enum ResponseFormat {
+  public enum ResponseFormat: Sendable {
     case url
     case b64Json
 
@@ -57,7 +57,7 @@ public struct CreateImageRequest {
     }
   }
 
-  public enum OutputFormat {
+  public enum OutputFormat: Sendable {
     case png
     case jpeg
     case webp
@@ -71,7 +71,7 @@ public struct CreateImageRequest {
     }
   }
 
-  public enum Size {
+  public enum Size: Sendable {
     case auto
     case size1024x1024
     case size1536x1024
@@ -95,7 +95,7 @@ public struct CreateImageRequest {
     }
   }
 
-  public enum Moderation {
+  public enum Moderation: Sendable {
     case low
     case auto
 
@@ -107,7 +107,7 @@ public struct CreateImageRequest {
     }
   }
 
-  public enum Background {
+  public enum Background: Sendable {
     case transparent
     case opaque
     case auto
@@ -121,7 +121,7 @@ public struct CreateImageRequest {
     }
   }
 
-  public enum Style {
+  public enum Style: Sendable {
     case vivid
     case natural
 
