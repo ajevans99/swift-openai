@@ -15,9 +15,25 @@ A modern Swift package for interacting with [OpenAI’s API]((https://platform.o
 
 > 💡 All layers rely on a pluggable transport layer conforming to [`ClientTransport` protocol](https://swiftpackageindex.com/apple/swift-openapi-runtime/main/documentation/openapiruntime/clienttransport). You can use [`OpenAPIAsyncHTTPClient`](https://github.com/swift-server/swift-openapi-async-http-client), [`OpenAPIURLSession`](https://github.com/apple/swift-openapi-urlsession), or bring your own.
 
-## Basic Usage
+## **`OpenAIKit`**
 
-## Tool Calling
+1. Define your tools, conforming to the `Tool` protocol.
+
+2. Register your tools
+
+3. Setup a `ResponseSession`
+
+4. Start streaming (or send async request)
+
+
+## **`OpenAICore`**
+
+## **`OpenAIFoundation`**
+
+| Endpoint | Supported? |
+| --- | --- |
+| `/responses` | [x] |
+| `/images` | [x] |
 
 ## Examples
 
