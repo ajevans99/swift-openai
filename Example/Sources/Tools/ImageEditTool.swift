@@ -4,7 +4,7 @@ import JSONSchemaBuilder
 import OpenAICore
 import OpenAIKit
 
-struct ImageEditTool: Tool {
+struct ImageEditTool: Toolable {
   private let client: OpenAI
   private let imagesDirectory: URL
 
@@ -53,18 +53,14 @@ struct ImageEditTool: Tool {
 
       client.logger.debug("Edit image response: \(response)")
 
-      var savedImages: [(id: String, url: String)] = []
+      let savedImages = try ImageUtils.saveBase64Images(
+        images: response.data.map { $0.b64Json },
+        imageId: imageId,
+        imagesDirectory: imagesDirectory
+      )
 
-      for (index, image) in response.data.enumerated() {
-        if let imageData = image.b64Json,
-          let data = Data(base64Encoded: imageData)
-        {
-          let imageId = "\(imageId)-\(index + 1)"
-          let imageURL = imagesDirectory.appendingPathComponent("\(imageId).png")
-          try data.write(to: imageURL)
-          client.logger.debug("Edited image saved to: \(imageURL.path)")
-          savedImages.append((id: imageId, url: imageURL.path))
-        }
+      for (_, path) in savedImages {
+        client.logger.debug("Edited image saved to: \(path)")
       }
 
       if !savedImages.isEmpty {

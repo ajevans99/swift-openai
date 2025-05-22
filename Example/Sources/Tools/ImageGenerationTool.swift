@@ -4,7 +4,7 @@ import JSONSchemaBuilder
 import OpenAICore
 import OpenAIKit
 
-struct ImageGenerationTool: Tool {
+struct ExampleImageGenerationTool: Toolable {
   let client: OpenAI
   let imagesDirectory: URL
 
@@ -43,18 +43,14 @@ struct ImageGenerationTool: Tool {
 
       client.logger.debug("Create image response: \(response)")
 
-      var savedImages: [(id: String, url: String)] = []
+      let savedImages = try ImageUtils.saveBase64Images(
+        images: response.data.map { $0.b64Json },
+        imageId: imageId,
+        imagesDirectory: imagesDirectory
+      )
 
-      for (index, image) in response.data.enumerated() {
-        if let imageData = image.b64Json,
-          let data = Data(base64Encoded: imageData)
-        {
-          let imageId = "\(imageId)-\(index + 1)"
-          let imageURL = imagesDirectory.appendingPathComponent("\(imageId).png")
-          try data.write(to: imageURL)
-          print("Image saved to: \(imageURL.path)")
-          savedImages.append((id: imageId, url: imageURL.path))
-        }
+      for (_, path) in savedImages {
+        print("Image saved to: \(path)")
       }
 
       if !savedImages.isEmpty {

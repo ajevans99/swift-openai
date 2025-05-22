@@ -4,7 +4,7 @@ import JSONSchemaBuilder
 import OpenAICore
 import OpenAIKit
 
-struct WeatherTool: Tool {
+struct WeatherTool: Toolable {
   let weatherService: WeatherService
 
   let name = "get_weather"

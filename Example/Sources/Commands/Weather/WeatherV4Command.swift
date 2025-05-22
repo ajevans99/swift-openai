@@ -52,6 +52,8 @@ struct WeatherV4Command: AsyncParsableCommand {
         print("[Arguments: \(arguments)]")
       case .completed:
         break
+      case .others:
+        continue
       }
     }
     print("\n----------------------------------------")

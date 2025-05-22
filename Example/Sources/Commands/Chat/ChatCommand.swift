@@ -71,6 +71,8 @@ struct ChatCommand: AsyncParsableCommand {
           case .completed(let responseID):
             print("\n[Conversation turn completed] \(responseID)")
             currentResponseID = responseID
+          case .others:
+            continue
           }
         }
       } catch {
