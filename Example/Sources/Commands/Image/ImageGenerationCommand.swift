@@ -30,8 +30,8 @@ struct ImageGenerationCommand: AsyncParsableCommand {
     let client = try OpenAIFactory.create()
     let session = ResponseSession(client: client, model: .standard(.gpt4o))
 
-    await session.register(tool: try ImageGenerationTool(client: client))
-    let response = try await session.send(prompt, additionalItems: [])  // TODO: Remove additional items here when Sendable is implemented on all models
+    await session.register(tool: try ExampleImageGenerationTool(client: client))
+    let response = try await session.send(prompt)
     print(response)
   }
 }

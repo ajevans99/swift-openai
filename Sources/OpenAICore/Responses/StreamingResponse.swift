@@ -1,3 +1,6 @@
+import Foundation
+import OpenAPIRuntime
+
 public enum StreamingResponse: Sendable {
   public enum OutputItem: Sendable {
     case added(item: OpenAICore.OutputItem, outputIndex: Int)
@@ -10,12 +13,14 @@ public enum StreamingResponse: Sendable {
       }
     }
 
-    public init(openAPI: Components.Schemas.ResponseOutputItemAddedEvent) {
-      self = .added(item: OpenAICore.OutputItem(openAPI.item)!, outputIndex: openAPI.outputIndex)
+    public init?(openAPI: Components.Schemas.ResponseOutputItemAddedEvent) {
+      guard let item = OpenAICore.OutputItem(openAPI.item) else { return nil }
+      self = .added(item: item, outputIndex: openAPI.outputIndex)
     }
 
-    public init(openAPI: Components.Schemas.ResponseOutputItemDoneEvent) {
-      self = .done(item: OpenAICore.OutputItem(openAPI.item)!, outputIndex: openAPI.outputIndex)
+    public init?(openAPI: Components.Schemas.ResponseOutputItemDoneEvent) {
+      guard let item = OpenAICore.OutputItem(openAPI.item) else { return nil }
+      self = .done(item: item, outputIndex: openAPI.outputIndex)
     }
   }
 
@@ -277,6 +282,50 @@ public enum StreamingResponse: Sendable {
     }
   }
 
+  public enum ReasoningSummary: Sendable {
+    case delta(
+      delta: OpenAPIRuntime.OpenAPIObjectContainer,
+      summaryIndex: Int,
+      itemId: String,
+      outputIndex: Int,
+      sequenceNumber: Int
+    )
+    case done(
+      text: String,
+      summaryIndex: Int,
+      itemId: String,
+      outputIndex: Int,
+      sequenceNumber: Int
+    )
+
+    public var value: String {
+      switch self {
+      case .delta: "delta"
+      case .done: "done"
+      }
+    }
+
+    public init(openAPI: Components.Schemas.ResponseReasoningSummaryDeltaEvent) {
+      self = .delta(
+        delta: openAPI.delta,
+        summaryIndex: openAPI.summaryIndex,
+        itemId: openAPI.itemId,
+        outputIndex: openAPI.outputIndex,
+        sequenceNumber: openAPI.sequenceNumber
+      )
+    }
+
+    public init(openAPI: Components.Schemas.ResponseReasoningSummaryDoneEvent) {
+      self = .done(
+        text: openAPI.text,
+        summaryIndex: openAPI.summaryIndex,
+        itemId: openAPI.itemId,
+        outputIndex: openAPI.outputIndex,
+        sequenceNumber: openAPI.sequenceNumber
+      )
+    }
+  }
+
   public enum Audio: Sendable {
     case delta(delta: String)
     case done
@@ -306,6 +355,7 @@ public enum StreamingResponse: Sendable {
       case .delta: "delta"
       case .done: "done"
       }
+
     }
 
     public init(openAPI: Components.Schemas.ResponseAudioTranscriptDeltaEvent) {
@@ -373,6 +423,204 @@ public enum StreamingResponse: Sendable {
     }
   }
 
+  public enum ImageGenCall: Sendable {
+    case completed(itemId: String, outputIndex: Int)
+    case generating(itemId: String, outputIndex: Int, sequenceNumber: Int)
+    case inProgress(itemId: String, outputIndex: Int, sequenceNumber: Int)
+    case partialImage(
+      itemId: String, outputIndex: Int, partialImageBase64: String, partialImageIndex: Int,
+      sequenceNumber: Int
+    )
+
+    public var value: String {
+      switch self {
+      case .completed: "completed"
+      case .generating: "generating"
+      case .inProgress: "in_progress"
+      case .partialImage: "partial_image"
+      }
+    }
+
+    public init(openAPI: Components.Schemas.ResponseImageGenCallCompletedEvent) {
+      self = .completed(itemId: openAPI.itemId, outputIndex: openAPI.outputIndex)
+    }
+
+    public init(openAPI: Components.Schemas.ResponseImageGenCallGeneratingEvent) {
+      self = .generating(
+        itemId: openAPI.itemId,
+        outputIndex: openAPI.outputIndex,
+        sequenceNumber: openAPI.sequenceNumber
+      )
+    }
+
+    public init(openAPI: Components.Schemas.ResponseImageGenCallInProgressEvent) {
+      self = .inProgress(
+        itemId: openAPI.itemId,
+        outputIndex: openAPI.outputIndex,
+        sequenceNumber: openAPI.sequenceNumber
+      )
+    }
+
+    public init(openAPI: Components.Schemas.ResponseImageGenCallPartialImageEvent) {
+      self = .partialImage(
+        itemId: openAPI.itemId,
+        outputIndex: openAPI.outputIndex,
+        partialImageBase64: openAPI.partialImageB64,
+        partialImageIndex: openAPI.partialImageIndex,
+        sequenceNumber: openAPI.sequenceNumber
+      )
+    }
+  }
+
+  public enum MCPCall: Sendable {
+    case argumentsDelta(
+      delta: OpenAPIRuntime.OpenAPIObjectContainer, itemId: String, outputIndex: Int)
+    case argumentsDone(
+      arguments: OpenAPIRuntime.OpenAPIObjectContainer, itemId: String, outputIndex: Int)
+    case completed(sequenceNumber: Int)
+    case failed(sequenceNumber: Int)
+    case inProgress(itemId: String, outputIndex: Int, sequenceNumber: Int)
+
+    public var value: String {
+      switch self {
+      case .argumentsDelta: "arguments_delta"
+      case .argumentsDone: "arguments_done"
+      case .completed: "completed"
+      case .failed: "failed"
+      case .inProgress: "in_progress"
+      }
+    }
+
+    public init(openAPI: Components.Schemas.ResponseMCPCallArgumentsDeltaEvent) {
+      self = .argumentsDelta(
+        delta: openAPI.delta,
+        itemId: openAPI.itemId,
+        outputIndex: openAPI.outputIndex
+      )
+    }
+
+    public init(openAPI: Components.Schemas.ResponseMCPCallArgumentsDoneEvent) {
+      self = .argumentsDone(
+        arguments: openAPI.arguments,
+        itemId: openAPI.itemId,
+        outputIndex: openAPI.outputIndex
+      )
+    }
+
+    public init(openAPI: Components.Schemas.ResponseMCPCallCompletedEvent) {
+      self = .completed(sequenceNumber: openAPI.sequenceNumber)
+    }
+
+    public init(openAPI: Components.Schemas.ResponseMCPCallFailedEvent) {
+      self = .failed(sequenceNumber: openAPI.sequenceNumber)
+    }
+
+    public init(openAPI: Components.Schemas.ResponseMCPCallInProgressEvent) {
+      self = .inProgress(
+        itemId: openAPI.itemId,
+        outputIndex: openAPI.outputIndex,
+        sequenceNumber: openAPI.sequenceNumber
+      )
+    }
+  }
+
+  public enum MCPListTools: Sendable {
+    case completed(sequenceNumber: Int)
+    case failed(sequenceNumber: Int)
+    case inProgress(sequenceNumber: Int)
+
+    public var value: String {
+      switch self {
+      case .completed: "completed"
+      case .failed: "failed"
+      case .inProgress: "in_progress"
+      }
+    }
+
+    public init(openAPI: Components.Schemas.ResponseMCPListToolsCompletedEvent) {
+      self = .completed(sequenceNumber: openAPI.sequenceNumber)
+    }
+
+    public init(openAPI: Components.Schemas.ResponseMCPListToolsFailedEvent) {
+      self = .failed(sequenceNumber: openAPI.sequenceNumber)
+    }
+
+    public init(openAPI: Components.Schemas.ResponseMCPListToolsInProgressEvent) {
+      self = .inProgress(sequenceNumber: openAPI.sequenceNumber)
+    }
+  }
+
+  public enum Reasoning: Sendable {
+    case delta(
+      delta: OpenAPIRuntime.OpenAPIObjectContainer, itemId: String, outputIndex: Int,
+      contentIndex: Int, sequenceNumber: Int)
+    case done(text: String, itemId: String, outputIndex: Int)
+
+    public var value: String {
+      switch self {
+      case .delta: "delta"
+      case .done: "done"
+      }
+    }
+
+    public init(openAPI: Components.Schemas.ResponseReasoningDeltaEvent) {
+      self = .delta(
+        delta: openAPI.delta,
+        itemId: openAPI.itemId,
+        outputIndex: openAPI.outputIndex,
+        contentIndex: openAPI.contentIndex,
+        sequenceNumber: openAPI.sequenceNumber
+      )
+    }
+
+    public init(openAPI: Components.Schemas.ResponseReasoningDoneEvent) {
+      self = .done(text: openAPI.text, itemId: openAPI.itemId, outputIndex: openAPI.outputIndex)
+    }
+  }
+
+  public enum Queued: Sendable {
+    case queued(response: Response, sequenceNumber: Int)
+
+    public var value: String {
+      switch self {
+      case .queued: "queued"
+      }
+    }
+
+    public init(openAPI: Components.Schemas.ResponseQueuedEvent) {
+      self = .queued(
+        response: Response(openAPI: openAPI.response), sequenceNumber: openAPI.sequenceNumber)
+    }
+  }
+
+  public enum OutputTextAnnotation: Sendable {
+    case added(
+      annotation: OpenAPIRuntime.OpenAPIObjectContainer,
+      annotationIndex: Int,
+      contentIndex: Int,
+      itemId: String,
+      outputIndex: Int,
+      sequenceNumber: Int
+    )
+
+    public var value: String {
+      switch self {
+      case .added: "added"
+      }
+    }
+
+    public init(openAPI: Components.Schemas.ResponseOutputTextAnnotationAddedEvent) {
+      self = .added(
+        annotation: openAPI.annotation,
+        annotationIndex: openAPI.annotationIndex,
+        contentIndex: openAPI.contentIndex,
+        itemId: openAPI.itemId,
+        outputIndex: openAPI.outputIndex,
+        sequenceNumber: openAPI.sequenceNumber
+      )
+    }
+  }
+
   case created(Response)
   case inProgress(Response)
   case completed(Response)
@@ -385,12 +633,19 @@ public enum StreamingResponse: Sendable {
   case functionCallArgument(FunctionCallArguments)
   case fileSearchCall(FileSearchCall)
   case webSearchCall(WebSearchCall)
+  case reasoningSummary(ReasoningSummary)
   case reasoningSummaryPart(ReasoningSummaryPart)
   case reasoningSummaryText(ReasoningSummaryText)
   case error(message: String, code: String?, param: String?)
   case audio(Audio)
   case audioTranscript(AudioTranscript)
   case codeInterpreterCall(CodeInterpreterCall)
+  case imageGenCall(ImageGenCall)
+  case mcpCall(MCPCall)
+  case mcpListTools(MCPListTools)
+  case reasoning(Reasoning)
+  case queued(Queued)
+  case outputTextAnnotation(OutputTextAnnotation)
 
   public var value: String {
     switch self {
@@ -406,12 +661,20 @@ public enum StreamingResponse: Sendable {
     case .functionCallArgument(let argument): "response.function_call_argument.\(argument.value)"
     case .fileSearchCall(let call): "response.file_search_call.\(call.value)"
     case .webSearchCall(let call): "response.web_search_call.\(call.value)"
+    case .reasoningSummary(let summary): "response.reasoning_summary.\(summary.value)"
     case .reasoningSummaryPart(let summary): "response.reasoning_summary_part.\(summary.value)"
     case .reasoningSummaryText(let text): "response.reasoning_summary_text.\(text.value)"
     case .error: "error"
     case .audio(let audio): "response.audio.\(audio.value)"
     case .audioTranscript(let transcript): "response.audio_transcript.\(transcript.value)"
     case .codeInterpreterCall(let call): "response.code_interpreter_call.\(call.value)"
+    case .imageGenCall(let call): "response.image_gen_call.\(call.value)"
+    case .mcpCall(let call): "response.mcp_call.\(call.value)"
+    case .mcpListTools(let tools): "response.mcp_list_tools.\(tools.value)"
+    case .reasoning(let reasoning): "response.reasoning.\(reasoning.value)"
+    case .queued(let queued): "response.queued.\(queued.value)"
+    case .outputTextAnnotation(let annotation):
+      "response.output_text_annotation.\(annotation.value)"
     }
   }
 
@@ -445,9 +708,17 @@ public enum StreamingResponse: Sendable {
     } else if let event = openAPI.value22 {
       self = .incomplete(Response(openAPI: event.response))
     } else if let event = openAPI.value23 {
-      self = .outputItem(OutputItem(openAPI: event))
+      guard let item = OutputItem(openAPI: event) else {
+        print("Failed to parse OutputItem: \(event)")
+        return nil
+      }
+      self = .outputItem(item)
     } else if let event = openAPI.value24 {
-      self = .outputItem(OutputItem(openAPI: event))
+      guard let item = OutputItem(openAPI: event) else {
+        print("Failed to parse OutputItem: \(event)")
+        return nil
+      }
+      self = .outputItem(item)
     } else if let event = openAPI.value11 {
       self = .contentPart(ContentPart(openAPI: event))
     } else if let event = openAPI.value12 {
@@ -488,6 +759,42 @@ public enum StreamingResponse: Sendable {
       self = .reasoningSummaryText(ReasoningSummaryText(openAPI: event))
     } else if let event = openAPI.value14 {
       self = .error(message: event.message, code: event.code, param: event.param)
+    } else if let event = openAPI.value37 {
+      self = .imageGenCall(ImageGenCall(openAPI: event))
+    } else if let event = openAPI.value38 {
+      self = .imageGenCall(ImageGenCall(openAPI: event))
+    } else if let event = openAPI.value39 {
+      self = .imageGenCall(ImageGenCall(openAPI: event))
+    } else if let event = openAPI.value40 {
+      self = .imageGenCall(ImageGenCall(openAPI: event))
+    } else if let event = openAPI.value41 {
+      self = .mcpCall(MCPCall(openAPI: event))
+    } else if let event = openAPI.value42 {
+      self = .mcpCall(MCPCall(openAPI: event))
+    } else if let event = openAPI.value43 {
+      self = .mcpCall(MCPCall(openAPI: event))
+    } else if let event = openAPI.value44 {
+      self = .mcpCall(MCPCall(openAPI: event))
+    } else if let event = openAPI.value45 {
+      self = .mcpCall(MCPCall(openAPI: event))
+    } else if let event = openAPI.value46 {
+      self = .mcpListTools(MCPListTools(openAPI: event))
+    } else if let event = openAPI.value47 {
+      self = .mcpListTools(MCPListTools(openAPI: event))
+    } else if let event = openAPI.value48 {
+      self = .mcpListTools(MCPListTools(openAPI: event))
+    } else if let event = openAPI.value49 {
+      self = .outputTextAnnotation(OutputTextAnnotation(openAPI: event))
+    } else if let event = openAPI.value50 {
+      self = .queued(Queued(openAPI: event))
+    } else if let event = openAPI.value51 {
+      self = .reasoning(Reasoning(openAPI: event))
+    } else if let event = openAPI.value52 {
+      self = .reasoning(Reasoning(openAPI: event))
+    } else if let event = openAPI.value53 {
+      self = .reasoningSummary(ReasoningSummary(openAPI: event))
+    } else if let event = openAPI.value54 {
+      self = .reasoningSummary(ReasoningSummary(openAPI: event))
     } else {
       return nil
     }

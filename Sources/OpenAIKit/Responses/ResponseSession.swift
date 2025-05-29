@@ -8,13 +8,20 @@ public actor ResponseSession {
     case output(String, isFinal: Bool)
     case toolCalled(name: String, arguments: String)
     case completed(responseID: String)
+
+    case others(StreamingResponse)
   }
 
   private let client: OpenAI
   private let model: Model
   private let errorPolicy: ToolErrorPolicy
 
-  private var tools: [String: any Tool] = [:]
+  private var functionTools: [String: any Toolable] = [:]
+  private var openAITools: [OpenAICore.Tool] = []
+
+  var allTools: [OpenAICore.Tool] {
+    functionTools.values.map { $0.toTool() } + openAITools
+  }
 
   public init(
     client: OpenAI, model: Model, errorPolicy: ToolErrorPolicy = .failFast
@@ -24,8 +31,12 @@ public actor ResponseSession {
     self.errorPolicy = errorPolicy
   }
 
-  public func register(tool: any Tool) {
-    tools[tool.name] = tool
+  public func register(tool: any Toolable) {
+    functionTools[tool.name] = tool
+  }
+
+  public func register(openAITool: OpenAICore.Tool) {
+    openAITools.append(openAITool)
   }
 
   @discardableResult
@@ -70,7 +81,8 @@ public actor ResponseSession {
       input: .items(newItems.map { .item($0) }),
       model: model,
       previousResponseId: previousResponseID,
-      tools: Array(tools.values).map { $0.toTool() }
+      tools: previousResponseID == nil ? allTools : []
+      // Don't need to re-register tools if we're continuing a previous response
     )
 
     var generatedText = ""
@@ -90,7 +102,7 @@ public actor ResponseSession {
           }
         case .functionToolCall(let toolCall):
           client.logger.debug("Tool call: \(toolCall.name)")
-          guard let tool = tools[toolCall.name] else {
+          guard let tool = functionTools[toolCall.name] else {
             client.logger.error("Unknown tool")
             throw ResponseSessionError.unknownTool(named: toolCall.name)
           }
@@ -101,7 +113,9 @@ public actor ResponseSession {
               .init(callId: toolCall.callId, output: result)
             )
           }
-        case .computerToolCall, .fileSearchToolCall, .reasoning, .webSearchToolCall:
+        case .computerToolCall, .fileSearchToolCall, .reasoning, .webSearchToolCall,
+          .imageGenToolCall, .codeInterpreterToolCall, .localShellToolCall, .mcpToolCall,
+          .mcpListTools, .mcpApprovalRequest:
           break
         }
       }
@@ -131,12 +145,14 @@ public actor ResponseSession {
       input: .items(newItems.map { .item($0) }),
       model: model,
       previousResponseId: previousResponseID,
-      tools: Array(tools.values).map { $0.toTool() }
+      tools: previousResponseID == nil ? allTools : []  // Don't need to re-register tools if we're continuing a previous response
     )
     var newItems: [Item] = []
     var responseID: String?
 
     for try await event in stream {
+      continuation.yield(.others(event))
+
       switch event {
       case .outputText(let text):
         switch text {
@@ -158,7 +174,7 @@ public actor ResponseSession {
             client.logger.debug("Received complete function tool call for: \(toolCall.name)")
             continuation.yield(.toolCalled(name: toolCall.name, arguments: toolCall.arguments))
 
-            guard let tool = tools[toolCall.name] else {
+            guard let tool = functionTools[toolCall.name] else {
               throw ResponseSessionError.unknownTool(named: toolCall.name)
             }
 
@@ -191,7 +207,6 @@ public actor ResponseSession {
 
       default:
         client.logger.debug("Received event: \(event.value)")
-        continue
       }
     }
 

@@ -3,7 +3,7 @@ import JSONSchemaBuilder
 import OpenAICore
 import OpenAPIRuntime
 
-public protocol Tool {
+public protocol Toolable {
   associatedtype Component: JSONSchemaComponent
 
   var name: String { get }
@@ -20,7 +20,7 @@ public enum CallError: Error {
   case invalidParameters(issues: [ParseIssue])
 }
 
-extension Tool {
+extension Toolable {
   func call(arguments: String) async throws -> String {
     let parameters = try parameters.parse(instance: arguments)
     switch parameters {
@@ -32,7 +32,7 @@ extension Tool {
   }
 }
 
-extension Tool {
+extension Toolable {
   public func toFunctionTool() -> FunctionTool {
     guard case .object(let parameters) = parameters.schemaValue else {
       fatalError("Boolean schemas are not supported at root level for tools")
@@ -48,7 +48,7 @@ extension Tool {
     )
   }
 
-  public func toTool() -> Components.Schemas.Tool {
-    .function(toFunctionTool().toOpenAPI())
+  public func toTool() -> OpenAICore.Tool {
+    .function(toFunctionTool())
   }
 }

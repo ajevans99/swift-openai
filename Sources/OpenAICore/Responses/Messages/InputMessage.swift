@@ -83,15 +83,14 @@ public enum InputContent: Sendable {
   case file(InputFileContent)
 
   public init(_ content: Components.Schemas.InputContent) {
-    switch content {
-    case .InputTextContent(let textContent):
+    if let textContent = content.value1 {
       self = .text(InputTextContent(text: textContent.text))
-    case .InputImageContent(let imageContent):
+    } else if let imageContent = content.value2 {
       let detail: InputImageContent.Detail
       switch imageContent.detail {
+      case .auto: detail = .auto
       case .low: detail = .low
       case .high: detail = .high
-      case .auto: detail = .auto
       }
       self = .image(
         InputImageContent(
@@ -100,7 +99,7 @@ public enum InputContent: Sendable {
           detail: detail
         )
       )
-    case .InputFileContent(let fileContent):
+    } else if let fileContent = content.value3 {
       self = .file(
         InputFileContent(
           fileId: fileContent.fileId?.value1,
@@ -108,18 +107,22 @@ public enum InputContent: Sendable {
           fileData: fileContent.fileData
         )
       )
+    } else {
+      fatalError("No content found in InputContent")
     }
   }
 
   public func toOpenAPI() -> Components.Schemas.InputContent {
+    var content = Components.Schemas.InputContent()
     switch self {
     case .text(let textContent):
-      return .InputTextContent(textContent.toOpenAPI())
+      content.value1 = textContent.toOpenAPI()
     case .image(let imageContent):
-      return .InputImageContent(imageContent.toOpenAPI())
+      content.value2 = imageContent.toOpenAPI()
     case .file(let fileContent):
-      return .InputFileContent(fileContent.toOpenAPI())
+      content.value3 = fileContent.toOpenAPI()
     }
+    return content
   }
 }
 

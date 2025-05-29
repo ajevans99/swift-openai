@@ -28,7 +28,7 @@ extension OpenAI {
     temperature: Double? = nil,
     text: Components.Schemas.ResponseProperties.TextPayload? = nil,
     toolChoice: Components.Schemas.ResponseProperties.ToolChoicePayload? = nil,
-    tools: [Components.Schemas.Tool]? = nil,
+    tools: [Tool]? = nil,
     topP: Double? = nil,
     truncation: Truncation? = nil,
     user: String? = nil
@@ -48,7 +48,7 @@ extension OpenAI {
         maxOutputTokens: maxOutputTokens,
         instructions: instructions,
         text: text,
-        tools: tools,
+        tools: tools?.map { $0.toOpenAPI() },
         toolChoice: toolChoice,
         truncation: truncation
       ),
@@ -101,7 +101,7 @@ extension OpenAI {
     temperature: Double? = nil,
     text: Components.Schemas.ResponseProperties.TextPayload? = nil,
     toolChoice: Components.Schemas.ResponseProperties.ToolChoicePayload? = nil,
-    tools: [Components.Schemas.Tool]? = nil,
+    tools: [Tool]? = nil,
     topP: Double? = nil,
     truncation: Truncation? = nil,
     user: String? = nil
@@ -121,7 +121,7 @@ extension OpenAI {
         maxOutputTokens: maxOutputTokens,
         instructions: instructions,
         text: text,
-        tools: tools,
+        tools: tools?.map { $0.toOpenAPI() },
         toolChoice: toolChoice,
         truncation: truncation
       ),

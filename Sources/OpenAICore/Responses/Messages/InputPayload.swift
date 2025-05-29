@@ -3,12 +3,14 @@ public enum InputPayload: Sendable {
   case items([InputItem])
 
   public func toOpenAPI() -> Components.Schemas.CreateResponse.Value3Payload.InputPayload {
+    var payload = Components.Schemas.CreateResponse.Value3Payload.InputPayload()
     switch self {
     case .text(let string):
-      return .case1(string)
+      payload.value1 = string
     case .items(let items):
-      return .case2(items.map { $0.toOpenAPI() })
+      payload.value2 = items.map { $0.toOpenAPI() }
     }
+    return payload
   }
 }
 

@@ -77,7 +77,9 @@ struct WeatherCommand: AsyncParsableCommand {
             )
           )
         }
-      case .webSearchToolCall, .fileSearchToolCall, .computerToolCall, .reasoning:
+      case .webSearchToolCall, .fileSearchToolCall, .computerToolCall, .reasoning,
+        .imageGenToolCall, .codeInterpreterToolCall, .localShellToolCall, .mcpToolCall,
+        .mcpListTools, .mcpApprovalRequest:
         throw ValidationError("Unexpected output item: \(output)")
       }
     }

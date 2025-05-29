@@ -1,0 +1,108 @@
+---
+description: Wrapping Swift types from generated OpenAPI types in `Types.swift`
+globs:
+alwaysApply: false
+---
+# OpenAPI Type Wrapper Guidelines
+
+When creating Swift-friendly wrappers for OpenAPI types, follow these patterns:
+
+## 1. Enum Wrappers
+
+For string-based enums in the OpenAPI spec:
+
+```swift
+public enum MyEnum: String, Sendable {
+  case value1 = "value_1"  // Use raw value if different from Swift case
+  case value2              // No raw value needed if matches Swift case
+}
+```
+
+## 2. Struct Wrappers
+
+For complex types, create a struct with:
+
+- Swift-friendly enums for string-based options
+- Nested types for complex sub-objects
+- Optional properties with sensible defaults
+- Two initializers:
+  - A Swift-friendly initializer with optional parameters
+  - An OpenAPI initializer that maps from the generated type
+
+Example:
+```swift
+public struct MyType: Sendable {
+  public enum Option: String, Sendable {
+    case option1
+    case option2
+  }
+
+  public struct SubType: Sendable {
+    public let field1: String
+    public let field2: Int?
+
+    public init(field1: String, field2: Int? = nil) {
+      self.field1 = field1
+      self.field2 = field2
+    }
+
+    public func toOpenAPI() -> Components.Schemas.SubType {
+      Components.Schemas.SubType(
+        field1: field1,
+        field2: field2
+      )
+    }
+  }
+
+  public let option: Option?
+  public let subType: SubType?
+
+  public init(
+    option: Option? = nil,
+    subType: SubType? = nil
+  ) {
+    self.option = option
+    self.subType = subType
+  }
+
+  public init(_ openAPI: Components.Schemas.MyType) {
+    self.option = openAPI.option.map { Option(rawValue: $0.rawValue)! }
+    self.subType = openAPI.subType.map { SubType($0) }
+  }
+
+  public func toOpenAPI() -> Components.Schemas.MyType {
+    Components.Schemas.MyType(
+      option: option.map { Components.Schemas.MyType.OptionPayload(rawValue: $0.rawValue)! },
+      subType: subType?.toOpenAPI()
+    )
+  }
+}
+```
+
+## 3. Best Practices
+
+- Use `Sendable` conformance for all types
+- Make properties `let` unless they need to be mutable
+- Use optional chaining and nil-coalescing for safe unwrapping
+- Provide default values in the Swift-friendly initializer
+- Use `map` for optional transformations
+- Include `fatalError` in OpenAPI initializers for required fields
+- Keep the wrapper API as close to Swift idioms as possible
+- Document any non-obvious mappings or transformations
+
+## 4. Common Patterns
+
+- For string enums: `rawValue` mapping
+- For optional fields: `map` transformation
+- For nested types: separate struct with its own `toOpenAPI()`
+- For arrays: `map` transformation of elements
+- For dictionaries: direct property access
+
+## 5. Example Implementation
+
+See `Responses.swift` for a complete example of:
+- Multiple enum wrappers
+- Nested type handling
+- Optional field management
+- OpenAPI type conversion
+- Swift-friendly API design

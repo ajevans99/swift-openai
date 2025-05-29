@@ -35,6 +35,8 @@ public struct Response: Sendable {
     case failed
     case inProgress
     case incomplete
+    case queued
+    case cancelled
 
     public init(openAPI: Components.Schemas.Response.Value3Payload.StatusPayload) {
       switch openAPI {
@@ -42,6 +44,8 @@ public struct Response: Sendable {
       case .failed: self = .failed
       case .inProgress: self = .inProgress
       case .incomplete: self = .incomplete
+      case .queued: self = .queued
+      case .cancelled: self = .cancelled
       }
     }
   }
@@ -57,16 +61,19 @@ public struct Response: Sendable {
     )
 
     public init(openAPI: Components.Schemas.TextResponseFormatConfiguration) {
-      switch openAPI {
-      case .ResponseFormatText: self = .text
-      case .ResponseFormatJsonObject: self = .jsonObject
-      case .TextResponseFormatJsonSchema(let textResponse):
+      if openAPI.value1 != nil {
+        self = .text
+      } else if openAPI.value3 != nil {
+        self = .jsonObject
+      } else if let jsonSchema = openAPI.value2 {
         self = .jsonSchema(
-          name: textResponse.name,
-          description: textResponse.description,
-          schema: textResponse.schema.additionalProperties,
-          strict: textResponse.strict
+          name: jsonSchema.name,
+          description: jsonSchema.description,
+          schema: jsonSchema.schema.additionalProperties,
+          strict: jsonSchema.strict
         )
+      } else {
+        fatalError("No value found in TextResponseFormatConfiguration")
       }
     }
   }

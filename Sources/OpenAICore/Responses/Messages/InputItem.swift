@@ -1,61 +1,101 @@
 public enum Item: Sendable {
   case inputMessage(InputMessage)
   case outputMessage(OutputMessage)
-
   case functionToolCall(FunctionToolCall)
   case functionCallOutputItemParam(FunctionToolCallOutputItemParam)
-
   case fileSearchToolCall(Components.Schemas.FileSearchToolCall)
   case computerToolCall(Components.Schemas.ComputerToolCall)
   case computerCallOutputItemParam(Components.Schemas.ComputerCallOutputItemParam)
   case webSearchToolCall(Components.Schemas.WebSearchToolCall)
   case reasoningItem(Components.Schemas.ReasoningItem)
+  case imageGenToolCall(Components.Schemas.ImageGenToolCall)
+  case codeInterpreterToolCall(Components.Schemas.CodeInterpreterToolCall)
+  case localShellToolCall(Components.Schemas.LocalShellToolCall)
+  case localShellToolCallOutput(Components.Schemas.LocalShellToolCallOutput)
+  case mcpListTools(Components.Schemas.MCPListTools)
+  case mcpApprovalRequest(Components.Schemas.MCPApprovalRequest)
+  case mcpApprovalResponse(Components.Schemas.MCPApprovalResponse)
+  case mcpToolCall(Components.Schemas.MCPToolCall)
 
   public init(_ item: Components.Schemas.Item) {
-    switch item {
-    case .inputMessage(let inputMessage):
-      self = .inputMessage(InputMessage(inputMessage))
-    case .outputMessage(let outputMessage):
-      self = .outputMessage(OutputMessage(outputMessage))
-    case .fileSearchToolCall(let fileSearchToolCall):
-      self = .fileSearchToolCall(fileSearchToolCall)
-    case .computerToolCall(let computerToolCall):
-      self = .computerToolCall(computerToolCall)
-    case .computerCallOutputItemParam(let computerCallOutputItemParam):
-      self = .computerCallOutputItemParam(computerCallOutputItemParam)
-    case .webSearchToolCall(let webSearchToolCall):
-      self = .webSearchToolCall(webSearchToolCall)
-    case .functionToolCall(let functionToolCall):
-      self = .functionToolCall(FunctionToolCall(functionToolCall))
-    case .functionCallOutputItemParam(let functionCallOutputItemParam):
-      self = .functionCallOutputItemParam(
-        FunctionToolCallOutputItemParam(functionCallOutputItemParam))
-    case .reasoningItem(let reasoningItem):
-      self = .reasoningItem(reasoningItem)
+    if let value = item.value1 {
+      self = .inputMessage(InputMessage(value))
+    } else if let value = item.value2 {
+      self = .outputMessage(OutputMessage(value))
+    } else if let value = item.value3 {
+      self = .fileSearchToolCall(value)
+    } else if let value = item.value4 {
+      self = .computerToolCall(value)
+    } else if let value = item.value5 {
+      self = .computerCallOutputItemParam(value)
+    } else if let value = item.value6 {
+      self = .webSearchToolCall(value)
+    } else if let value = item.value7 {
+      self = .functionToolCall(FunctionToolCall(value))
+    } else if let value = item.value8 {
+      self = .functionCallOutputItemParam(FunctionToolCallOutputItemParam(value))
+    } else if let value = item.value9 {
+      self = .reasoningItem(value)
+    } else if let value = item.value10 {
+      self = .imageGenToolCall(value)
+    } else if let value = item.value11 {
+      self = .codeInterpreterToolCall(value)
+    } else if let value = item.value12 {
+      self = .localShellToolCall(value)
+    } else if let value = item.value13 {
+      self = .localShellToolCallOutput(value)
+    } else if let value = item.value14 {
+      self = .mcpListTools(value)
+    } else if let value = item.value15 {
+      self = .mcpApprovalRequest(value)
+    } else if let value = item.value16 {
+      self = .mcpApprovalResponse(value)
+    } else if let value = item.value17 {
+      self = .mcpToolCall(value)
+    } else {
+      fatalError("No value found in Item")
     }
   }
 
   public func toOpenAPI() -> Components.Schemas.Item {
+    var item = Components.Schemas.Item()
     switch self {
-    case .inputMessage(let inputMessage):
-      return .inputMessage(inputMessage.toOpenAPI())
-    case .outputMessage(let outputMessage):
-      return .outputMessage(outputMessage.toOpenAPI())
-    case .fileSearchToolCall(let fileSearchToolCall):
-      return .fileSearchToolCall(fileSearchToolCall)
-    case .computerToolCall(let computerToolCall):
-      return .computerToolCall(computerToolCall)
-    case .computerCallOutputItemParam(let computerCallOutputItemParam):
-      return .computerCallOutputItemParam(computerCallOutputItemParam)
-    case .webSearchToolCall(let webSearchToolCall):
-      return .webSearchToolCall(webSearchToolCall)
-    case .functionToolCall(let functionToolCall):
-      return .functionToolCall(functionToolCall.toOpenAPI())
-    case .functionCallOutputItemParam(let functionCallOutputItemParam):
-      return .functionCallOutputItemParam(functionCallOutputItemParam.toOpenAPI())
-    case .reasoningItem(let reasoningItem):
-      return .reasoningItem(reasoningItem)
+    case .inputMessage(let value):
+      item.value1 = value.toOpenAPI()
+    case .outputMessage(let value):
+      item.value2 = value.toOpenAPI()
+    case .fileSearchToolCall(let value):
+      item.value3 = value
+    case .computerToolCall(let value):
+      item.value4 = value
+    case .computerCallOutputItemParam(let value):
+      item.value5 = value
+    case .webSearchToolCall(let value):
+      item.value6 = value
+    case .functionToolCall(let value):
+      item.value7 = value.toOpenAPI()
+    case .functionCallOutputItemParam(let value):
+      item.value8 = value.toOpenAPI()
+    case .reasoningItem(let value):
+      item.value9 = value
+    case .imageGenToolCall(let value):
+      item.value10 = value
+    case .codeInterpreterToolCall(let value):
+      item.value11 = value
+    case .localShellToolCall(let value):
+      item.value12 = value
+    case .localShellToolCallOutput(let value):
+      item.value13 = value
+    case .mcpListTools(let value):
+      item.value14 = value
+    case .mcpApprovalRequest(let value):
+      item.value15 = value
+    case .mcpApprovalResponse(let value):
+      item.value16 = value
+    case .mcpToolCall(let value):
+      item.value17 = value
     }
+    return item
   }
 }
 
@@ -83,9 +123,10 @@ public struct EasyInputMessage: Sendable {
     public func toOpenAPI() -> Components.Schemas.EasyInputMessage.ContentPayload {
       switch self {
       case .text(let text):
-        return .case1(text)
+        return Components.Schemas.EasyInputMessage.ContentPayload(value1: text)
       case .contentList(let content):
-        return .InputMessageContentList(content.map { $0.toOpenAPI() })
+        return Components.Schemas.EasyInputMessage.ContentPayload(
+          value2: content.map { $0.toOpenAPI() })
       }
     }
   }
@@ -111,11 +152,12 @@ public struct EasyInputMessage: Sendable {
       }
 
     self.content =
-      switch message.content {
-      case .case1(let text):
+      if let text = message.content.value1 {
         .text(text)
-      case .InputMessageContentList(let content):
-        .contentList(content.map { InputContent($0) })
+      } else if let contentList = message.content.value2 {
+        .contentList(contentList.map { InputContent($0) })
+      } else {
+        .text("")  // Default to empty text if no content is provided
       }
   }
 
@@ -134,24 +176,25 @@ public enum InputItem: Sendable {
   case itemReferenceParam(Components.Schemas.ItemReferenceParam)
 
   public init(_ item: Components.Schemas.InputItem) {
-    switch item {
-    case .easyInputMessage(let easyInputMessage):
-      self = .easyInputMessage(EasyInputMessage(easyInputMessage))
-    case .item(let item):
+    if let message = item.value1 {
+      self = .easyInputMessage(EasyInputMessage(message))
+    } else if let item = item.value2 {
       self = .item(Item(item))
-    case .itemReferenceParam(let itemReferenceParam):
-      self = .itemReferenceParam(itemReferenceParam)
+    } else if let reference = item.value3 {
+      self = .itemReferenceParam(reference)
+    } else {
+      fatalError("No value found in InputItem")
     }
   }
 
   public func toOpenAPI() -> Components.Schemas.InputItem {
     switch self {
     case .easyInputMessage(let easyInputMessage):
-      return .easyInputMessage(easyInputMessage.toOpenAPI())
+      return .init(value1: easyInputMessage.toOpenAPI())
     case .item(let item):
-      return .item(item.toOpenAPI())
+      return .init(value2: item.toOpenAPI())
     case .itemReferenceParam(let itemReferenceParam):
-      return .itemReferenceParam(itemReferenceParam)
+      return .init(value3: itemReferenceParam)
     }
   }
 }

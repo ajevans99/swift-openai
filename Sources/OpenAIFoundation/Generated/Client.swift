@@ -39,6 +39,8 @@ public struct Client: APIProtocol {
     private var converter: Converter {
         client.converter
     }
+    /// Create image edit
+    ///
     /// Creates an edited or extended image given one or more source images and a prompt. This endpoint only supports `gpt-image-1` and `dall-e-2`.
     ///
     /// - Remark: HTTP `POST /images/edits`.
@@ -75,6 +77,7 @@ public struct Client: APIProtocol {
                         ],
                         requiredAtLeastOncePartNames: [],
                         atMostOncePartNames: [
+                            "background",
                             "mask",
                             "model",
                             "n",
@@ -124,6 +127,20 @@ public struct Client: APIProtocol {
                                 )
                                 return .init(
                                     name: "mask",
+                                    filename: wrapped.filename,
+                                    headerFields: headerFields,
+                                    body: body
+                                )
+                            case let .background(wrapped):
+                                var headerFields: HTTPTypes.HTTPFields = .init()
+                                let value = wrapped.payload
+                                let body = try converter.setRequiredRequestBodyAsBinary(
+                                    value.body,
+                                    headerFields: &headerFields,
+                                    contentType: "text/plain"
+                                )
+                                return .init(
+                                    name: "background",
                                     filename: wrapped.filename,
                                     headerFields: headerFields,
                                     body: body
@@ -256,7 +273,9 @@ public struct Client: APIProtocol {
             }
         )
     }
-    /// Creates an image given a prompt. [Learn more](/docs/guides/images).
+    /// Create image
+    ///
+    /// Creates an image given a prompt. [Learn more](https://platform.openai.com/docs/guides/images).
     ///
     ///
     /// - Remark: HTTP `POST /images/generations`.
@@ -326,6 +345,8 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// Create image variation
+    ///
     /// Creates a variation of a given image. This endpoint only supports `dall-e-2`.
     ///
     /// - Remark: HTTP `POST /images/variations`.
@@ -498,12 +519,14 @@ public struct Client: APIProtocol {
             }
         )
     }
-    /// Creates a model response. Provide [text](/docs/guides/text) or
-    /// [image](/docs/guides/images) inputs to generate [text](/docs/guides/text)
-    /// or [JSON](/docs/guides/structured-outputs) outputs. Have the model call
-    /// your own [custom code](/docs/guides/function-calling) or use built-in
-    /// [tools](/docs/guides/tools) like [web search](/docs/guides/tools-web-search)
-    /// or [file search](/docs/guides/tools-file-search) to use your own data
+    /// Create a model response
+    ///
+    /// Creates a model response. Provide [text](https://platform.openai.com/docs/guides/text) or
+    /// [image](https://platform.openai.com/docs/guides/images) inputs to generate [text](https://platform.openai.com/docs/guides/text)
+    /// or [JSON](https://platform.openai.com/docs/guides/structured-outputs) outputs. Have the model call
+    /// your own [custom code](https://platform.openai.com/docs/guides/function-calling) or use built-in
+    /// [tools](https://platform.openai.com/docs/guides/tools) like [web search](https://platform.openai.com/docs/guides/tools-web-search)
+    /// or [file search](https://platform.openai.com/docs/guides/tools-file-search) to use your own data
     /// as input for the model's response.
     ///
     ///
@@ -583,6 +606,8 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// Get a model response
+    ///
     /// Retrieves a model response with the given ID.
     ///
     ///
@@ -653,6 +678,8 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// Delete a model response
+    ///
     /// Deletes a model response with the given ID.
     ///
     ///
@@ -718,6 +745,77 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// Cancel a response
+    ///
+    /// Cancels a model response with the given ID. Only responses created with
+    /// the `background` parameter set to `true` can be cancelled. 
+    /// [Learn more](https://platform.openai.com/docs/guides/background).
+    ///
+    ///
+    /// - Remark: HTTP `POST /responses/{response_id}/cancel`.
+    /// - Remark: Generated from `#/paths//responses/{response_id}/cancel/post(cancelResponse)`.
+    public func cancelResponse(_ input: Operations.CancelResponse.Input) async throws -> Operations.CancelResponse.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.CancelResponse.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/responses/{}/cancel",
+                    parameters: [
+                        input.path.responseId
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .post
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    return .ok(.init())
+                case 404:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.CancelResponse.Output.NotFound.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.Response.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .notFound(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// List input items
+    ///
     /// Returns a list of input items for a given response.
     ///
     /// - Remark: HTTP `GET /responses/{response_id}/input_items`.
