@@ -1,5 +1,9 @@
 # Swift OpenAI
 
+> [!IMPORTANT]
+> This project is in active development and does not support many endpoints yet.
+> Public API is likely to have major breaking changes.
+
 [![CI](https://github.com/ajevans99/swift-openai/actions/workflows/swift.yml/badge.svg)](https://github.com/ajevans99/swift-openai/actions/workflows/swift.yml)
 
 A modern Swift package for interacting with [OpenAI’s API]((https://platform.openai.com/docs/api-reference)), built on top of the official OpenAI *OpenAPI* spec.
