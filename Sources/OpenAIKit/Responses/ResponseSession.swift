@@ -59,12 +59,19 @@ public actor ResponseSession {
   ) async throws -> AsyncThrowingStream<StreamEvent, Error> {
     let item = Item.inputMessage(InputMessage(role: .user, content: [.text(.init(text: userText))]))
     client.logger.debug("Starting stream for user text: \(userText)")
+    return try await stream(items: [item] + additionalItems, previousResponseID: previousResponseID)
+  }
 
-    return AsyncThrowingStream { continuation in
+  @available(macOS 15.0, *)
+  public func stream(
+    items: [Item] = [],
+    previousResponseID: String? = nil
+  ) async throws -> AsyncThrowingStream<StreamEvent, Error> {
+    AsyncThrowingStream { continuation in
       Task {
         do {
           try await streamAdvance(
-            newItems: [item] + additionalItems,
+            newItems: items,
             previousResponseID: previousResponseID,
             continuation: continuation
           )
@@ -81,8 +88,7 @@ public actor ResponseSession {
       input: .items(newItems.map { .item($0) }),
       model: model,
       previousResponseId: previousResponseID,
-      tools: previousResponseID == nil ? allTools : []
-      // Don't need to re-register tools if we're continuing a previous response
+      tools: allTools  // Tools always need to be sent even if previousResponseID is provided
     )
 
     var generatedText = ""
@@ -145,7 +151,7 @@ public actor ResponseSession {
       input: .items(newItems.map { .item($0) }),
       model: model,
       previousResponseId: previousResponseID,
-      tools: previousResponseID == nil ? allTools : []  // Don't need to re-register tools if we're continuing a previous response
+      tools: allTools  // Tools always need to be sent even if previousResponseID is provided
     )
     var newItems: [Item] = []
     var responseID: String?
