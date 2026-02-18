@@ -50,7 +50,7 @@ Checkout the [Example CLI Project](Example) for some more sample usages.
 
 > Patches are messed up currently!
 
-`swift-openai` uses `swift-openapi-generator` to generate models and endpoint definitions directly from OpenAI’s official [openapi.yaml](https://github.com/openai/openai-openapi). This ensures maximum compatibility and future-proofing as the spec evolves.
+`swift-openai` uses `swift-openapi-generator` to generate models and endpoint definitions directly from OpenAI’s documented OpenAPI spec at [openapi.documented.yml](https://app.stainless.com/api/spec/documented/openai/openapi.documented.yml). This ensures maximum compatibility and future-proofing as the spec evolves.
 
 To ensure the generated code compiles and behaves correctly in Swift, we apply a series of patch files located in the `Patches/` directory to the `swift-openapi.yaml` spec. These are applied before generation via a custom script. This workaround is necessary because the raw OpenAPI spec includes some constructs that are either unsupported or problematic for the Swift OpenAPI toolchain.
 
