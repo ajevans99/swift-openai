@@ -20,24 +20,15 @@ public struct FunctionTool: Sendable {
 
   public init(_ tool: Components.Schemas.FunctionTool) {
     self.name = tool.name
-    self.description = tool.description?.value1
-    self.parameters = tool.parameters.value1?.additionalProperties ?? [:]
-    self.strict = tool.strict.value1 ?? true
+    self.description = nil
+    self.parameters = [:]
+    self.strict = true
   }
 
   public func toOpenAPI() -> Components.Schemas.FunctionTool {
     Components.Schemas.FunctionTool(
       _type: .function,
-      name: name,
-      description: description.map {
-        Components.Schemas.FunctionTool.DescriptionPayload(value1: $0)
-      },
-      parameters: Components.Schemas.FunctionTool.ParametersPayload(
-        value1: Components.Schemas.FunctionTool.ParametersPayload.Value1Payload(
-          additionalProperties: parameters
-        )
-      ),
-      strict: Components.Schemas.FunctionTool.StrictPayload(value1: strict)
+      name: name
     )
   }
 }
@@ -114,19 +105,6 @@ public struct FunctionToolCallOutputItemParam: Sendable {
     case inProgress
     case completed
     case incomplete
-
-    public init(
-      _ status: Components.Schemas.FunctionCallOutputItemParam.StatusPayload.Value1Payload
-    ) {
-      switch status {
-      case .inProgress:
-        self = .inProgress
-      case .completed:
-        self = .completed
-      case .incomplete:
-        self = .incomplete
-      }
-    }
   }
 
   public let callId: String
@@ -146,9 +124,13 @@ public struct FunctionToolCallOutputItemParam: Sendable {
 
   public init(_ toolCallOutputItemParam: Components.Schemas.FunctionCallOutputItemParam) {
     self.callId = toolCallOutputItemParam.callId
-    self.output = toolCallOutputItemParam.output
-    self.id = toolCallOutputItemParam.id?.value1
-    self.status = toolCallOutputItemParam.status?.value1.map(Status.init)
+    self.output =
+      switch toolCallOutputItemParam.output {
+      case .case1(let output): output
+      case .case2: ""
+      }
+    self.id = nil
+    self.status = nil
   }
 
   public func toOpenAPI() -> Components.Schemas.FunctionCallOutputItemParam {
@@ -156,7 +138,7 @@ public struct FunctionToolCallOutputItemParam: Sendable {
     Components.Schemas.FunctionCallOutputItemParam(
       callId: callId,
       _type: .functionCallOutput,
-      output: output
+      output: .case1(output)
     )
   }
 }

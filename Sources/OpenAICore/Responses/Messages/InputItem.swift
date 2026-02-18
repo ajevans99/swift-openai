@@ -18,84 +18,83 @@ public enum Item: Sendable {
   case mcpToolCall(Components.Schemas.MCPToolCall)
 
   public init(_ item: Components.Schemas.Item) {
-    if let value = item.value1 {
+    switch item {
+    case .inputMessage(let value):
       self = .inputMessage(InputMessage(value))
-    } else if let value = item.value2 {
+    case .outputMessage(let value):
       self = .outputMessage(OutputMessage(value))
-    } else if let value = item.value3 {
+    case .fileSearchToolCall(let value):
       self = .fileSearchToolCall(value)
-    } else if let value = item.value4 {
+    case .computerToolCall(let value):
       self = .computerToolCall(value)
-    } else if let value = item.value5 {
+    case .computerCallOutputItemParam(let value):
       self = .computerCallOutputItemParam(value)
-    } else if let value = item.value6 {
+    case .webSearchToolCall(let value):
       self = .webSearchToolCall(value)
-    } else if let value = item.value7 {
+    case .functionToolCall(let value):
       self = .functionToolCall(FunctionToolCall(value))
-    } else if let value = item.value8 {
+    case .functionCallOutputItemParam(let value):
       self = .functionCallOutputItemParam(FunctionToolCallOutputItemParam(value))
-    } else if let value = item.value9 {
+    case .reasoningItem(let value):
       self = .reasoningItem(value)
-    } else if let value = item.value10 {
+    case .imageGenToolCall(let value):
       self = .imageGenToolCall(value)
-    } else if let value = item.value11 {
+    case .codeInterpreterToolCall(let value):
       self = .codeInterpreterToolCall(value)
-    } else if let value = item.value12 {
+    case .localShellToolCall(let value):
       self = .localShellToolCall(value)
-    } else if let value = item.value13 {
+    case .localShellToolCallOutput(let value):
       self = .localShellToolCallOutput(value)
-    } else if let value = item.value14 {
+    case .mcpListTools(let value):
       self = .mcpListTools(value)
-    } else if let value = item.value15 {
+    case .mcpApprovalRequest(let value):
       self = .mcpApprovalRequest(value)
-    } else if let value = item.value16 {
+    case .mcpApprovalResponse(let value):
       self = .mcpApprovalResponse(value)
-    } else if let value = item.value17 {
+    case .mcpToolCall(let value):
       self = .mcpToolCall(value)
-    } else {
-      fatalError("No value found in Item")
+    default:
+      fatalError("Unsupported Item case for OpenAICore wrapper")
     }
   }
 
   public func toOpenAPI() -> Components.Schemas.Item {
-    var item = Components.Schemas.Item()
     switch self {
     case .inputMessage(let value):
-      item.value1 = value.toOpenAPI()
+      return .inputMessage(value.toOpenAPI())
     case .outputMessage(let value):
-      item.value2 = value.toOpenAPI()
+      return .outputMessage(value.toOpenAPI())
     case .fileSearchToolCall(let value):
-      item.value3 = value
+      return .fileSearchToolCall(value)
     case .computerToolCall(let value):
-      item.value4 = value
+      return .computerToolCall(value)
     case .computerCallOutputItemParam(let value):
-      item.value5 = value
+      return .computerCallOutputItemParam(value)
     case .webSearchToolCall(let value):
-      item.value6 = value
+      return .webSearchToolCall(value)
     case .functionToolCall(let value):
-      item.value7 = value.toOpenAPI()
+      return .functionToolCall(value.toOpenAPI())
     case .functionCallOutputItemParam(let value):
-      item.value8 = value.toOpenAPI()
+      return .functionCallOutputItemParam(value.toOpenAPI())
     case .reasoningItem(let value):
-      item.value9 = value
+      return .reasoningItem(value)
     case .imageGenToolCall(let value):
-      item.value10 = value
+      return .imageGenToolCall(value)
     case .codeInterpreterToolCall(let value):
-      item.value11 = value
+      return .codeInterpreterToolCall(value)
     case .localShellToolCall(let value):
-      item.value12 = value
+      return .localShellToolCall(value)
     case .localShellToolCallOutput(let value):
-      item.value13 = value
+      return .localShellToolCallOutput(value)
     case .mcpListTools(let value):
-      item.value14 = value
+      return .mcpListTools(value)
     case .mcpApprovalRequest(let value):
-      item.value15 = value
+      return .mcpApprovalRequest(value)
     case .mcpApprovalResponse(let value):
-      item.value16 = value
+      return .mcpApprovalResponse(value)
     case .mcpToolCall(let value):
-      item.value17 = value
+      return .mcpToolCall(value)
     }
-    return item
   }
 }
 
@@ -123,10 +122,9 @@ public struct EasyInputMessage: Sendable {
     public func toOpenAPI() -> Components.Schemas.EasyInputMessage.ContentPayload {
       switch self {
       case .text(let text):
-        return Components.Schemas.EasyInputMessage.ContentPayload(value1: text)
+        return .case1(text)
       case .contentList(let content):
-        return Components.Schemas.EasyInputMessage.ContentPayload(
-          value2: content.map { $0.toOpenAPI() })
+        return .InputMessageContentList(content.map { $0.toOpenAPI() })
       }
     }
   }
@@ -152,12 +150,9 @@ public struct EasyInputMessage: Sendable {
       }
 
     self.content =
-      if let text = message.content.value1 {
-        .text(text)
-      } else if let contentList = message.content.value2 {
-        .contentList(contentList.map { InputContent($0) })
-      } else {
-        .text("")  // Default to empty text if no content is provided
+      switch message.content {
+      case .case1(let text): .text(text)
+      case .InputMessageContentList(let contentList): .contentList(contentList.map { InputContent($0) })
       }
   }
 
@@ -176,25 +171,24 @@ public enum InputItem: Sendable {
   case itemReferenceParam(Components.Schemas.ItemReferenceParam)
 
   public init(_ item: Components.Schemas.InputItem) {
-    if let message = item.value1 {
+    switch item {
+    case .easyInputMessage(let message):
       self = .easyInputMessage(EasyInputMessage(message))
-    } else if let item = item.value2 {
+    case .item(let item):
       self = .item(Item(item))
-    } else if let reference = item.value3 {
+    case .itemReferenceParam(let reference):
       self = .itemReferenceParam(reference)
-    } else {
-      fatalError("No value found in InputItem")
     }
   }
 
   public func toOpenAPI() -> Components.Schemas.InputItem {
     switch self {
     case .easyInputMessage(let easyInputMessage):
-      return .init(value1: easyInputMessage.toOpenAPI())
+      return .easyInputMessage(easyInputMessage.toOpenAPI())
     case .item(let item):
-      return .init(value2: item.toOpenAPI())
+      return .item(item.toOpenAPI())
     case .itemReferenceParam(let itemReferenceParam):
-      return .init(value3: itemReferenceParam)
+      return .itemReferenceParam(itemReferenceParam)
     }
   }
 }

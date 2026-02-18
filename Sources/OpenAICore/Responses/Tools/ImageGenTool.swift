@@ -90,7 +90,7 @@ public struct ImageGenTool: Sendable {
   }
 
   public init(_ tool: Components.Schemas.ImageGenTool) {
-    self.model = tool.model.map { Model(rawValue: $0.rawValue)! }
+    self.model = nil
     self.quality = tool.quality.map { Quality(rawValue: $0.rawValue)! }
     self.size = tool.size.map { Size(rawValue: $0.rawValue)! }
     self.outputFormat = tool.outputFormat.map { OutputFormat(rawValue: $0.rawValue)! }
@@ -109,7 +109,7 @@ public struct ImageGenTool: Sendable {
   public func toOpenAPI() -> Components.Schemas.ImageGenTool {
     Components.Schemas.ImageGenTool(
       _type: .imageGeneration,
-      model: model.map { Components.Schemas.ImageGenTool.ModelPayload(rawValue: $0.rawValue)! },
+      model: model.map { .init(value2: .init(rawValue: $0.rawValue)) },
       quality: quality.map {
         Components.Schemas.ImageGenTool.QualityPayload(rawValue: $0.rawValue)!
       },

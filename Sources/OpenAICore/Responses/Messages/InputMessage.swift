@@ -19,7 +19,7 @@ public struct InputImageContent: Sendable {
     case high
     case auto
 
-    public func toOpenAPI() -> Components.Schemas.InputImageContent.DetailPayload {
+    public func toOpenAPI() -> Components.Schemas.ImageDetail {
       switch self {
       case .low: return .low
       case .high: return .high
@@ -45,8 +45,6 @@ public struct InputImageContent: Sendable {
   public func toOpenAPI() -> Components.Schemas.InputImageContent {
     Components.Schemas.InputImageContent(
       _type: .inputImage,
-      imageUrl: imageUrl.map { Components.Schemas.InputImageContent.ImageUrlPayload(value1: $0) },
-      fileId: fileId.map { Components.Schemas.InputImageContent.FileIdPayload(value1: $0) },
       detail: detail.toOpenAPI()
     )
   }
@@ -70,8 +68,8 @@ public struct InputFileContent: Sendable {
   public func toOpenAPI() -> Components.Schemas.InputFileContent {
     Components.Schemas.InputFileContent(
       _type: .inputFile,
-      fileId: fileId.map { Components.Schemas.InputFileContent.FileIdPayload(value1: $0) },
       filename: filename,
+      fileUrl: nil,
       fileData: fileData
     )
   }
@@ -83,9 +81,10 @@ public enum InputContent: Sendable {
   case file(InputFileContent)
 
   public init(_ content: Components.Schemas.InputContent) {
-    if let textContent = content.value1 {
+    switch content {
+    case .inputTextContent(let textContent):
       self = .text(InputTextContent(text: textContent.text))
-    } else if let imageContent = content.value2 {
+    case .inputImageContent(let imageContent):
       let detail: InputImageContent.Detail
       switch imageContent.detail {
       case .auto: detail = .auto
@@ -94,35 +93,31 @@ public enum InputContent: Sendable {
       }
       self = .image(
         InputImageContent(
-          imageUrl: imageContent.imageUrl?.value1,
-          fileId: imageContent.fileId?.value1,
+          imageUrl: nil,
+          fileId: nil,
           detail: detail
         )
       )
-    } else if let fileContent = content.value3 {
+    case .inputFileContent(let fileContent):
       self = .file(
         InputFileContent(
-          fileId: fileContent.fileId?.value1,
+          fileId: nil,
           filename: fileContent.filename,
           fileData: fileContent.fileData
         )
       )
-    } else {
-      fatalError("No content found in InputContent")
     }
   }
 
   public func toOpenAPI() -> Components.Schemas.InputContent {
-    var content = Components.Schemas.InputContent()
     switch self {
     case .text(let textContent):
-      content.value1 = textContent.toOpenAPI()
+      return .inputTextContent(textContent.toOpenAPI())
     case .image(let imageContent):
-      content.value2 = imageContent.toOpenAPI()
+      return .inputImageContent(imageContent.toOpenAPI())
     case .file(let fileContent):
-      content.value3 = fileContent.toOpenAPI()
+      return .inputFileContent(fileContent.toOpenAPI())
     }
-    return content
   }
 }
 

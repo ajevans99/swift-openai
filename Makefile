@@ -1,4 +1,4 @@
-.PHONY: format lint fetch patches generate all clean check
+.PHONY: format lint fetch patches generate build all clean check
 
 GIT_ROOT := $(shell git rev-parse --show-toplevel)
 
@@ -32,7 +32,11 @@ generate: patches
 	@echo "▶ generate-models"
 	@bash $(GENERATE_SCRIPT)
 
-all: fetch generate
+build:
+	@echo "▶ swift-build"
+	@swift build
+
+all: fetch generate build
 	@echo "✅ All done."
 
 clean:

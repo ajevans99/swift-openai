@@ -120,8 +120,10 @@ public actor ResponseSession {
             )
           }
         case .computerToolCall, .fileSearchToolCall, .reasoning, .webSearchToolCall,
-          .imageGenToolCall, .codeInterpreterToolCall, .localShellToolCall, .mcpToolCall,
-          .mcpListTools, .mcpApprovalRequest:
+          .compactionBody, .imageGenToolCall, .codeInterpreterToolCall, .localShellToolCall,
+          .functionShellCall, .functionShellCallOutput, .applyPatchToolCall,
+          .applyPatchToolCallOutput, .mcpToolCall, .mcpListTools, .mcpApprovalRequest,
+          .customToolCall:
           break
         }
       }

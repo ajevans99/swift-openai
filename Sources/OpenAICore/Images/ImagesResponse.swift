@@ -19,7 +19,7 @@ public struct ImagesResponse: Sendable {
       public let textTokens: Int
       public let imageTokens: Int
 
-      public init(openAPI: Components.Schemas.ImagesResponse.UsagePayload.InputTokensDetailsPayload)
+      public init(openAPI: Components.Schemas.ImageGenInputUsageDetails)
       {
         self.textTokens = openAPI.textTokens
         self.imageTokens = openAPI.imageTokens
@@ -31,7 +31,7 @@ public struct ImagesResponse: Sendable {
     public let outputTokens: Int
     public let inputTokensDetails: InputTokensDetails
 
-    public init(openAPI: Components.Schemas.ImagesResponse.UsagePayload) {
+    public init(openAPI: Components.Schemas.ImageGenUsage) {
       self.totalTokens = openAPI.totalTokens
       self.inputTokens = openAPI.inputTokens
       self.outputTokens = openAPI.outputTokens
@@ -46,6 +46,6 @@ public struct ImagesResponse: Sendable {
   public init(openAPI: Components.Schemas.ImagesResponse) {
     self.created = openAPI.created
     self.data = openAPI.data?.map(Image.init) ?? []
-    self.usage = openAPI.usage.map(Usage.init)
+    self.usage = openAPI.usage.map { Usage(openAPI: $0) }
   }
 }

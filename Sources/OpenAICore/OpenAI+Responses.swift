@@ -26,8 +26,8 @@ extension OpenAI {
     serviceTier: ServiceTier? = nil,
     store: Bool? = nil,
     temperature: Double? = nil,
-    text: Components.Schemas.ResponseProperties.TextPayload? = nil,
-    toolChoice: Components.Schemas.ResponseProperties.ToolChoicePayload? = nil,
+    text: Components.Schemas.ResponseTextParam? = nil,
+    toolChoice: Components.Schemas.ToolChoiceParam? = nil,
     tools: [Tool]? = nil,
     topP: Double? = nil,
     truncation: Truncation? = nil,
@@ -99,8 +99,8 @@ extension OpenAI {
     serviceTier: ServiceTier? = nil,
     store: Bool? = nil,
     temperature: Double? = nil,
-    text: Components.Schemas.ResponseProperties.TextPayload? = nil,
-    toolChoice: Components.Schemas.ResponseProperties.ToolChoicePayload? = nil,
+    text: Components.Schemas.ResponseTextParam? = nil,
+    toolChoice: Components.Schemas.ToolChoiceParam? = nil,
     tools: [Tool]? = nil,
     topP: Double? = nil,
     truncation: Truncation? = nil,
@@ -212,14 +212,12 @@ extension OpenAI {
   public func responseInputItems(
     id: String,
     after: String? = nil,
-    before: String? = nil,
     limit: Int? = nil,
     order: ListQueryItems.Order? = nil,
     include: [Includable]? = nil
   ) async throws -> ListInputItemsResponse {
     let query = ListQueryItems(
       after: after,
-      before: before,
       limit: limit,
       order: order,
       include: include

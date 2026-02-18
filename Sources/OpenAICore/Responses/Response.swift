@@ -5,11 +5,6 @@ public struct Response: Sendable {
   public struct ResponseError: Error, Sendable {
     public let code: String
     public let message: String
-
-    public init(openAPI: Components.Schemas.ResponseError) {
-      self.code = openAPI.code.rawValue
-      self.message = openAPI.message
-    }
   }
 
   public struct IncompleteDetails: Sendable {
@@ -20,14 +15,6 @@ public struct Response: Sendable {
 
     public let reason: Reason?
 
-    public init(openAPI: Components.Schemas.Response.Value3Payload.IncompleteDetailsPayload) {
-      self.reason =
-        switch openAPI.reason {
-        case .maxOutputTokens: .maxOutputTokens
-        case .contentFilter: .contentFilter
-        case nil: nil
-        }
-    }
   }
 
   public enum Status: String, Sendable {
@@ -61,19 +48,18 @@ public struct Response: Sendable {
     )
 
     public init(openAPI: Components.Schemas.TextResponseFormatConfiguration) {
-      if openAPI.value1 != nil {
+      switch openAPI {
+      case .ResponseFormatText:
         self = .text
-      } else if openAPI.value3 != nil {
+      case .ResponseFormatJsonObject:
         self = .jsonObject
-      } else if let jsonSchema = openAPI.value2 {
+      case .TextResponseFormatJsonSchema(let jsonSchema):
         self = .jsonSchema(
           name: jsonSchema.name,
           description: jsonSchema.description,
           schema: jsonSchema.schema.additionalProperties,
-          strict: jsonSchema.strict
+          strict: nil
         )
-      } else {
-        fatalError("No value found in TextResponseFormatConfiguration")
       }
     }
   }
@@ -95,7 +81,7 @@ public struct Response: Sendable {
   public let status: Status?
   public let temperature: Double?
   public let textFormat: TextFormat?
-  public let toolChoice: Components.Schemas.ResponseProperties.ToolChoicePayload?
+  public let toolChoice: Components.Schemas.ToolChoiceParam?
   public let tools: [Components.Schemas.Tool]?
   public let topP: Double?
   public let truncation: Truncation?
@@ -123,28 +109,28 @@ public struct Response: Sendable {
   public init(openAPI: Components.Schemas.Response) {
     self.output = openAPI.value3.output.compactMap { OutputItem($0) }
     self.createdAt = openAPI.value3.createdAt
-    self.error = openAPI.value3.error.map(ResponseError.init)
+    self.error = nil
     self.id = openAPI.value3.id
-    self.incompleteDetails = openAPI.value3.incompleteDetails.map(IncompleteDetails.init)
-    self.instuctions = openAPI.value2.instructions
-    self.maxOutputTokens = openAPI.value2.maxOutputTokens
-    self.metadata = openAPI.value1.metadata?.additionalProperties
+    self.incompleteDetails = nil
+    self.instuctions = nil
+    self.maxOutputTokens = nil
+    self.metadata = nil
     self.model =
       openAPI.value2.model?.value1?.value1
       ?? openAPI.value2.model?.value1?.value2?.rawValue
       ?? openAPI.value2.model?.value2?.rawValue
     self.parallelToolCalls = openAPI.value3.parallelToolCalls
-    self.previousResponseId = openAPI.value2.previousResponseId
-    self.reasoning = openAPI.value2.reasoning.map(Reasoning.init)
-    self.serviceTier = openAPI.value1.serviceTier.map(ServiceTier.init)
+    self.previousResponseId = nil
+    self.reasoning = nil
+    self.serviceTier = nil
     self.status = openAPI.value3.status.map(Status.init)
-    self.temperature = openAPI.value1.temperature
+    self.temperature = nil
     self.textFormat = openAPI.value2.text?.format.map(TextFormat.init)
     self.toolChoice = openAPI.value2.toolChoice
     self.tools = openAPI.value2.tools
-    self.topP = openAPI.value1.topP
-    self.truncation = openAPI.value2.truncation.map(Truncation.init)
+    self.topP = nil
+    self.truncation = nil
     self.usage = openAPI.value3.usage.map(Usage.init)
-    self.user = openAPI.value1.user
+    self.user = nil
   }
 }

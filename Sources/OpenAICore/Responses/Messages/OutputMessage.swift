@@ -17,7 +17,8 @@ public struct OutputTextContent: Sendable {
     Components.Schemas.OutputTextContent(
       _type: .outputText,
       text: text,
-      annotations: annotations
+      annotations: annotations,
+      logprobs: []
     )
   }
 }
@@ -41,30 +42,52 @@ public enum OutputContent: Sendable {
   case text(OutputTextContent)
   case refusal(RefusalContent)
 
-  public init(_ content: Components.Schemas.OutputContent) {
-    if let textContent = content.value1 {
+  public init(_ content: Components.Schemas.OutputMessageContent) {
+    switch content {
+    case .outputTextContent(let textContent):
       self = .text(
         OutputTextContent(
           text: textContent.text,
           annotations: textContent.annotations
         )
       )
-    } else if let refusalContent = content.value2 {
+    case .refusalContent(let refusalContent):
       self = .refusal(RefusalContent(refusal: refusalContent.refusal))
-    } else {
-      fatalError("No content found in OutputContent")
     }
   }
 
-  public func toOpenAPI() -> Components.Schemas.OutputContent {
-    var content = Components.Schemas.OutputContent()
+  public init(_ content: Components.Schemas.OutputContent) {
+    switch content {
+    case .outputTextContent(let textContent):
+      self = .text(
+        OutputTextContent(
+          text: textContent.text,
+          annotations: textContent.annotations
+        )
+      )
+    case .refusalContent(let refusalContent):
+      self = .refusal(RefusalContent(refusal: refusalContent.refusal))
+    case .reasoningTextContent:
+      self = .refusal(RefusalContent(refusal: ""))
+    }
+  }
+
+  public func toOpenAPIOutputContent() -> Components.Schemas.OutputContent {
     switch self {
     case .text(let textContent):
-      content.value1 = textContent.toOpenAPI()
+      return .outputTextContent(textContent.toOpenAPI())
     case .refusal(let refusalContent):
-      content.value2 = refusalContent.toOpenAPI()
+      return .refusalContent(refusalContent.toOpenAPI())
     }
-    return content
+  }
+
+  public func toOpenAPIMessageContent() -> Components.Schemas.OutputMessageContent {
+    switch self {
+    case .text(let textContent):
+      return .outputTextContent(textContent.toOpenAPI())
+    case .refusal(let refusalContent):
+      return .refusalContent(refusalContent.toOpenAPI())
+    }
   }
 }
 
@@ -113,7 +136,7 @@ public struct OutputMessage: Sendable {
       id: id,
       _type: .message,
       role: .assistant,
-      content: content.map { $0.toOpenAPI() },
+      content: content.map { $0.toOpenAPIMessageContent() },
       status: status.toOpenAPI()
     )
   }
