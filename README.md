@@ -52,18 +52,12 @@ Checkout the [Example CLI Project](Example) for some more sample usages.
 
 `swift-openai` uses `swift-openapi-generator` to generate models and endpoint definitions directly from OpenAI’s documented OpenAPI spec at [openapi.documented.yml](https://app.stainless.com/api/spec/documented/openai/openapi.documented.yml). This ensures maximum compatibility and future-proofing as the spec evolves.
 
-To ensure the generated code compiles and behaves correctly in Swift, we apply a series of patch files located in the `Patches/` directory to the `swift-openapi.yaml` spec. These are applied before generation via a custom script. This workaround is necessary because the raw OpenAPI spec includes some constructs that are either unsupported or problematic for the Swift OpenAPI toolchain.
+To ensure the generated code compiles and behaves correctly in Swift, we apply deterministic transforms to `openapi.yaml` via `Scripts/apply-patches.sh` before generation. This avoids fragile line-based patch failures when upstream spec structure changes.
 
 | Task                                    | Command          |
 |-----------------------------------------|------------------|
 | To check for spec changes               | `make check`     |
 | To fetch the latest `openapi.yaml`      | `make fetch`     |
-| To apply the necessary patches          | `make patches`   |
+| To apply the necessary transforms       | `make patches`   |
 | To generate the Swift types             | `make generate`  |
 | To fetch, patch, and generate           | `make all`       |
-
-To generate patches, make changes to the yaml and run:
-
-```sh
-git diff Sources/OpenAIFoundation/openapi.yaml > Patches/<two-digit-sort-number-here>-<patch-description-here>.patch
-```

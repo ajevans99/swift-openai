@@ -28,11 +28,11 @@ patches:
 	@echo "▶ apply-patches"
 	@bash $(APPLY_SCRIPT)
 
-generate:
+generate: patches
 	@echo "▶ generate-models"
 	@bash $(GENERATE_SCRIPT)
 
-all: fetch patches generate
+all: fetch generate
 	@echo "✅ All done."
 
 clean:
