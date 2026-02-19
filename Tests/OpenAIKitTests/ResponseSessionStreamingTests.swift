@@ -182,6 +182,7 @@ struct ResponseSessionStreamingTests {
     #expect(requestBodies.count == 2)
     #expect(requestBodies[1].contains(#""type" : "function_call_output""#))
     #expect(requestBodies[1].contains(#""call_id" : "call_weather_1""#))
+    #expect(requestBodies[1].contains(#""previous_response_id" : "resp_tool_1""#))
   }
 
   @Test("Tool orchestrator falls back to session-level tool registration")

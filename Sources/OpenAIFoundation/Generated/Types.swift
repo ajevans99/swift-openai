@@ -1583,25 +1583,31 @@ public enum Components {
             public struct Value3Payload: Codable, Hashable, Sendable {
                 /// - Remark: Generated from `#/components/schemas/CreateResponse/value3/input`.
                 public var input: Components.Schemas.InputParam?
-            /// - Remark: Added by swift-openai patch: missing stream flag in generated schema.
-            public var stream: Swift.Bool?
-            /// Creates a new `Value3Payload`.
-            ///
-            /// - Parameters:
-            ///   - input:
-            ///   - stream:
-            public init(
-                input: Components.Schemas.InputParam? = nil,
-                stream: Swift.Bool? = nil
-            ) {
-                self.input = input
-                self.stream = stream
+                /// - Remark: Added by swift-openai patch: missing previous response linkage in generated schema.
+                public var previousResponseId: Swift.String?
+                /// - Remark: Added by swift-openai patch: missing stream flag in generated schema.
+                public var stream: Swift.Bool?
+                /// Creates a new `Value3Payload`.
+                ///
+                /// - Parameters:
+                ///   - input:
+                ///   - previousResponseId:
+                ///   - stream:
+                public init(
+                    input: Components.Schemas.InputParam? = nil,
+                    previousResponseId: Swift.String? = nil,
+                    stream: Swift.Bool? = nil
+                ) {
+                    self.input = input
+                    self.previousResponseId = previousResponseId
+                    self.stream = stream
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case input
+                    case previousResponseId = "previous_response_id"
+                    case stream
+                }
             }
-            public enum CodingKeys: String, CodingKey {
-                case input
-                case stream
-            }
-        }
             /// - Remark: Generated from `#/components/schemas/CreateResponse/value3`.
             public var value3: Components.Schemas.CreateResponse.Value3Payload
             /// Creates a new `CreateResponse`.
