@@ -184,6 +184,177 @@ struct ResponseSessionStreamingTests {
     #expect(requestBodies[1].contains(#""call_id" : "call_weather_1""#))
   }
 
+  @Test("README streaming example pattern runs with for-await task group")
+  func readmeStreamingExamplePattern() async throws {
+    guard #available(macOS 15.0, *) else { return }
+    let transport = StreamQueueTransport(
+      payloads: [
+        Self.ssePayload([
+          Self.createdEvent(responseID: "resp_readme_1", sequenceNumber: 0),
+          Self.functionCallOutputItemDoneEvent(
+            itemID: "fc_readme_1",
+            callID: "call_weather_readme_1",
+            name: "get_weather",
+            arguments: #"{"location":"San Francisco"}"#,
+            outputIndex: 0,
+            sequenceNumber: 1
+          ),
+          Self.completedEvent(responseID: "resp_readme_1", sequenceNumber: 2),
+        ]),
+        Self.ssePayload([
+          Self.createdEvent(responseID: "resp_readme_2", sequenceNumber: 0),
+          Self.textDeltaEvent(
+            itemID: "msg_readme_2",
+            outputIndex: 0,
+            contentIndex: 0,
+            delta: "Sunny in SF. ",
+            sequenceNumber: 1
+          ),
+          Self.textDoneEvent(
+            itemID: "msg_readme_2",
+            outputIndex: 0,
+            contentIndex: 0,
+            text: "Sunny in SF.",
+            sequenceNumber: 2
+          ),
+          Self.completedEvent(responseID: "resp_readme_2", sequenceNumber: 3),
+        ]),
+      ]
+    )
+
+    let session = try Self.makeSession(transport: transport)
+    let orchestrator = ToolOrchestratorPlugin(
+      tools: [WeatherEchoTool(prefix: "plugin-local")]
+    )
+
+    let handle = try await session.stream(
+      "What's the weather in SF?",
+      plugins: TextPlugin(), orchestrator
+    )
+
+    let (textChannel, toolChannel) = handle.pluginEvents
+    let recorder = StreamRecorder()
+
+    try await withThrowingTaskGroup(of: Void.self) { group in
+      group.addTask {
+        for try await event in textChannel.events {
+          switch event {
+          case .delta(let chunk):
+            await recorder.appendRenderedText(chunk)
+          case .completed:
+            await recorder.appendRenderedText("\n")
+          }
+        }
+      }
+
+      group.addTask {
+        for try await event in toolChannel.events {
+          await recorder.appendToolEvent(event)
+        }
+      }
+
+      try await group.waitForAll()
+    }
+
+    let snapshot = await recorder.snapshot()
+    #expect(snapshot.renderedText == "Sunny in SF. \n")
+    expectNoDifference(
+      snapshot.toolEvents,
+      [
+        .executed(
+          name: "get_weather",
+          arguments: #"{"location":"San Francisco"}"#,
+          callID: "call_weather_readme_1",
+          output: "plugin-local:San Francisco"
+        )
+      ]
+    )
+  }
+
+  @Test("Full stream integration snapshot covers raw and typed plugin channels")
+  func fullStreamIntegrationSnapshot() async throws {
+    guard #available(macOS 15.0, *) else { return }
+    let transport = StreamQueueTransport(
+      payloads: [
+        Self.ssePayload([
+          Self.createdEvent(responseID: "resp_full_1", sequenceNumber: 0),
+          Self.functionCallOutputItemDoneEvent(
+            itemID: "fc_full_1",
+            callID: "call_weather_full_1",
+            name: "get_weather",
+            arguments: #"{"location":"Seattle"}"#,
+            outputIndex: 0,
+            sequenceNumber: 1
+          ),
+          Self.completedEvent(responseID: "resp_full_1", sequenceNumber: 2),
+        ]),
+        Self.ssePayload([
+          Self.createdEvent(responseID: "resp_full_2", sequenceNumber: 0),
+          Self.textDeltaEvent(
+            itemID: "msg_full_2",
+            outputIndex: 0,
+            contentIndex: 0,
+            delta: "Rain ",
+            sequenceNumber: 1
+          ),
+          Self.textDoneEvent(
+            itemID: "msg_full_2",
+            outputIndex: 0,
+            contentIndex: 0,
+            text: "Rain expected.",
+            sequenceNumber: 2
+          ),
+          Self.completedEvent(responseID: "resp_full_2", sequenceNumber: 3),
+        ]),
+      ]
+    )
+
+    let session = try Self.makeSession(transport: transport)
+    let handle = try await session.stream(
+      "Give me weather details",
+      plugins: TextPlugin(), ToolOrchestratorPlugin(tools: [WeatherEchoTool(prefix: "plugin-local")])
+    )
+
+    let (textChannel, toolChannel) = handle.pluginEvents
+
+    async let rawValues = Self.collectRawValues(handle.raw)
+    async let textEvents = Self.collect(textChannel.events)
+    async let toolEvents = Self.collect(toolChannel.events)
+
+    let snapshot = StreamIntegrationSnapshot(
+      rawValues: try await rawValues,
+      textEvents: try await textEvents,
+      toolEvents: try await toolEvents
+    )
+
+    expectNoDifference(
+      snapshot,
+      StreamIntegrationSnapshot(
+        rawValues: [
+          "response.created",
+          "response.output_item.done",
+          "response.completed",
+          "response.created",
+          "response.output_text.delta",
+          "response.output_text.done",
+          "response.completed",
+        ],
+        textEvents: [
+          .delta("Rain "),
+          .completed("Rain expected."),
+        ],
+        toolEvents: [
+          .executed(
+            name: "get_weather",
+            arguments: #"{"location":"Seattle"}"#,
+            callID: "call_weather_full_1",
+            output: "plugin-local:Seattle"
+          )
+        ]
+      )
+    )
+  }
+
   @Test("Tool orchestrator falls back to session-level tool registration")
   func toolOrchestratorSessionFallbackRegistration() async throws {
     guard #available(macOS 15.0, *) else { return }
@@ -582,4 +753,29 @@ private struct WeatherEchoTool: Toolable {
   func call(parameters: Input) async throws -> String {
     "\(prefix):\(parameters)"
   }
+}
+
+@available(macOS 15.0, *)
+private actor StreamRecorder {
+  private var renderedText = ""
+  private var toolEvents: [ToolOrchestratorPlugin.Event] = []
+
+  func appendRenderedText(_ value: String) {
+    renderedText.append(value)
+  }
+
+  func appendToolEvent(_ event: ToolOrchestratorPlugin.Event) {
+    toolEvents.append(event)
+  }
+
+  func snapshot() -> (renderedText: String, toolEvents: [ToolOrchestratorPlugin.Event]) {
+    (renderedText, toolEvents)
+  }
+}
+
+@available(macOS 15.0, *)
+private struct StreamIntegrationSnapshot: Equatable, Sendable {
+  let rawValues: [String]
+  let textEvents: [TextPlugin.Event]
+  let toolEvents: [ToolOrchestratorPlugin.Event]
 }
