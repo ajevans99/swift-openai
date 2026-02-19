@@ -3,7 +3,7 @@ import JSONSchemaBuilder
 import OpenAICore
 import OpenAPIRuntime
 
-public protocol Toolable {
+public protocol Toolable: Sendable {
   associatedtype Component: JSONSchemaComponent
 
   var name: String { get }

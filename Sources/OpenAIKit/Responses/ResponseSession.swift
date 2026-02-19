@@ -222,13 +222,16 @@ public actor ResponseSession {
           }
 
         case .functionToolCall(let toolCall):
-          guard let tool = functionTools[toolCall.name] else {
-            throw ResponseSessionError.unknownTool(named: toolCall.name)
-          }
+          let toolName = toolCall.name
+          let toolArguments = toolCall.arguments
+          let callID = toolCall.callId
           group.addTask {
-            let result = try await tool.call(arguments: toolCall.arguments)
+            let result = try await self.executeFunctionTool(
+              named: toolName,
+              arguments: toolArguments
+            )
             return .functionCallOutputItemParam(
-              .init(callId: toolCall.callId, output: result)
+              .init(callId: callID, output: result)
             )
           }
 
@@ -263,8 +266,12 @@ public actor ResponseSession {
     var pendingItems = newItems
     var currentPreviousResponseID = previousResponseID
     var context = StreamPluginContext(
-      executeFunctionTool: { [self] name, arguments in
-        try await executeFunctionTool(named: name, arguments: arguments)
+      executeFunctionTool: { [self] name, arguments, policy in
+        try await executeFunctionTool(
+          named: name,
+          arguments: arguments,
+          policyOverride: policy
+        )
       }
     )
 
@@ -342,41 +349,20 @@ public actor ResponseSession {
     }
   }
 
-  private func executeFunctionTool(named name: String, arguments: String) async throws -> String {
+  private func executeFunctionTool(
+    named name: String,
+    arguments: String,
+    policyOverride: ToolErrorPolicy? = nil
+  ) async throws -> String {
     guard let tool = functionTools[name] else {
       throw ResponseSessionError.unknownTool(named: name)
     }
 
-    let maxAttempts: Int
-    switch errorPolicy {
-    case .retry(let count):
-      maxAttempts = max(1, count + 1)
-    default:
-      maxAttempts = 1
-    }
-
-    var attempt = 0
-    var lastError: Error?
-    while attempt < maxAttempts {
-      do {
-        return try await tool.call(arguments: arguments)
-      } catch {
-        lastError = error
-        attempt += 1
-      }
-    }
-
-    guard let lastError else {
-      throw ResponseSessionError.toolExecutionFailed(name: name)
-    }
-
-    switch errorPolicy {
-    case .failFast, .retry:
-      throw lastError
-    case .returnAsMessage:
-      return "Tool '\(name)' failed: \(String(describing: lastError))"
-    case .askAssistantToClarify(let systemMessage):
-      return systemMessage(lastError)
+    return try await executeToolWithPolicy(
+      named: name,
+      policy: policyOverride ?? errorPolicy
+    ) {
+      try await tool.call(arguments: arguments)
     }
   }
 

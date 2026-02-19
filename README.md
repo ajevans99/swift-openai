@@ -116,10 +116,14 @@ struct RefusalPlugin: ResponseStreamPlugin {
 `ToolOrchestratorPlugin` supports plugin-local tools:
 
 ```swift
-let orchestrator = ToolOrchestratorPlugin(tools: [WeatherTool(apiKey: "...")])
+let orchestrator = ToolOrchestratorPlugin(
+  tools: [WeatherTool(apiKey: "...")],
+  errorPolicy: .returnAsMessage
+)
 ```
 
 If a tool is not found locally, it can fall back to session-level registration (`session.register(tool:)`) for compatibility.
+When set, the orchestrator's `errorPolicy` override is also applied on that fallback path.
 
 ### Backpressure visibility
 

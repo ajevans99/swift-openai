@@ -45,11 +45,19 @@ public extension ResponseStreamPlugin {
 /// invoke function tools registered at the session level (compatibility path).
 @available(macOS 15.0, *)
 public struct StreamPluginContext: Sendable {
-  private let executeFunctionToolImpl: @Sendable (_ name: String, _ arguments: String) async throws -> String
+  private let executeFunctionToolImpl: @Sendable (
+    _ name: String,
+    _ arguments: String,
+    _ policy: ToolErrorPolicy?
+  ) async throws -> String
   private var followUpItems: [Item] = []
 
   init(
-    executeFunctionTool: @escaping @Sendable (_ name: String, _ arguments: String) async throws -> String
+    executeFunctionTool: @escaping @Sendable (
+      _ name: String,
+      _ arguments: String,
+      _ policy: ToolErrorPolicy?
+    ) async throws -> String
   ) {
     self.executeFunctionToolImpl = executeFunctionTool
   }
@@ -62,9 +70,15 @@ public struct StreamPluginContext: Sendable {
   /// - Parameters:
   ///   - name: The function tool name.
   ///   - arguments: A JSON argument string to pass to the tool.
+  ///   - errorPolicy: Optional override for tool error handling. If omitted,
+  ///     the session default policy is used.
   /// - Returns: Tool output string.
-  public mutating func callFunctionTool(named name: String, arguments: String) async throws -> String {
-    try await executeFunctionToolImpl(name, arguments)
+  public mutating func callFunctionTool(
+    named name: String,
+    arguments: String,
+    errorPolicy: ToolErrorPolicy? = nil
+  ) async throws -> String {
+    try await executeFunctionToolImpl(name, arguments, errorPolicy)
   }
 
   /// Enqueues an item that will be sent in a follow-up request in the same
