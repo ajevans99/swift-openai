@@ -2,8 +2,73 @@ import Foundation
 import OpenAPIRuntime
 
 public struct ImageGenTool: Sendable {
-  public enum Model: String, Sendable {
-    case gptImage1 = "gpt-image-1"
+  public enum Model: Sendable, Hashable, RawRepresentable {
+    public typealias RawValue = String
+
+    case gptImage1
+    case gptImage1Mini
+    case gptImage1_5
+    case custom(String)
+
+    public var rawValue: String {
+      switch self {
+      case .gptImage1:
+        "gpt-image-1"
+      case .gptImage1Mini:
+        "gpt-image-1-mini"
+      case .gptImage1_5:
+        "gpt-image-1.5"
+      case .custom(let value):
+        value
+      }
+    }
+
+    public init?(rawValue: String) {
+      switch rawValue {
+      case "gpt-image-1":
+        self = .gptImage1
+      case "gpt-image-1-mini":
+        self = .gptImage1Mini
+      case "gpt-image-1.5":
+        self = .gptImage1_5
+      default:
+        self = .custom(rawValue)
+      }
+    }
+
+    public init(_ payload: Components.Schemas.ImageGenTool.ModelPayload) {
+      if let value2 = payload.value2 {
+        switch value2 {
+        case .gptImage1:
+          self = .gptImage1
+        case .gptImage1Mini:
+          self = .gptImage1Mini
+        case .gptImage1_5:
+          self = .gptImage1_5
+        }
+        return
+      }
+
+      if let value1 = payload.value1 {
+        self = .custom(value1)
+        return
+      }
+
+      self = .gptImage1
+    }
+
+    public func toOpenAPI() -> Components.Schemas.ImageGenTool.ModelPayload {
+      switch self {
+      case .gptImage1:
+        Components.Schemas.ImageGenTool.ModelPayload(value2: .gptImage1)
+      case .gptImage1Mini:
+        Components.Schemas.ImageGenTool.ModelPayload(value2: .gptImage1Mini)
+      case .gptImage1_5:
+        Components.Schemas.ImageGenTool.ModelPayload(value2: .gptImage1_5)
+      case .custom(let value):
+        Components.Schemas.ImageGenTool.ModelPayload(value1: value)
+      }
+    }
   }
 
   public enum Quality: String, Sendable {
@@ -90,7 +155,7 @@ public struct ImageGenTool: Sendable {
   }
 
   public init(_ tool: Components.Schemas.ImageGenTool) {
-    self.model = tool.model.map { Model(rawValue: $0.rawValue)! }
+    self.model = tool.model.map(Model.init)
     self.quality = tool.quality.map { Quality(rawValue: $0.rawValue)! }
     self.size = tool.size.map { Size(rawValue: $0.rawValue)! }
     self.outputFormat = tool.outputFormat.map { OutputFormat(rawValue: $0.rawValue)! }
@@ -109,7 +174,7 @@ public struct ImageGenTool: Sendable {
   public func toOpenAPI() -> Components.Schemas.ImageGenTool {
     Components.Schemas.ImageGenTool(
       _type: .imageGeneration,
-      model: model.map { Components.Schemas.ImageGenTool.ModelPayload(rawValue: $0.rawValue)! },
+      model: model?.toOpenAPI(),
       quality: quality.map {
         Components.Schemas.ImageGenTool.QualityPayload(rawValue: $0.rawValue)!
       },
@@ -127,5 +192,11 @@ public struct ImageGenTool: Sendable {
       inputImageMask: inputImageMask?.toOpenAPI(),
       partialImages: partialImages
     )
+  }
+}
+
+extension ImageGenTool.Model: ExpressibleByStringInterpolation {
+  public init(stringLiteral value: String) {
+    self = Self(rawValue: value) ?? .custom(value)
   }
 }

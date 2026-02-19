@@ -11,7 +11,7 @@ let package = Package(
   dependencies: [
     .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.5.0"),
     .package(
-      url: "https://github.com/swift-server/swift-openapi-async-http-client.git", from: "1.1.0"),
+      url: "https://github.com/swift-server/swift-openapi-async-http-client.git", from: "1.3.0"),
     .package(url: "https://github.com/thebarndog/swift-dotenv.git", from: "2.1.0"),
     .package(name: "swift-openai", path: "../"),
   ],

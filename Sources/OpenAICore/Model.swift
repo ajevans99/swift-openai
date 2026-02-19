@@ -1,7 +1,7 @@
 import OpenAIFoundation
 
 public enum Model: Sendable {
-  case standard(Components.Schemas.ChatModel)
+  case standard(Components.Schemas.ModelIdsShared.Value2Payload)
   case responseSpecific(Components.Schemas.ModelIdsResponses.Value2Payload)
   case custom(String)
 

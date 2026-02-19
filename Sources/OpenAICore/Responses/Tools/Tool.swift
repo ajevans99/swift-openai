@@ -4,55 +4,59 @@ import OpenAPIRuntime
 public enum Tool: Sendable {
   case function(FunctionTool)
   case fileSearch(Components.Schemas.FileSearchTool)
-  case webSearch(Components.Schemas.WebSearchPreviewTool)
+  case webSearch(Components.Schemas.WebSearchTool)
+  case webSearchPreview(Components.Schemas.WebSearchPreviewTool)
   case computer(Components.Schemas.ComputerUsePreviewTool)
   case mcp(Components.Schemas.MCPTool)
   case codeInterpreter(Components.Schemas.CodeInterpreterTool)
   case imageGen(ImageGenTool)
-  case localShell(Components.Schemas.LocalShellTool)
+  case localShell(Components.Schemas.LocalShellToolParam)
 
   public init(_ tool: Components.Schemas.Tool) {
-    if let value = tool.value1 {
+    switch tool {
+    case .functionTool(let value):
       self = .function(FunctionTool(value))
-    } else if let value = tool.value2 {
+    case .fileSearchTool(let value):
       self = .fileSearch(value)
-    } else if let value = tool.value3 {
+    case .webSearchTool(let value):
       self = .webSearch(value)
-    } else if let value = tool.value4 {
+    case .computerUsePreviewTool(let value):
       self = .computer(value)
-    } else if let value = tool.value5 {
+    case .mcpTool(let value):
       self = .mcp(value)
-    } else if let value = tool.value6 {
+    case .codeInterpreterTool(let value):
       self = .codeInterpreter(value)
-    } else if let value = tool.value7 {
+    case .imageGenTool(let value):
       self = .imageGen(ImageGenTool(value))
-    } else if let value = tool.value8 {
+    case .localShellToolParam(let value):
       self = .localShell(value)
-    } else {
-      fatalError("No tool value found")
+    case .webSearchPreviewTool(let value):
+      self = .webSearchPreview(value)
+    default:
+      fatalError("Unsupported tool case")
     }
   }
 
   public func toOpenAPI() -> Components.Schemas.Tool {
-    var tool = Components.Schemas.Tool()
     switch self {
     case .function(let value):
-      tool.value1 = value.toOpenAPI()
+      return .functionTool(value.toOpenAPI())
     case .fileSearch(let value):
-      tool.value2 = value
+      return .fileSearchTool(value)
     case .webSearch(let value):
-      tool.value3 = value
+      return .webSearchTool(value)
+    case .webSearchPreview(let value):
+      return .webSearchPreviewTool(value)
     case .computer(let value):
-      tool.value4 = value
+      return .computerUsePreviewTool(value)
     case .mcp(let value):
-      tool.value5 = value
+      return .mcpTool(value)
     case .codeInterpreter(let value):
-      tool.value6 = value
+      return .codeInterpreterTool(value)
     case .imageGen(let value):
-      tool.value7 = value.toOpenAPI()
+      return .imageGenTool(value.toOpenAPI())
     case .localShell(let value):
-      tool.value8 = value
+      return .localShellToolParam(value)
     }
-    return tool
   }
 }

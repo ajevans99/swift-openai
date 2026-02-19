@@ -1,4 +1,4 @@
-.PHONY: format lint fetch patches generate all clean check
+.PHONY: format lint fetch patches generated-patches generate build test test-live-snapshots record-snapshots all clean check
 
 GIT_ROOT := $(shell git rev-parse --show-toplevel)
 
@@ -11,8 +11,10 @@ GENERATED_DIR    := $(SPEC_DIR)/Generated
 # Scripts
 FETCH_SCRIPT   := $(GIT_ROOT)/Scripts/fetch-openapi.sh
 APPLY_SCRIPT   := $(GIT_ROOT)/Scripts/apply-patches.sh
+GENERATED_PATCH_SCRIPT := $(GIT_ROOT)/Scripts/apply-generated-patches.sh
 GENERATE_SCRIPT:= $(GIT_ROOT)/Scripts/generate-models.sh
 CHECK_SCRIPT   := $(GIT_ROOT)/Scripts/check-openapi-up-to-date.sh
+RECORD_SNAPSHOTS_SCRIPT := $(GIT_ROOT)/Scripts/record-response-snapshots.sh
 
 SWIFT_FORMAT_CONFIG = .swift-format.json
 
@@ -28,11 +30,31 @@ patches:
 	@echo "▶ apply-patches"
 	@bash $(APPLY_SCRIPT)
 
-generate:
+generated-patches:
+	@echo "▶ apply-generated-patches"
+	@bash $(GENERATED_PATCH_SCRIPT)
+
+generate: patches
 	@echo "▶ generate-models"
 	@bash $(GENERATE_SCRIPT)
 
-all: fetch patches generate
+build:
+	@echo "▶ swift-build"
+	@swift build
+
+test:
+	@echo "▶ swift-test"
+	@swift test
+
+test-live-snapshots:
+	@echo "▶ swift-test (live snapshot smoke)"
+	@OPENAI_LIVE_SNAPSHOT=1 swift test
+
+record-snapshots:
+	@echo "▶ record-response-snapshots"
+	@bash $(RECORD_SNAPSHOTS_SCRIPT)
+
+all: fetch generate build
 	@echo "✅ All done."
 
 clean:

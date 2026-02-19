@@ -2,17 +2,56 @@ import Foundation
 import OpenAPIRuntime
 
 public struct CreateImageEditRequest: Sendable {
-  public enum Model: String, Sendable {
-    case dallE2 = "dall-e-2"
-    case gptImage1 = "gpt-image-1"
+  public enum Model: Sendable, Hashable, RawRepresentable {
+    public typealias RawValue = String
+
+    case dallE2
+    case gptImage1
+    case gptImage1Mini
+    case gptImage1_5
+    case chatgptImageLatest
+    case custom(String)
+
+    public var rawValue: String {
+      switch self {
+      case .dallE2:
+        "dall-e-2"
+      case .gptImage1:
+        "gpt-image-1"
+      case .gptImage1Mini:
+        "gpt-image-1-mini"
+      case .gptImage1_5:
+        "gpt-image-1.5"
+      case .chatgptImageLatest:
+        "chatgpt-image-latest"
+      case .custom(let value):
+        value
+      }
+    }
+
+    public init?(rawValue: String) {
+      switch rawValue {
+      case "dall-e-2":
+        self = .dallE2
+      case "gpt-image-1":
+        self = .gptImage1
+      case "gpt-image-1-mini":
+        self = .gptImage1Mini
+      case "gpt-image-1.5":
+        self = .gptImage1_5
+      case "chatgpt-image-latest":
+        self = .chatgptImageLatest
+      default:
+        self = .custom(rawValue)
+      }
+    }
 
     public func toOpenAPI()
       -> Operations.CreateImageEdit.Input.Body.MultipartFormPayload.ModelPayload
     {
-      return .init(body: .init(rawValue))
+      .init(body: .init(rawValue))
     }
   }
-
   public enum Size: String, Sendable {
     // Dall-E 2
     case size256x256 = "256x256"
@@ -149,6 +188,12 @@ public struct CreateImageEditRequest: Sendable {
       }
     }
     return .init(parts)
+  }
+}
+
+extension CreateImageEditRequest.Model: ExpressibleByStringInterpolation {
+  public init(stringLiteral value: String) {
+    self = Self(rawValue: value) ?? .custom(value)
   }
 }
 

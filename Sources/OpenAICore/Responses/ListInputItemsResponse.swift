@@ -14,20 +14,17 @@ public struct ListQueryItems: Sendable {
   }
 
   public let after: String?
-  public let before: String?
   public let limit: Int?
   public let order: Order?
   public let include: [Includable]?
 
   public init(
     after: String? = nil,
-    before: String? = nil,
     limit: Int? = nil,
     order: Order? = nil,
     include: [Includable]? = nil
   ) {
     self.after = after
-    self.before = before
     self.limit = limit
     self.order = order
     self.include = include
@@ -38,7 +35,6 @@ public struct ListQueryItems: Sendable {
       limit: limit,
       order: order?.toOpenAPI(),
       after: after,
-      before: before,
       include: include?.map { $0.toOpenAPI() }
     )
   }

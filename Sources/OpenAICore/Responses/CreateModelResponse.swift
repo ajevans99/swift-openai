@@ -31,30 +31,35 @@ public struct CreateModelResponseProperties: Sendable {
   public var topP: Double?
   public var user: String?
   public var serviceTier: ServiceTier?
+  public var safetyIdentifier: String?
+  public var promptCacheKey: String?
 
   public init(
     metadata: [String: String]? = nil,
     temperature: Double? = nil,
     topP: Double? = nil,
     user: String? = nil,
-    serviceTier: ServiceTier? = nil
+    serviceTier: ServiceTier? = nil,
+    safetyIdentifier: String? = nil,
+    promptCacheKey: String? = nil
   ) {
     self.metadata = metadata
     self.temperature = temperature
     self.topP = topP
     self.user = user
     self.serviceTier = serviceTier
+    self.safetyIdentifier = safetyIdentifier
+    self.promptCacheKey = promptCacheKey
   }
 
   public func toOpenAPI() -> Components.Schemas.CreateModelResponseProperties {
     Components.Schemas.CreateModelResponseProperties(
       value1: Components.Schemas.ModelResponseProperties(
-        metadata: metadata.map { Components.Schemas.Metadata(additionalProperties: $0) },
-        temperature: temperature,
-        topP: topP,
         user: user,
-        serviceTier: serviceTier?.toOpenAPI()
-      )
+        safetyIdentifier: safetyIdentifier,
+        promptCacheKey: promptCacheKey
+      ),
+      value2: .init(topLogprobs: nil)
     )
   }
 }
@@ -65,9 +70,9 @@ public struct ResponseProperties: Sendable {
   public var reasoning: Reasoning?
   public var maxOutputTokens: Int?
   public var instructions: String?
-  public var text: Components.Schemas.ResponseProperties.TextPayload?
+  public var text: Components.Schemas.ResponseTextParam?
   public var tools: [Components.Schemas.Tool]?
-  public var toolChoice: Components.Schemas.ResponseProperties.ToolChoicePayload?
+  public var toolChoice: Components.Schemas.ToolChoiceParam?
   public var truncation: Truncation?
 
   public init(
@@ -76,9 +81,9 @@ public struct ResponseProperties: Sendable {
     reasoning: Reasoning? = nil,
     maxOutputTokens: Int? = nil,
     instructions: String? = nil,
-    text: Components.Schemas.ResponseProperties.TextPayload? = nil,
+    text: Components.Schemas.ResponseTextParam? = nil,
     tools: [Components.Schemas.Tool]? = nil,
-    toolChoice: Components.Schemas.ResponseProperties.ToolChoicePayload? = nil,
+    toolChoice: Components.Schemas.ToolChoiceParam? = nil,
     truncation: Truncation? = nil
   ) {
     self.previousResponseId = previousResponseId
@@ -94,15 +99,10 @@ public struct ResponseProperties: Sendable {
 
   public func toOpenAPI() -> Components.Schemas.ResponseProperties {
     .init(
-      previousResponseId: previousResponseId,
       model: model.toOpenAPI(),
-      reasoning: reasoning?.toOpenAPI(),
-      maxOutputTokens: maxOutputTokens,
-      instructions: instructions,
       text: text,
       tools: tools,
-      toolChoice: toolChoice,
-      truncation: truncation?.toOpenAPI()
+      toolChoice: toolChoice
     )
   }
 }
@@ -131,9 +131,6 @@ public struct CreateResponseInputPayload: Sendable {
   public func toOpenAPI() -> Components.Schemas.CreateResponse.Value3Payload {
     Components.Schemas.CreateResponse.Value3Payload(
       input: input.toOpenAPI(),
-      include: include?.map { $0.toOpenAPI() },
-      parallelToolCalls: parallelToolCalls,
-      store: store,
       stream: stream
     )
   }
@@ -144,7 +141,7 @@ public enum Includable: Sendable {
   case messageInputImage
   case computerCallOutputImage
 
-  public func toOpenAPI() -> Components.Schemas.Includable {
+  public func toOpenAPI() -> Components.Schemas.IncludeEnum {
     switch self {
     case .fileSearchResults:
       return .fileSearchCall_results

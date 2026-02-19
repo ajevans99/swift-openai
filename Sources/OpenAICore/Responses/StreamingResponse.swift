@@ -55,34 +55,8 @@ public enum StreamingResponse: Sendable {
   }
 
   public enum OutputText: Sendable {
-    public enum Annotation: Sendable {
-      case added(
-        annotation: Components.Schemas.Annotation,
-        annotationIndex: Int,
-        contentIndex: Int,
-        itemId: String,
-        outputIndex: Int
-      )
-
-      public var value: String {
-        switch self {
-        case .added: "added"
-        }
-      }
-
-      public init(openAPI: Components.Schemas.ResponseTextAnnotationDeltaEvent) {
-        self = .added(
-          annotation: openAPI.annotation,
-          annotationIndex: openAPI.annotationIndex,
-          contentIndex: openAPI.contentIndex,
-          itemId: openAPI.itemId,
-          outputIndex: openAPI.outputIndex
-        )
-      }
-    }
-
     case delta(delta: String, contentIndex: Int, itemId: String, outputIndex: Int)
-    case annotation(Annotation)
+    case annotation(OutputTextAnnotation)
     case done(text: String, contentIndex: Int, itemId: String, outputIndex: Int)
 
     public var value: String {
@@ -102,10 +76,6 @@ public enum StreamingResponse: Sendable {
       )
     }
 
-    public init(openAPI: Components.Schemas.ResponseTextAnnotationDeltaEvent) {
-      self = .annotation(Annotation(openAPI: openAPI))
-    }
-
     public init(openAPI: Components.Schemas.ResponseTextDoneEvent) {
       self = .done(
         text: openAPI.text,
@@ -113,6 +83,10 @@ public enum StreamingResponse: Sendable {
         itemId: openAPI.itemId,
         outputIndex: openAPI.outputIndex
       )
+    }
+
+    public init(openAPI: Components.Schemas.ResponseOutputTextAnnotationAddedEvent) {
+      self = .annotation(OutputTextAnnotation(openAPI: openAPI))
     }
   }
 
@@ -171,16 +145,20 @@ public enum StreamingResponse: Sendable {
   }
 
   public enum FileSearchCall: Sendable {
+    case completed(itemId: String, outputIndex: Int)
     case inProgress(itemId: String, outputIndex: Int)
     case searching(itemId: String, outputIndex: Int)
-    case completed(itemId: String, outputIndex: Int)
 
     public var value: String {
       switch self {
+      case .completed: "completed"
       case .inProgress: "in_progress"
       case .searching: "searching"
-      case .completed: "completed"
       }
+    }
+
+    public init(openAPI: Components.Schemas.ResponseFileSearchCallCompletedEvent) {
+      self = .completed(itemId: openAPI.itemId, outputIndex: openAPI.outputIndex)
     }
 
     public init(openAPI: Components.Schemas.ResponseFileSearchCallInProgressEvent) {
@@ -190,23 +168,23 @@ public enum StreamingResponse: Sendable {
     public init(openAPI: Components.Schemas.ResponseFileSearchCallSearchingEvent) {
       self = .searching(itemId: openAPI.itemId, outputIndex: openAPI.outputIndex)
     }
-
-    public init(openAPI: Components.Schemas.ResponseFileSearchCallCompletedEvent) {
-      self = .completed(itemId: openAPI.itemId, outputIndex: openAPI.outputIndex)
-    }
   }
 
   public enum WebSearchCall: Sendable {
+    case completed(itemId: String, outputIndex: Int)
     case inProgress(itemId: String, outputIndex: Int)
     case searching(itemId: String, outputIndex: Int)
-    case completed(itemId: String, outputIndex: Int)
 
     public var value: String {
       switch self {
+      case .completed: "completed"
       case .inProgress: "in_progress"
       case .searching: "searching"
-      case .completed: "completed"
       }
+    }
+
+    public init(openAPI: Components.Schemas.ResponseWebSearchCallCompletedEvent) {
+      self = .completed(itemId: openAPI.itemId, outputIndex: openAPI.outputIndex)
     }
 
     public init(openAPI: Components.Schemas.ResponseWebSearchCallInProgressEvent) {
@@ -216,25 +194,21 @@ public enum StreamingResponse: Sendable {
     public init(openAPI: Components.Schemas.ResponseWebSearchCallSearchingEvent) {
       self = .searching(itemId: openAPI.itemId, outputIndex: openAPI.outputIndex)
     }
-
-    public init(openAPI: Components.Schemas.ResponseWebSearchCallCompletedEvent) {
-      self = .completed(itemId: openAPI.itemId, outputIndex: openAPI.outputIndex)
-    }
   }
 
   public enum ReasoningSummaryPart: Sendable {
-    case delta(part: String, summaryIndex: Int, itemId: String, outputIndex: Int)
+    case added(part: String, summaryIndex: Int, itemId: String, outputIndex: Int)
     case done(part: String, summaryIndex: Int, itemId: String, outputIndex: Int)
 
     public var value: String {
       switch self {
-      case .delta: "delta"
+      case .added: "added"
       case .done: "done"
       }
     }
 
     public init(openAPI: Components.Schemas.ResponseReasoningSummaryPartAddedEvent) {
-      self = .delta(
+      self = .added(
         part: openAPI.part.text,
         summaryIndex: openAPI.summaryIndex,
         itemId: openAPI.itemId,
@@ -282,50 +256,6 @@ public enum StreamingResponse: Sendable {
     }
   }
 
-  public enum ReasoningSummary: Sendable {
-    case delta(
-      delta: OpenAPIRuntime.OpenAPIObjectContainer,
-      summaryIndex: Int,
-      itemId: String,
-      outputIndex: Int,
-      sequenceNumber: Int
-    )
-    case done(
-      text: String,
-      summaryIndex: Int,
-      itemId: String,
-      outputIndex: Int,
-      sequenceNumber: Int
-    )
-
-    public var value: String {
-      switch self {
-      case .delta: "delta"
-      case .done: "done"
-      }
-    }
-
-    public init(openAPI: Components.Schemas.ResponseReasoningSummaryDeltaEvent) {
-      self = .delta(
-        delta: openAPI.delta,
-        summaryIndex: openAPI.summaryIndex,
-        itemId: openAPI.itemId,
-        outputIndex: openAPI.outputIndex,
-        sequenceNumber: openAPI.sequenceNumber
-      )
-    }
-
-    public init(openAPI: Components.Schemas.ResponseReasoningSummaryDoneEvent) {
-      self = .done(
-        text: openAPI.text,
-        summaryIndex: openAPI.summaryIndex,
-        itemId: openAPI.itemId,
-        outputIndex: openAPI.outputIndex,
-        sequenceNumber: openAPI.sequenceNumber
-      )
-    }
-  }
-
   public enum Audio: Sendable {
     case delta(delta: String)
     case done
@@ -355,7 +285,6 @@ public enum StreamingResponse: Sendable {
       case .delta: "delta"
       case .done: "done"
       }
-
     }
 
     public init(openAPI: Components.Schemas.ResponseAudioTranscriptDeltaEvent) {
@@ -368,20 +297,11 @@ public enum StreamingResponse: Sendable {
   }
 
   public enum CodeInterpreterCall: Sendable {
-    case codeDelta(delta: String, outputIndex: Int)
-    case codeDone(code: String, outputIndex: Int)
-    case completed(
-      outputIndex: Int,
-      codeInterpreterCall: Components.Schemas.CodeInterpreterToolCall
-    )
-    case inProgress(
-      outputIndex: Int,
-      codeInterpreterCall: Components.Schemas.CodeInterpreterToolCall
-    )
-    case interpreting(
-      outputIndex: Int,
-      codeInterpreterCall: Components.Schemas.CodeInterpreterToolCall
-    )
+    case codeDelta(delta: String, outputIndex: Int, itemId: String, sequenceNumber: Int)
+    case codeDone(code: String, outputIndex: Int, itemId: String, sequenceNumber: Int)
+    case completed(outputIndex: Int, itemId: String, sequenceNumber: Int)
+    case inProgress(outputIndex: Int, itemId: String, sequenceNumber: Int)
+    case interpreting(outputIndex: Int, itemId: String, sequenceNumber: Int)
 
     public var value: String {
       switch self {
@@ -394,31 +314,44 @@ public enum StreamingResponse: Sendable {
     }
 
     public init(openAPI: Components.Schemas.ResponseCodeInterpreterCallCodeDeltaEvent) {
-      self = .codeDelta(delta: openAPI.delta, outputIndex: openAPI.outputIndex)
+      self = .codeDelta(
+        delta: openAPI.delta,
+        outputIndex: openAPI.outputIndex,
+        itemId: openAPI.itemId,
+        sequenceNumber: openAPI.sequenceNumber
+      )
     }
 
     public init(openAPI: Components.Schemas.ResponseCodeInterpreterCallCodeDoneEvent) {
-      self = .codeDone(code: openAPI.code, outputIndex: openAPI.outputIndex)
+      self = .codeDone(
+        code: openAPI.code,
+        outputIndex: openAPI.outputIndex,
+        itemId: openAPI.itemId,
+        sequenceNumber: openAPI.sequenceNumber
+      )
     }
 
     public init(openAPI: Components.Schemas.ResponseCodeInterpreterCallCompletedEvent) {
       self = .completed(
         outputIndex: openAPI.outputIndex,
-        codeInterpreterCall: openAPI.codeInterpreterCall
+        itemId: openAPI.itemId,
+        sequenceNumber: openAPI.sequenceNumber
       )
     }
 
     public init(openAPI: Components.Schemas.ResponseCodeInterpreterCallInProgressEvent) {
       self = .inProgress(
         outputIndex: openAPI.outputIndex,
-        codeInterpreterCall: openAPI.codeInterpreterCall
+        itemId: openAPI.itemId,
+        sequenceNumber: openAPI.sequenceNumber
       )
     }
 
     public init(openAPI: Components.Schemas.ResponseCodeInterpreterCallInterpretingEvent) {
       self = .interpreting(
         outputIndex: openAPI.outputIndex,
-        codeInterpreterCall: openAPI.codeInterpreterCall
+        itemId: openAPI.itemId,
+        sequenceNumber: openAPI.sequenceNumber
       )
     }
   }
@@ -428,7 +361,10 @@ public enum StreamingResponse: Sendable {
     case generating(itemId: String, outputIndex: Int, sequenceNumber: Int)
     case inProgress(itemId: String, outputIndex: Int, sequenceNumber: Int)
     case partialImage(
-      itemId: String, outputIndex: Int, partialImageBase64: String, partialImageIndex: Int,
+      itemId: String,
+      outputIndex: Int,
+      partialImageBase64: String,
+      partialImageIndex: Int,
       sequenceNumber: Int
     )
 
@@ -473,10 +409,8 @@ public enum StreamingResponse: Sendable {
   }
 
   public enum MCPCall: Sendable {
-    case argumentsDelta(
-      delta: OpenAPIRuntime.OpenAPIObjectContainer, itemId: String, outputIndex: Int)
-    case argumentsDone(
-      arguments: OpenAPIRuntime.OpenAPIObjectContainer, itemId: String, outputIndex: Int)
+    case argumentsDelta(delta: String, itemId: String, outputIndex: Int)
+    case argumentsDone(arguments: String, itemId: String, outputIndex: Int)
     case completed(sequenceNumber: Int)
     case failed(sequenceNumber: Int)
     case inProgress(itemId: String, outputIndex: Int, sequenceNumber: Int)
@@ -551,10 +485,8 @@ public enum StreamingResponse: Sendable {
   }
 
   public enum Reasoning: Sendable {
-    case delta(
-      delta: OpenAPIRuntime.OpenAPIObjectContainer, itemId: String, outputIndex: Int,
-      contentIndex: Int, sequenceNumber: Int)
-    case done(text: String, itemId: String, outputIndex: Int)
+    case delta(delta: String, itemId: String, outputIndex: Int, contentIndex: Int, sequenceNumber: Int)
+    case done(text: String, itemId: String, outputIndex: Int, contentIndex: Int, sequenceNumber: Int)
 
     public var value: String {
       switch self {
@@ -563,7 +495,7 @@ public enum StreamingResponse: Sendable {
       }
     }
 
-    public init(openAPI: Components.Schemas.ResponseReasoningDeltaEvent) {
+    public init(openAPI: Components.Schemas.ResponseReasoningTextDeltaEvent) {
       self = .delta(
         delta: openAPI.delta,
         itemId: openAPI.itemId,
@@ -573,8 +505,14 @@ public enum StreamingResponse: Sendable {
       )
     }
 
-    public init(openAPI: Components.Schemas.ResponseReasoningDoneEvent) {
-      self = .done(text: openAPI.text, itemId: openAPI.itemId, outputIndex: openAPI.outputIndex)
+    public init(openAPI: Components.Schemas.ResponseReasoningTextDoneEvent) {
+      self = .done(
+        text: openAPI.text,
+        itemId: openAPI.itemId,
+        outputIndex: openAPI.outputIndex,
+        contentIndex: openAPI.contentIndex,
+        sequenceNumber: openAPI.sequenceNumber
+      )
     }
   }
 
@@ -589,7 +527,9 @@ public enum StreamingResponse: Sendable {
 
     public init(openAPI: Components.Schemas.ResponseQueuedEvent) {
       self = .queued(
-        response: Response(openAPI: openAPI.response), sequenceNumber: openAPI.sequenceNumber)
+        response: Response(openAPI: openAPI.response),
+        sequenceNumber: openAPI.sequenceNumber
+      )
     }
   }
 
@@ -621,6 +561,36 @@ public enum StreamingResponse: Sendable {
     }
   }
 
+  public enum CustomToolCallInput: Sendable {
+    case delta(delta: String, itemId: String, outputIndex: Int, sequenceNumber: Int)
+    case done(input: String, itemId: String, outputIndex: Int, sequenceNumber: Int)
+
+    public var value: String {
+      switch self {
+      case .delta: "delta"
+      case .done: "done"
+      }
+    }
+
+    public init(openAPI: Components.Schemas.ResponseCustomToolCallInputDeltaEvent) {
+      self = .delta(
+        delta: openAPI.delta,
+        itemId: openAPI.itemId,
+        outputIndex: openAPI.outputIndex,
+        sequenceNumber: openAPI.sequenceNumber
+      )
+    }
+
+    public init(openAPI: Components.Schemas.ResponseCustomToolCallInputDoneEvent) {
+      self = .done(
+        input: openAPI.input,
+        itemId: openAPI.itemId,
+        outputIndex: openAPI.outputIndex,
+        sequenceNumber: openAPI.sequenceNumber
+      )
+    }
+  }
+
   case created(Response)
   case inProgress(Response)
   case completed(Response)
@@ -633,7 +603,6 @@ public enum StreamingResponse: Sendable {
   case functionCallArgument(FunctionCallArguments)
   case fileSearchCall(FileSearchCall)
   case webSearchCall(WebSearchCall)
-  case reasoningSummary(ReasoningSummary)
   case reasoningSummaryPart(ReasoningSummaryPart)
   case reasoningSummaryText(ReasoningSummaryText)
   case error(message: String, code: String?, param: String?)
@@ -646,6 +615,7 @@ public enum StreamingResponse: Sendable {
   case reasoning(Reasoning)
   case queued(Queued)
   case outputTextAnnotation(OutputTextAnnotation)
+  case customToolCallInput(CustomToolCallInput)
 
   public var value: String {
     switch self {
@@ -661,7 +631,6 @@ public enum StreamingResponse: Sendable {
     case .functionCallArgument(let argument): "response.function_call_argument.\(argument.value)"
     case .fileSearchCall(let call): "response.file_search_call.\(call.value)"
     case .webSearchCall(let call): "response.web_search_call.\(call.value)"
-    case .reasoningSummary(let summary): "response.reasoning_summary.\(summary.value)"
     case .reasoningSummaryPart(let summary): "response.reasoning_summary_part.\(summary.value)"
     case .reasoningSummaryText(let text): "response.reasoning_summary_text.\(text.value)"
     case .error: "error"
@@ -673,8 +642,8 @@ public enum StreamingResponse: Sendable {
     case .mcpListTools(let tools): "response.mcp_list_tools.\(tools.value)"
     case .reasoning(let reasoning): "response.reasoning.\(reasoning.value)"
     case .queued(let queued): "response.queued.\(queued.value)"
-    case .outputTextAnnotation(let annotation):
-      "response.output_text_annotation.\(annotation.value)"
+    case .outputTextAnnotation(let annotation): "response.output_text_annotation.\(annotation.value)"
+    case .customToolCallInput(let custom): "response.custom_tool_call_input.\(custom.value)"
     }
   }
 
@@ -697,58 +666,38 @@ public enum StreamingResponse: Sendable {
       self = .codeInterpreterCall(CodeInterpreterCall(openAPI: event))
     } else if let event = openAPI.value9 {
       self = .codeInterpreterCall(CodeInterpreterCall(openAPI: event))
-    } else if let event = openAPI.value13 {
-      self = .created(Response(openAPI: event.response))
-    } else if let event = openAPI.value20 {
-      self = .inProgress(Response(openAPI: event.response))
     } else if let event = openAPI.value10 {
       self = .completed(Response(openAPI: event.response))
+    } else if let event = openAPI.value11 {
+      self = .contentPart(ContentPart(openAPI: event))
+    } else if let event = openAPI.value12 {
+      self = .contentPart(ContentPart(openAPI: event))
+    } else if let event = openAPI.value13 {
+      self = .created(Response(openAPI: event.response))
+    } else if let event = openAPI.value14 {
+      self = .error(message: event.message, code: nil, param: nil)
+    } else if let event = openAPI.value15 {
+      self = .fileSearchCall(FileSearchCall(openAPI: event))
+    } else if let event = openAPI.value16 {
+      self = .fileSearchCall(FileSearchCall(openAPI: event))
+    } else if let event = openAPI.value17 {
+      self = .fileSearchCall(FileSearchCall(openAPI: event))
+    } else if let event = openAPI.value18 {
+      self = .functionCallArgument(FunctionCallArguments(openAPI: event))
+    } else if let event = openAPI.value19 {
+      self = .functionCallArgument(FunctionCallArguments(openAPI: event))
+    } else if let event = openAPI.value20 {
+      self = .inProgress(Response(openAPI: event.response))
     } else if let event = openAPI.value21 {
       self = .failed(Response(openAPI: event.response))
     } else if let event = openAPI.value22 {
       self = .incomplete(Response(openAPI: event.response))
     } else if let event = openAPI.value23 {
-      guard let item = OutputItem(openAPI: event) else {
-        print("Failed to parse OutputItem: \(event)")
-        return nil
-      }
+      guard let item = OutputItem(openAPI: event) else { return nil }
       self = .outputItem(item)
     } else if let event = openAPI.value24 {
-      guard let item = OutputItem(openAPI: event) else {
-        print("Failed to parse OutputItem: \(event)")
-        return nil
-      }
+      guard let item = OutputItem(openAPI: event) else { return nil }
       self = .outputItem(item)
-    } else if let event = openAPI.value11 {
-      self = .contentPart(ContentPart(openAPI: event))
-    } else if let event = openAPI.value12 {
-      self = .contentPart(ContentPart(openAPI: event))
-    } else if let event = openAPI.value32 {
-      self = .outputText(OutputText(openAPI: event))
-    } else if let event = openAPI.value31 {
-      self = .outputText(OutputText(openAPI: event))
-    } else if let event = openAPI.value33 {
-      self = .outputText(OutputText(openAPI: event))
-    } else if let event = openAPI.value29 {
-      self = .refusal(Refusal(openAPI: event))
-    } else if let event = openAPI.value30 {
-      self = .refusal(Refusal(openAPI: event))
-    } else if let event = openAPI.value18 {
-      self = .functionCallArgument(FunctionCallArguments(openAPI: event))
-    } else if let event = openAPI.value19 {
-      self = .functionCallArgument(FunctionCallArguments(openAPI: event))
-    } else if let event = openAPI.value16 {
-      self = .fileSearchCall(FileSearchCall(openAPI: event))
-    } else if let event = openAPI.value17 {
-      self = .fileSearchCall(FileSearchCall(openAPI: event))
-    } else if let event = openAPI.value15 {
-      self = .fileSearchCall(FileSearchCall(openAPI: event))
-    } else if let event = openAPI.value35 {
-      self = .webSearchCall(WebSearchCall(openAPI: event))
-    } else if let event = openAPI.value36 {
-      self = .webSearchCall(WebSearchCall(openAPI: event))
-    } else if let event = openAPI.value34 {
-      self = .webSearchCall(WebSearchCall(openAPI: event))
     } else if let event = openAPI.value25 {
       self = .reasoningSummaryPart(ReasoningSummaryPart(openAPI: event))
     } else if let event = openAPI.value26 {
@@ -757,10 +706,24 @@ public enum StreamingResponse: Sendable {
       self = .reasoningSummaryText(ReasoningSummaryText(openAPI: event))
     } else if let event = openAPI.value28 {
       self = .reasoningSummaryText(ReasoningSummaryText(openAPI: event))
-    } else if let event = openAPI.value14 {
-      self = .error(message: event.message, code: event.code, param: event.param)
+    } else if let event = openAPI.value29 {
+      self = .reasoning(Reasoning(openAPI: event))
+    } else if let event = openAPI.value30 {
+      self = .reasoning(Reasoning(openAPI: event))
+    } else if let event = openAPI.value31 {
+      self = .refusal(Refusal(openAPI: event))
+    } else if let event = openAPI.value32 {
+      self = .refusal(Refusal(openAPI: event))
+    } else if let event = openAPI.value33 {
+      self = .outputText(OutputText(openAPI: event))
+    } else if let event = openAPI.value34 {
+      self = .outputText(OutputText(openAPI: event))
+    } else if let event = openAPI.value35 {
+      self = .webSearchCall(WebSearchCall(openAPI: event))
+    } else if let event = openAPI.value36 {
+      self = .webSearchCall(WebSearchCall(openAPI: event))
     } else if let event = openAPI.value37 {
-      self = .imageGenCall(ImageGenCall(openAPI: event))
+      self = .webSearchCall(WebSearchCall(openAPI: event))
     } else if let event = openAPI.value38 {
       self = .imageGenCall(ImageGenCall(openAPI: event))
     } else if let event = openAPI.value39 {
@@ -768,7 +731,7 @@ public enum StreamingResponse: Sendable {
     } else if let event = openAPI.value40 {
       self = .imageGenCall(ImageGenCall(openAPI: event))
     } else if let event = openAPI.value41 {
-      self = .mcpCall(MCPCall(openAPI: event))
+      self = .imageGenCall(ImageGenCall(openAPI: event))
     } else if let event = openAPI.value42 {
       self = .mcpCall(MCPCall(openAPI: event))
     } else if let event = openAPI.value43 {
@@ -778,23 +741,21 @@ public enum StreamingResponse: Sendable {
     } else if let event = openAPI.value45 {
       self = .mcpCall(MCPCall(openAPI: event))
     } else if let event = openAPI.value46 {
-      self = .mcpListTools(MCPListTools(openAPI: event))
+      self = .mcpCall(MCPCall(openAPI: event))
     } else if let event = openAPI.value47 {
       self = .mcpListTools(MCPListTools(openAPI: event))
     } else if let event = openAPI.value48 {
       self = .mcpListTools(MCPListTools(openAPI: event))
     } else if let event = openAPI.value49 {
-      self = .outputTextAnnotation(OutputTextAnnotation(openAPI: event))
+      self = .mcpListTools(MCPListTools(openAPI: event))
     } else if let event = openAPI.value50 {
-      self = .queued(Queued(openAPI: event))
+      self = .outputText(OutputText(openAPI: event))
     } else if let event = openAPI.value51 {
-      self = .reasoning(Reasoning(openAPI: event))
+      self = .queued(Queued(openAPI: event))
     } else if let event = openAPI.value52 {
-      self = .reasoning(Reasoning(openAPI: event))
+      self = .customToolCallInput(CustomToolCallInput(openAPI: event))
     } else if let event = openAPI.value53 {
-      self = .reasoningSummary(ReasoningSummary(openAPI: event))
-    } else if let event = openAPI.value54 {
-      self = .reasoningSummary(ReasoningSummary(openAPI: event))
+      self = .customToolCallInput(CustomToolCallInput(openAPI: event))
     } else {
       return nil
     }

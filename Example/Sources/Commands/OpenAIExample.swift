@@ -35,7 +35,7 @@ struct OpenAIExample: AsyncParsableCommand {
 
     let response = try await openAI.createResponse(
       input: "Hello, world!",
-      model: .standard(.gpt4o)
+      model: .standard(.gpt5_2)
     )
 
     dump(response)

@@ -78,8 +78,10 @@ struct WeatherCommand: AsyncParsableCommand {
           )
         }
       case .webSearchToolCall, .fileSearchToolCall, .computerToolCall, .reasoning,
-        .imageGenToolCall, .codeInterpreterToolCall, .localShellToolCall, .mcpToolCall,
-        .mcpListTools, .mcpApprovalRequest:
+        .compactionBody, .imageGenToolCall, .codeInterpreterToolCall, .localShellToolCall,
+        .functionShellCall, .functionShellCallOutput, .applyPatchToolCall,
+        .applyPatchToolCallOutput, .mcpToolCall, .mcpListTools, .mcpApprovalRequest,
+        .customToolCall:
         throw ValidationError("Unexpected output item: \(output)")
       }
     }

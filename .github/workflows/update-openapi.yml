@@ -24,6 +24,10 @@ jobs:
         if: steps.check.outcome == 'failure'
         run: make all
 
+      - name: Run tests after regeneration
+        if: steps.check.outcome == 'failure'
+        run: make test
+
       - name: Create Pull Request for updated spec
         if: steps.check.outcome == 'failure'
         uses: peter-evans/create-pull-request@v8
@@ -31,7 +35,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: Update OpenAPI spec
           branch: update/openapi-spec
-          title: Update OpenAPI spec to latest
+          title: Update OpenAPI spec to latest documented version
           body: |
-            This PR updates the OpenAPI spec and generated models to the latest upstream version.
+            This PR updates the OpenAPI spec and generated models to the latest documented OpenAI spec from Stainless.
           labels: auto-update

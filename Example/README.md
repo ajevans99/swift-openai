@@ -28,3 +28,9 @@ swift run OpenAIExample
 ```
 
 The CLI will use your API keys from the `.env` file to demonstrate basic functionality with the OpenAI and OpenWeather APIs.
+
+## Python SDK comparison benchmark
+
+To compare streaming image-generation timing against the official Python SDK, see:
+
+- `python-sdk-benchmark/README.md`

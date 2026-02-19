@@ -31,7 +31,7 @@ let package = Package(
     // 🔄 Swift OpenAPI Runtime
     .package(url: "https://github.com/apple/swift-openapi-runtime.git", from: "1.8.2"),
     // 📦 JSON Schema Builder for tools
-    .package(url: "https://github.com/ajevans99/swift-json-schema.git", from: "0.5.0"),
+    .package(url: "https://github.com/ajevans99/swift-json-schema.git", .upToNextMinor(from: "0.5.0")),
     // 🪵 Logging
     .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
   ],
@@ -48,7 +48,10 @@ let package = Package(
     ),
     .testTarget(
       name: "OpenAIKitTests",
-      dependencies: ["OpenAIKit"]
+      dependencies: ["OpenAIKit", "OpenAICore"],
+      resources: [
+        .copy("Fixtures")
+      ]
     ),
 
     .target(

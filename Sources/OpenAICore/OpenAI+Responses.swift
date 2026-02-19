@@ -1,3 +1,5 @@
+import Foundation
+import Logging
 import OpenAIFoundation
 import OpenAPIRuntime
 
@@ -26,8 +28,8 @@ extension OpenAI {
     serviceTier: ServiceTier? = nil,
     store: Bool? = nil,
     temperature: Double? = nil,
-    text: Components.Schemas.ResponseProperties.TextPayload? = nil,
-    toolChoice: Components.Schemas.ResponseProperties.ToolChoicePayload? = nil,
+    text: Components.Schemas.ResponseTextParam? = nil,
+    toolChoice: Components.Schemas.ToolChoiceParam? = nil,
     tools: [Tool]? = nil,
     topP: Double? = nil,
     truncation: Truncation? = nil,
@@ -99,8 +101,8 @@ extension OpenAI {
     serviceTier: ServiceTier? = nil,
     store: Bool? = nil,
     temperature: Double? = nil,
-    text: Components.Schemas.ResponseProperties.TextPayload? = nil,
-    toolChoice: Components.Schemas.ResponseProperties.ToolChoicePayload? = nil,
+    text: Components.Schemas.ResponseTextParam? = nil,
+    toolChoice: Components.Schemas.ToolChoiceParam? = nil,
     tools: [Tool]? = nil,
     topP: Double? = nil,
     truncation: Truncation? = nil,
@@ -159,13 +161,99 @@ extension OpenAI {
       body = stream
     }
 
-    return
-      body
-      .asDecodedServerSentEventsWithJSONData(of: Components.Schemas.ResponseStreamEvent.self)
-      .compactMap { event in
-        guard let data = event.data else { return nil }
-        return StreamingResponse(openAPI: data)
+    return AsyncThrowingStream { continuation in
+      let logger = self.logger
+      let task = Task {
+        let decoder = JSONDecoder()
+        var parser = StreamingSSEParser()
+
+        do {
+          for try await chunk in body {
+            if Task.isCancelled {
+              continuation.finish()
+              return
+            }
+
+            for event in parser.consume(chunk) {
+              if let response = Self.decodeStreamingResponse(
+                from: event,
+                decoder: decoder,
+                logger: logger
+              ) {
+                continuation.yield(response)
+              }
+            }
+          }
+
+          for event in parser.finish() {
+            if let response = Self.decodeStreamingResponse(
+              from: event,
+              decoder: decoder,
+              logger: logger
+            ) {
+              continuation.yield(response)
+            }
+          }
+
+          continuation.finish()
+        } catch {
+          continuation.finish(throwing: error)
+        }
       }
+
+      continuation.onTermination = { _ in
+        task.cancel()
+      }
+    }
+  }
+
+  private static func decodeStreamingResponse(
+    from event: StreamingSSEEvent,
+    decoder: JSONDecoder,
+    logger: Logger
+  ) -> StreamingResponse? {
+    let eventName = event.event ?? "<none>"
+    let eventID = event.id ?? "<none>"
+
+    guard let payload = event.data else {
+      let retryDescription = event.retry.map(String.init) ?? "none"
+      logger.debug(
+        "[OpenAICore] Received SSE control event event=\(eventName) id=\(eventID) retry=\(retryDescription)"
+      )
+      return nil
+    }
+
+    let payloadType = Self.streamEventType(from: payload) ?? "<unknown>"
+    logger.debug(
+      "[OpenAICore] Received SSE payload event=\(eventName) id=\(eventID) type=\(payloadType) bytes=\(payload.utf8.count)"
+    )
+    let payloadData = Data(payload.utf8)
+
+    guard
+      let decodedEvent = try? decoder.decode(
+        Components.Schemas.ResponseStreamEvent.self,
+        from: payloadData
+      )
+    else {
+      logger.debug(
+        "Skipping unsupported stream event payload type=\(payloadType): \(Self.truncatedStreamPayload(payload))"
+      )
+      return nil
+    }
+
+    return StreamingResponse(openAPI: decodedEvent)
+  }
+
+  private static func streamEventType(from payload: String) -> String? {
+    guard let payloadData = payload.data(using: .utf8) else { return nil }
+    guard let object = try? JSONSerialization.jsonObject(with: payloadData) else { return nil }
+    guard let dictionary = object as? [String: Any] else { return nil }
+    return dictionary["type"] as? String
+  }
+
+  private static func truncatedStreamPayload(_ payload: String, maxLength: Int = 800) -> String {
+    guard payload.count > maxLength else { return payload }
+    return String(payload.prefix(maxLength)) + "...<truncated>"
   }
 
   // MARK: - Get Response
@@ -212,14 +300,12 @@ extension OpenAI {
   public func responseInputItems(
     id: String,
     after: String? = nil,
-    before: String? = nil,
     limit: Int? = nil,
     order: ListQueryItems.Order? = nil,
     include: [Includable]? = nil
   ) async throws -> ListInputItemsResponse {
     let query = ListQueryItems(
       after: after,
-      before: before,
       limit: limit,
       order: order,
       include: include

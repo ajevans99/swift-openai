@@ -3,6 +3,10 @@ import OpenAIFoundation
 import OpenAPIRuntime
 
 extension OpenAI {
+  public enum ImagesError: Error {
+    case incorrectEndpointForNonStreaming
+  }
+
   // MARK: - Create Image
 
   public func createImage(
@@ -47,6 +51,8 @@ extension OpenAI {
     switch try output.ok.body {
     case .json(let response):
       return ImagesResponse(openAPI: response)
+    case .textEventStream:
+      throw ImagesError.incorrectEndpointForNonStreaming
     }
   }
 
@@ -87,6 +93,8 @@ extension OpenAI {
     switch try output.ok.body {
     case .json(let response):
       return ImagesResponse(openAPI: response)
+    case .textEventStream:
+      throw ImagesError.incorrectEndpointForNonStreaming
     }
   }
 }
