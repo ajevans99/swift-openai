@@ -43,16 +43,17 @@ A modern Swift package for interacting with [OpenAI’s API]((https://platform.o
 
 Checkout the [Example CLI Project](Example) for some more sample usages.
 
-## Code Genertion
+## Code Generation
 
 > [!NOTE]
 > This section is only relevant for library maintainers. If you're just using the package, you can skip this.
 
-> Patches are messed up currently!
-
 `swift-openai` uses `swift-openapi-generator` to generate models and endpoint definitions directly from OpenAI’s documented OpenAPI spec at [openapi.documented.yml](https://app.stainless.com/api/spec/documented/openai/openapi.documented.yml). This ensures maximum compatibility and future-proofing as the spec evolves.
 
-To ensure the generated code compiles and behaves correctly in Swift, we apply deterministic transforms to `openapi.yaml` via `Scripts/apply-patches.sh` before generation. This avoids fragile line-based patch failures when upstream spec structure changes.
+To ensure generated code remains buildable against fast-moving upstream changes, generation runs two deterministic patch phases:
+
+1. OpenAPI spec transforms in `Scripts/apply-patches.sh` (pre-generation).
+2. Generated source transforms in `Scripts/apply-generated-patches.sh` (post-generation).
 
 | Task                                    | Command          |
 |-----------------------------------------|------------------|
@@ -61,3 +62,13 @@ To ensure the generated code compiles and behaves correctly in Swift, we apply d
 | To apply the necessary transforms       | `make patches`   |
 | To generate the Swift types             | `make generate`  |
 | To fetch, patch, and generate           | `make all`       |
+
+## Snapshot Tests
+
+The test suite includes fixture-based response decode snapshots and an opt-in live recorder.
+
+| Task                                                     | Command                 |
+|----------------------------------------------------------|-------------------------|
+| Run all tests (includes snapshot replay)                | `make test`             |
+| Run a live decode smoke test (requires `OPENAI_API_KEY`) | `make test-live-snapshots` |
+| Record/update snapshot fixtures from live API            | `make record-snapshots` |

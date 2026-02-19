@@ -130,7 +130,8 @@ public struct CreateResponseInputPayload: Sendable {
 
   public func toOpenAPI() -> Components.Schemas.CreateResponse.Value3Payload {
     Components.Schemas.CreateResponse.Value3Payload(
-      input: input.toOpenAPI()
+      input: input.toOpenAPI(),
+      stream: stream
     )
   }
 }

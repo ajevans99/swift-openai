@@ -24,6 +24,10 @@ jobs:
         if: steps.check.outcome == 'failure'
         run: make all
 
+      - name: Run tests after regeneration
+        if: steps.check.outcome == 'failure'
+        run: make test
+
       - name: Create Pull Request for updated spec
         if: steps.check.outcome == 'failure'
         uses: peter-evans/create-pull-request@v7

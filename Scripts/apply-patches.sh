@@ -54,4 +54,11 @@ apply_transform \
   "add image-edit multipart encoding" \
   's{(operationId:\s*createImageEdit\n.*?multipart/form-data:\n\s+schema:\n\s+\$ref:\s*\'"'"'#/components/schemas/CreateImageEditRequest\'"'"'\n)(\s+)examples:}{$1$2encoding:\n$2  image:\n$2    contentType: image/png\n$2  mask:\n$2    contentType: image/png\n$2examples:}s'
 
+# Preserve final image payloads for image_generation_call in generated types.
+# The upstream anyOf(string|null) currently drops `result` in Swift generation.
+apply_transform \
+  "normalize ImageGenToolCall.result for Swift generation" \
+  's{(\n\s+ImageGenToolCall:\n.*?\n\s+result:\n)\s+anyOf:\n\s+- type: string\n\s+description: \|\n\s+The generated image encoded in base64\.\n\s+- type: '\''null'\''}{$1          type: string\n          description: |\n            The generated image encoded in base64.}s;
+   s{(\n\s+ImageGenToolCall:\n.*?\n\s+required:\n\s+- type\n\s+- id\n\s+- status\n)\s+- result\n}{$1}s'
+
 echo "✅ OpenAPI transforms complete."

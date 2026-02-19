@@ -10,6 +10,7 @@ fi
 SPEC="$GIT_ROOT/Sources/OpenAIFoundation/openapi.yaml"
 CONFIG="$GIT_ROOT/Sources/OpenAIFoundation/openapi-generator-config.yaml"
 OUT_DIR="$GIT_ROOT/Sources/OpenAIFoundation/Generated"
+GENERATED_PATCH_SCRIPT="$GIT_ROOT/Scripts/apply-generated-patches.sh"
 
 # Sanity checks
 if [[ ! -f "$SPEC" ]]; then
@@ -39,5 +40,13 @@ find "$OUT_DIR" -type f -name "*.swift" | while read -r file; do
   cat "$file" >> "$tmp"
   mv "$tmp" "$file"
 done
+
+if [[ ! -f "$GENERATED_PATCH_SCRIPT" ]]; then
+  echo "❌ Generated patch script not found at $GENERATED_PATCH_SCRIPT"
+  exit 1
+fi
+
+echo "▶ Applying generated source transforms"
+bash "$GENERATED_PATCH_SCRIPT"
 
 echo "✅ Models generated into $OUT_DIR"

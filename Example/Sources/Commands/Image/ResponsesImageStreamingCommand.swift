@@ -12,6 +12,12 @@ struct ResponsesImageStreamingCommand: AsyncParsableCommand {
   @Argument(help: "The prompt to send to the assistant (or pipe input via stdin)")
   var prompt: String?
 
+  @Option(name: .long, help: "Responses model to orchestrate tool calling.")
+  var model: String = "gpt-5.2"
+
+  @Option(name: .long, help: "Number of partial images to request (0-3).")
+  var partialImages: Int = 0
+
   mutating func run() async throws {
     let prompt =
       self.prompt
@@ -26,18 +32,19 @@ struct ResponsesImageStreamingCommand: AsyncParsableCommand {
 
     let imagesDirectory = try ImagesDirectory.create()
     let client = try OpenAIFactory.create()
-    let session = ResponseSession(client: client, model: .standard(.gpt4o))
+    let session = ResponseSession(client: client, model: .custom(model))
 
     let imageGenTool = ImageGenTool(
-      model: .gptImage1,
+      model: .gptImage1_5,
       quality: .medium,
       moderation: .low,
-      partialImages: 3
+      partialImages: max(0, min(3, partialImages))
     )
 
     await session.register(openAITool: .imageGen(imageGenTool))
 
     let stream = try await session.stream(prompt)
+    var finalizedImageCallIDs = Set<String>()
 
     for try await event in stream {
       switch event {
@@ -66,15 +73,38 @@ struct ResponsesImageStreamingCommand: AsyncParsableCommand {
           print("Error saving partial image: \(error)")
         }
       case .others(.outputItem(.done(.imageGenToolCall(let item), _))):
-        let savedImages = try ImageUtils.saveBase64Images(
-          images: [item.result],
-          imageId: item.id,
-          imagesDirectory: imagesDirectory
-        )
-        print("Images saved to: \(savedImages.map { $0.url }.joined(separator: "\n"))")
+        print("Image generation call completed: \(item.id) (\(item.status.rawValue))")
+        do {
+          try Self.persistFinalImageIfPresent(
+            item: item,
+            imagesDirectory: imagesDirectory,
+            finalizedImageCallIDs: &finalizedImageCallIDs
+          )
+        } catch {
+          print("Error saving final image: \(error)")
+        }
       case .others:
         break
       }
+    }
+  }
+
+  private static func persistFinalImageIfPresent(
+    item: Components.Schemas.ImageGenToolCall,
+    imagesDirectory: URL,
+    finalizedImageCallIDs: inout Set<String>
+  ) throws {
+    guard let result = item.result, !result.isEmpty else { return }
+    guard finalizedImageCallIDs.insert(item.id).inserted else { return }
+
+    let savedImages = try ImageUtils.saveBase64Images(
+      images: [result],
+      imageId: item.id,
+      imagesDirectory: imagesDirectory
+    )
+
+    for image in savedImages {
+      print("Final image saved to: \(image.url)")
     }
   }
 }

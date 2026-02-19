@@ -162,6 +162,14 @@ public actor ResponseSession {
       continuation.yield(.others(event))
 
       switch event {
+      case .created(let response):
+        responseID = response.id
+        client.logger.debug("Received response.created for response ID: \(response.id)")
+
+      case .inProgress(let response):
+        responseID = response.id
+        client.logger.debug("Received response.in_progress for response ID: \(response.id)")
+
       case .outputText(let text):
         switch text {
         case .delta(let delta, _, _, _):

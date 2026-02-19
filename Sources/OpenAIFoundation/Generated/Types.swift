@@ -1583,17 +1583,25 @@ public enum Components {
             public struct Value3Payload: Codable, Hashable, Sendable {
                 /// - Remark: Generated from `#/components/schemas/CreateResponse/value3/input`.
                 public var input: Components.Schemas.InputParam?
-                /// Creates a new `Value3Payload`.
-                ///
-                /// - Parameters:
-                ///   - input:
-                public init(input: Components.Schemas.InputParam? = nil) {
-                    self.input = input
-                }
-                public enum CodingKeys: String, CodingKey {
-                    case input
-                }
+            /// - Remark: Added by swift-openai patch: missing stream flag in generated schema.
+            public var stream: Swift.Bool?
+            /// Creates a new `Value3Payload`.
+            ///
+            /// - Parameters:
+            ///   - input:
+            ///   - stream:
+            public init(
+                input: Components.Schemas.InputParam? = nil,
+                stream: Swift.Bool? = nil
+            ) {
+                self.input = input
+                self.stream = stream
             }
+            public enum CodingKeys: String, CodingKey {
+                case input
+                case stream
+            }
+        }
             /// - Remark: Generated from `#/components/schemas/CreateResponse/value3`.
             public var value3: Components.Schemas.CreateResponse.Value3Payload
             /// Creates a new `CreateResponse`.
@@ -3397,25 +3405,34 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/ImageGenToolCall/status`.
             public var status: Components.Schemas.ImageGenToolCall.StatusPayload
+            /// The generated image encoded in base64.
+            ///
+            ///
+            /// - Remark: Generated from `#/components/schemas/ImageGenToolCall/result`.
+            public var result: Swift.String?
             /// Creates a new `ImageGenToolCall`.
             ///
             /// - Parameters:
             ///   - _type: The type of the image generation call. Always `image_generation_call`.
             ///   - id: The unique ID of the image generation call.
             ///   - status: The status of the image generation call.
+            ///   - result: The generated image encoded in base64.
             public init(
                 _type: Components.Schemas.ImageGenToolCall._TypePayload,
                 id: Swift.String,
-                status: Components.Schemas.ImageGenToolCall.StatusPayload
+                status: Components.Schemas.ImageGenToolCall.StatusPayload,
+                result: Swift.String? = nil
             ) {
                 self._type = _type
                 self.id = id
                 self.status = status
+                self.result = result
             }
             public enum CodingKeys: String, CodingKey {
                 case _type = "type"
                 case id
                 case status
+                case result
             }
         }
         /// Reference an input image by either URL or uploaded file ID.
@@ -5103,11 +5120,11 @@ public enum Components {
                     forKey: ._type
                 )
                 switch discriminator {
-                case "OutputTextContent", "#/components/schemas/OutputTextContent":
+                case "output_text", "OutputTextContent", "#/components/schemas/OutputTextContent":
                     self = .outputTextContent(try .init(from: decoder))
-                case "RefusalContent", "#/components/schemas/RefusalContent":
+                case "refusal", "RefusalContent", "#/components/schemas/RefusalContent":
                     self = .refusalContent(try .init(from: decoder))
-                case "ReasoningTextContent", "#/components/schemas/ReasoningTextContent":
+                case "reasoning_text", "ReasoningTextContent", "#/components/schemas/ReasoningTextContent":
                     self = .reasoningTextContent(try .init(from: decoder))
                 default:
                     throw Swift.DecodingError.unknownOneOfDiscriminator(
@@ -5465,9 +5482,9 @@ public enum Components {
                     forKey: ._type
                 )
                 switch discriminator {
-                case "OutputTextContent", "#/components/schemas/OutputTextContent":
+                case "output_text", "OutputTextContent", "#/components/schemas/OutputTextContent":
                     self = .outputTextContent(try .init(from: decoder))
-                case "RefusalContent", "#/components/schemas/RefusalContent":
+                case "refusal", "RefusalContent", "#/components/schemas/RefusalContent":
                     self = .refusalContent(try .init(from: decoder))
                 default:
                     throw Swift.DecodingError.unknownOneOfDiscriminator(
@@ -10071,29 +10088,29 @@ public enum Components {
                     forKey: ._type
                 )
                 switch discriminator {
-                case "FunctionTool", "#/components/schemas/FunctionTool":
+                case "function", "FunctionTool", "#/components/schemas/FunctionTool":
                     self = .functionTool(try .init(from: decoder))
-                case "FileSearchTool", "#/components/schemas/FileSearchTool":
+                case "file_search", "FileSearchTool", "#/components/schemas/FileSearchTool":
                     self = .fileSearchTool(try .init(from: decoder))
-                case "ComputerUsePreviewTool", "#/components/schemas/ComputerUsePreviewTool":
+                case "computer_use_preview", "ComputerUsePreviewTool", "#/components/schemas/ComputerUsePreviewTool":
                     self = .computerUsePreviewTool(try .init(from: decoder))
-                case "WebSearchTool", "#/components/schemas/WebSearchTool":
+                case "web_search", "web_search_2025_08_26", "WebSearchTool", "#/components/schemas/WebSearchTool":
                     self = .webSearchTool(try .init(from: decoder))
-                case "MCPTool", "#/components/schemas/MCPTool":
+                case "mcp", "MCPTool", "#/components/schemas/MCPTool":
                     self = .mcpTool(try .init(from: decoder))
-                case "CodeInterpreterTool", "#/components/schemas/CodeInterpreterTool":
+                case "code_interpreter", "CodeInterpreterTool", "#/components/schemas/CodeInterpreterTool":
                     self = .codeInterpreterTool(try .init(from: decoder))
-                case "ImageGenTool", "#/components/schemas/ImageGenTool":
+                case "image_generation", "ImageGenTool", "#/components/schemas/ImageGenTool":
                     self = .imageGenTool(try .init(from: decoder))
-                case "LocalShellToolParam", "#/components/schemas/LocalShellToolParam":
+                case "local_shell", "LocalShellToolParam", "#/components/schemas/LocalShellToolParam":
                     self = .localShellToolParam(try .init(from: decoder))
-                case "FunctionShellToolParam", "#/components/schemas/FunctionShellToolParam":
+                case "shell", "FunctionShellToolParam", "#/components/schemas/FunctionShellToolParam":
                     self = .functionShellToolParam(try .init(from: decoder))
-                case "CustomToolParam", "#/components/schemas/CustomToolParam":
+                case "custom", "CustomToolParam", "#/components/schemas/CustomToolParam":
                     self = .customToolParam(try .init(from: decoder))
-                case "WebSearchPreviewTool", "#/components/schemas/WebSearchPreviewTool":
+                case "web_search_preview", "web_search_preview_2025_03_11", "WebSearchPreviewTool", "#/components/schemas/WebSearchPreviewTool":
                     self = .webSearchPreviewTool(try .init(from: decoder))
-                case "ApplyPatchToolParam", "#/components/schemas/ApplyPatchToolParam":
+                case "apply_patch", "ApplyPatchToolParam", "#/components/schemas/ApplyPatchToolParam":
                     self = .applyPatchToolParam(try .init(from: decoder))
                 default:
                     throw Swift.DecodingError.unknownOneOfDiscriminator(

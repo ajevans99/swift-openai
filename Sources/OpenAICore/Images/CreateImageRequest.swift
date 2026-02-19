@@ -2,19 +2,65 @@ import Foundation
 import OpenAPIRuntime
 
 public struct CreateImageRequest: Sendable {
-  public enum Model: Sendable {
+  public enum Model: Sendable, Hashable, RawRepresentable {
+    public typealias RawValue = String
+
     case dallE2
     case dallE3
     case gptImage1
+    case gptImage1Mini
+    case gptImage1_5
+    case custom(String)
+
+    public var rawValue: String {
+      switch self {
+      case .dallE2:
+        "dall-e-2"
+      case .dallE3:
+        "dall-e-3"
+      case .gptImage1:
+        "gpt-image-1"
+      case .gptImage1Mini:
+        "gpt-image-1-mini"
+      case .gptImage1_5:
+        "gpt-image-1.5"
+      case .custom(let value):
+        value
+      }
+    }
+
+    public init?(rawValue: String) {
+      switch rawValue {
+      case "dall-e-2":
+        self = .dallE2
+      case "dall-e-3":
+        self = .dallE3
+      case "gpt-image-1":
+        self = .gptImage1
+      case "gpt-image-1-mini":
+        self = .gptImage1Mini
+      case "gpt-image-1.5":
+        self = .gptImage1_5
+      default:
+        self = .custom(rawValue)
+      }
+    }
 
     public func toOpenAPI() -> Components.Schemas.CreateImageRequest.ModelPayload {
-      let value2: Components.Schemas.CreateImageRequest.ModelPayload.Value2Payload =
-        switch self {
-        case .dallE2: .dallE2
-        case .dallE3: .dallE3
-        case .gptImage1: .gptImage1
-        }
-      return .init(value2: value2)
+      switch self {
+      case .dallE2:
+        .init(value2: .dallE2)
+      case .dallE3:
+        .init(value2: .dallE3)
+      case .gptImage1:
+        .init(value2: .gptImage1)
+      case .gptImage1Mini:
+        .init(value2: .gptImage1Mini)
+      case .gptImage1_5:
+        .init(value2: .gptImage1_5)
+      case .custom(let value):
+        .init(value1: value)
+      }
     }
   }
 
@@ -189,5 +235,11 @@ public struct CreateImageRequest: Sendable {
       style: self.style?.toOpenAPI(),
       user: self.user
     )
+  }
+}
+
+extension CreateImageRequest.Model: ExpressibleByStringInterpolation {
+  public init(stringLiteral value: String) {
+    self = Self(rawValue: value) ?? .custom(value)
   }
 }

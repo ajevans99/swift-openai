@@ -45049,16 +45049,13 @@ components:
           description: |
             The status of the image generation call.
         result:
-          anyOf:
-            - type: string
-              description: |
-                The generated image encoded in base64.
-            - type: 'null'
+          type: string
+          description: |
+            The generated image encoded in base64.
       required:
         - type
         - id
         - status
-        - result
     ImageRefParam:
       type: object
       description: |
@@ -65015,7 +65012,6 @@ components:
         - object
         - start_time
         - end_time
-        - result
     UsageVectorStoresResult:
       type: object
       description: The aggregated vector stores usage details of the specific time bucket.

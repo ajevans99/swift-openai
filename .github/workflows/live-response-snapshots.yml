@@ -1,0 +1,37 @@
+name: Live Response Snapshots
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh-snapshots:
+    runs-on: macos-15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Xcode setup
+        shell: bash
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.3.app
+
+      - name: Record live response snapshots
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: make record-snapshots
+
+      - name: Create Pull Request for snapshot changes
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: Refresh live response snapshots
+          branch: update/live-response-snapshots
+          title: Refresh live response snapshots
+          body: |
+            This PR refreshes response snapshot fixtures from live OpenAI API calls.
+          labels: auto-update
