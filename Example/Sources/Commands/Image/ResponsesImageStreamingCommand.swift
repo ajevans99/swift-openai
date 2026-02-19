@@ -16,7 +16,7 @@ struct ResponsesImageStreamingCommand: AsyncParsableCommand {
   var model: String = "gpt-5.2"
 
   @Option(name: .long, help: "Number of partial images to request (0-3).")
-  var partialImages: Int = 0
+  var partialImages: Int = 3
 
   mutating func run() async throws {
     let prompt =
