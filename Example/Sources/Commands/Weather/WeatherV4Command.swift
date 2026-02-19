@@ -31,30 +31,49 @@ struct WeatherV4Command: AsyncParsableCommand {
       throw ValidationError("OPENWEATHER_API_KEY is not set")
     }
 
-    await session.register(
-      tool: WeatherTool(apiKey: weatherApiKey)
+    let orchestrator = ToolOrchestratorPlugin(
+      tools: [WeatherTool(apiKey: weatherApiKey)]
     )
 
     print("Starting streaming response...")
     print("----------------------------------------")
 
-    let stream = try await session.stream(prompt)
-    for try await event in stream {
-      switch event {
-      case .output(let text, let isFinal):
-        if isFinal {
-          print("Final output: \(text)")
-        } else {
-          print(text, terminator: "")
+    let handle = try await session.stream(
+      prompt,
+      plugins: TextPlugin(), orchestrator
+    )
+    let (textChannel, toolChannel) = handle.pluginEvents
+
+    try await withThrowingTaskGroup(of: Void.self) { group in
+      group.addTask {
+        for try await event in textChannel.events {
+          switch event {
+          case .delta(let text):
+            print(text, terminator: "")
+          case .completed(let text):
+            print("\nFinal output: \(text)")
+          }
         }
-      case .toolCalled(let name, let arguments):
-        print("\n[Tool Called: \(name)]")
-        print("[Arguments: \(arguments)]")
-      case .completed:
-        break
-      case .others:
-        continue
       }
+
+      group.addTask {
+        for try await event in toolChannel.events {
+          if case .executed(let name, let arguments, _, _) = event {
+            print("\n[Tool Called: \(name)]")
+            print("[Arguments: \(arguments)]")
+          }
+        }
+      }
+
+      group.addTask {
+        for try await rawEvent in handle.raw {
+          if case .completed(let response) = rawEvent {
+            print("\n[Response completed: \(response.id)]")
+          }
+        }
+      }
+
+      try await group.waitForAll()
     }
     print("\n----------------------------------------")
     print("Streaming complete")

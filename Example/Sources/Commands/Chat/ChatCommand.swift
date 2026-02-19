@@ -54,26 +54,49 @@ struct ChatCommand: AsyncParsableCommand {
       print("\nAssistant: ", terminator: "")
 
       do {
-        let stream = try await session.stream(
-          input, additionalItems: [], previousResponseID: currentResponseID)
+        let handle = try await session.stream(
+          input,
+          additionalItems: [],
+          previousResponseID: currentResponseID,
+          plugins: TextPlugin()
+        )
+        let textChannel = handle.pluginEvents
 
-        for try await event in stream {
-          switch event {
-          case .output(let text, let isFinal):
-            if isFinal {
-              print()
-            } else {
-              print(text, terminator: "")
+        let completedResponseID = try await withThrowingTaskGroup(of: String?.self) { group in
+          group.addTask {
+            for try await event in textChannel.events {
+              switch event {
+              case .delta(let text):
+                print(text, terminator: "")
+              case .completed:
+                print()
+              }
             }
-          case .toolCalled(let name, let arguments):
-            print("\n[Tool called: \(name)]")
-            print("Arguments: \(arguments)")
-          case .completed(let responseID):
-            print("\n[Conversation turn completed] \(responseID)")
-            currentResponseID = responseID
-          case .others:
-            continue
+            return nil
           }
+
+          group.addTask {
+            var responseID: String?
+            for try await rawEvent in handle.raw {
+              if case .completed(let response) = rawEvent {
+                responseID = response.id
+              }
+            }
+            return responseID
+          }
+
+          var completedID: String?
+          for try await result in group {
+            if let result {
+              completedID = result
+            }
+          }
+          return completedID
+        }
+
+        if let completedResponseID {
+          print("\n[Conversation turn completed] \(completedResponseID)")
+          currentResponseID = completedResponseID
         }
       } catch {
         print("\nError: \(error.localizedDescription)")

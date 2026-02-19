@@ -29,6 +29,118 @@ A modern Swift package for interacting with [OpenAI’s API]((https://platform.o
 
 4. Start streaming (or send async request)
 
+```swift
+let orchestrator = ToolOrchestratorPlugin(
+  tools: [WeatherTool(apiKey: "...")]
+)
+
+let handle = try await session.stream(
+  "What's the weather in SF?",
+  plugins: TextPlugin(), orchestrator
+)
+
+let (textChannel, toolChannel) = handle.pluginEvents
+
+try await withThrowingTaskGroup(of: Void.self) { group in
+  group.addTask {
+    for try await event in textChannel.events {
+      switch event {
+      case .delta(let chunk): print(chunk, terminator: "")
+      case .completed: print()
+      }
+    }
+  }
+
+  group.addTask {
+    for try await event in toolChannel.events {
+      print(event)
+    }
+  }
+
+  try await group.waitForAll()
+}
+```
+
+<details>
+<summary><strong>Plugin System Deep Dive</strong></summary>
+
+### Why this design?
+
+`ResponseSession.stream` gives you two layers at once:
+
+- `handle.raw`: full `StreamingResponse` protocol events.
+- `handle.pluginEvents`: strongly typed plugin channels tailored to your app.
+
+This lets you keep low-level access when needed, while still writing most app logic against clean domain events.
+
+### Compose any number of plugins
+
+Plugins are variadic, so you are not limited to 1-3:
+
+```swift
+let handle = try await session.stream(
+  "Generate an image and explain it",
+  plugins: TextPlugin(), ToolOrchestratorPlugin(), ImagePlugin(), MyPlugin()
+)
+
+let (text, tools, images, custom) = handle.pluginEvents
+```
+
+### Author your own plugin
+
+```swift
+struct RefusalPlugin: ResponseStreamPlugin {
+  enum Event: Sendable {
+    case refusal(String)
+  }
+
+  func consume(
+    _ event: StreamingResponse,
+    context: inout StreamPluginContext
+  ) async throws -> Event? {
+    guard case .outputItem(.done(let item, _)) = event else { return nil }
+    guard case .message(let message) = item else { return nil }
+
+    for content in message.content {
+      if case .refusal(let refusal) = content {
+        return .refusal(refusal.refusal)
+      }
+    }
+    return nil
+  }
+}
+```
+
+### Tool orchestration
+
+`ToolOrchestratorPlugin` supports plugin-local tools:
+
+```swift
+let orchestrator = ToolOrchestratorPlugin(tools: [WeatherTool(apiKey: "...")])
+```
+
+If a tool is not found locally, it can fall back to session-level registration (`session.register(tool:)`) for compatibility.
+
+### Backpressure visibility
+
+Each plugin channel uses bounded buffering (`bufferingNewest`). If a consumer is too slow:
+
+- older buffered events can be dropped,
+- and you can inspect loss with `channel.droppedCount()`.
+
+### Raw-only mode
+
+If you want protocol events only:
+
+```swift
+let raw = try await session.streamRaw("Debug this turn")
+for try await event in raw {
+  print(event.value)
+}
+```
+
+</details>
+
 
 ## **`OpenAICore`**
 
