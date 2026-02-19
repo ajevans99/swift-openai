@@ -1,5 +1,4 @@
 import Foundation
-import CasePaths
 import OpenAICore
 import OpenAIFoundation
 
@@ -10,7 +9,6 @@ import OpenAIFoundation
 @available(macOS 15.0, *)
 public struct TextPlugin: ResponseStreamPlugin {
   /// Typed text output events.
-  @CasePathable
   public enum Event: Sendable, Equatable {
     /// A partial text delta from the model.
     case delta(String)
@@ -46,7 +44,6 @@ public struct TextPlugin: ResponseStreamPlugin {
 @available(macOS 15.0, *)
 public struct ToolOrchestratorPlugin: ResponseStreamPlugin {
   /// Typed tool orchestration events.
-  @CasePathable
   public enum Event: Sendable, Equatable {
     /// A function tool call was executed and its output captured.
     case executed(name: String, arguments: String, callID: String, output: String)
@@ -127,7 +124,6 @@ public struct ToolOrchestratorPlugin: ResponseStreamPlugin {
 @available(macOS 15.0, *)
 public struct ImagePlugin: ResponseStreamPlugin {
   /// Typed image generation events.
-  @CasePathable
   public enum Event: Sendable, Equatable {
     /// A partial image frame from an in-progress generation call.
     case partial(
