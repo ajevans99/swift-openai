@@ -1,16 +1,36 @@
 import Foundation
 import OpenAICore
 
+/// A high-level conversational session that wraps the OpenAI Responses API.
+///
+/// `ResponseSession` supports two interaction styles:
+///
+/// - Non-streaming turns through ``send(_:additionalItems:previousResponseID:)``.
+/// - Streaming turns through ``stream(_:additionalItems:previousResponseID:plugins:)``
+///   and related overloads.
+///
+/// Stream APIs produce both:
+///
+/// - Raw protocol events (`StreamingResponse`) via
+///   ``ResponseStreamHandle/raw``.
+/// - Typed plugin channels via ``ResponseStreamHandle/pluginEvents``.
+///
+/// ## Tool handling
+///
+/// - Session-level `register(tool:)` remains available for non-streaming turns
+///   and for streaming fallback lookup.
+/// - Prefer plugin-local tool registration on ``ToolOrchestratorPlugin`` for
+///   streaming flows.
+///
+/// ## Bounded buffering
+///
+/// Streaming channels use a bounded `bufferingNewest` strategy. If consumers
+/// are slower than producers, older buffered events are dropped. Per-channel
+/// drop counts are exposed through ``PluginChannel/droppedCount()``.
 public actor ResponseSession {
   public typealias Message = Item
 
-  public enum StreamEvent: Sendable {
-    case output(String, isFinal: Bool)
-    case toolCalled(name: String, arguments: String)
-    case completed(responseID: String)
-
-    case others(StreamingResponse)
-  }
+  private static let streamBufferLimit = 256
 
   private let client: OpenAI
   private let model: Model
@@ -23,64 +43,158 @@ public actor ResponseSession {
     functionTools.values.map { $0.toTool() } + openAITools
   }
 
+  /// Creates a new response session.
+  ///
+  /// - Parameters:
+  ///   - client: The configured OpenAI client.
+  ///   - model: The model used for all turns in this session.
+  ///   - errorPolicy: Behavior to apply when function tools fail.
   public init(
-    client: OpenAI, model: Model, errorPolicy: ToolErrorPolicy = .failFast
+    client: OpenAI,
+    model: Model,
+    errorPolicy: ToolErrorPolicy = .failFast
   ) {
     self.client = client
     self.model = model
     self.errorPolicy = errorPolicy
   }
 
+  /// Registers a function tool on the session.
+  ///
+  /// This registry is used by:
+  ///
+  /// - Non-streaming tool orchestration (`send` recursion path).
+  /// - Streaming fallback lookup from ``ToolOrchestratorPlugin`` when a tool is
+  ///   not registered directly on the plugin.
+  ///
+  /// - Parameter tool: The tool to register.
   public func register(tool: any Toolable) {
     functionTools[tool.name] = tool
   }
 
+  /// Registers a built-in OpenAI tool for response creation.
+  ///
+  /// Registered tools are sent on every request for session continuity.
+  ///
+  /// - Parameter openAITool: A built-in OpenAI tool descriptor.
   public func register(openAITool: OpenAICore.Tool) {
     openAITools.append(openAITool)
   }
 
+  /// Sends a non-streaming user turn and returns the final assistant text.
+  ///
+  /// If the model emits function tool calls, the session executes them and
+  /// recursively continues until the assistant emits a plain response.
+  ///
+  /// - Parameters:
+  ///   - userText: User message content.
+  ///   - additionalItems: Additional input items to include in the turn.
+  ///   - previousResponseID: The prior response ID for conversation
+  ///     continuation.
+  /// - Returns: Final concatenated assistant text for the turn.
   @discardableResult
   public func send(
     _ userText: String,
     additionalItems: [Item] = [],
     previousResponseID: String? = nil
   ) async throws -> String {
-    let item = Item.inputMessage(InputMessage(role: .user, content: [.text(.init(text: userText))]))
+    let item = Item.inputMessage(
+      InputMessage(role: .user, content: [.text(.init(text: userText))])
+    )
 
     return try await advance(
-      newItems: [item] + additionalItems, previousResponseID: previousResponseID)
+      newItems: [item] + additionalItems,
+      previousResponseID: previousResponseID
+    )
   }
 
+  /// Starts a streaming turn with typed plugin channel(s).
+  ///
+  /// - Parameters:
+  ///   - userText: User message content.
+  ///   - additionalItems: Additional input items to include in the turn.
+  ///   - previousResponseID: The prior response ID for conversation
+  ///     continuation.
+  ///   - plugins: Plugins used to produce typed events.
+  /// - Returns: A stream handle containing raw events and typed plugin
+  ///   channel(s).
   @available(macOS 15.0, *)
-  public func stream(
+  public func stream<each Plugin: ResponseStreamPlugin>(
+    _ userText: String,
+    additionalItems: [Item] = [],
+    previousResponseID: String? = nil,
+    plugins: repeat each Plugin
+  ) async throws -> ResponseStreamHandle<(repeat PluginChannel<each Plugin>)> {
+    let item = Item.inputMessage(
+      InputMessage(role: .user, content: [.text(.init(text: userText))])
+    )
+
+    return try await stream(
+      items: [item] + additionalItems,
+      previousResponseID: previousResponseID,
+      plugins: repeat each plugins
+    )
+  }
+
+  /// Starts a streaming turn with typed plugin channel(s) using prebuilt input
+  /// items.
+  ///
+  /// Use this overload when you already have structured ``Item`` values.
+  @available(macOS 15.0, *)
+  public func stream<each Plugin: ResponseStreamPlugin>(
+    items: [Item] = [],
+    previousResponseID: String? = nil,
+    plugins: repeat each Plugin
+  ) async throws -> ResponseStreamHandle<(repeat PluginChannel<each Plugin>)> {
+    let (rawStream, rawEmitter) = Self.makeRawStream(bufferLimit: Self.streamBufferLimit)
+    let (pluginChannels, pluginRuntimes) = Self.makePluginRuntimes(
+      plugins: repeat each plugins,
+      bufferLimit: Self.streamBufferLimit
+    )
+
+    startStreamTask(
+      newItems: items,
+      previousResponseID: previousResponseID,
+      pluginRuntimes: pluginRuntimes,
+      rawEmitter: rawEmitter
+    )
+
+    return ResponseStreamHandle(raw: rawStream, pluginEvents: pluginChannels)
+  }
+
+  /// Starts a raw-only streaming turn from user text.
+  ///
+  /// This bypasses plugin projection and yields protocol-level events directly.
+  @available(macOS 15.0, *)
+  public func streamRaw(
     _ userText: String,
     additionalItems: [Item] = [],
     previousResponseID: String? = nil
-  ) async throws -> AsyncThrowingStream<StreamEvent, Error> {
-    let item = Item.inputMessage(InputMessage(role: .user, content: [.text(.init(text: userText))]))
-    client.logger.debug("Starting stream for user text: \(userText)")
-    return try await stream(items: [item] + additionalItems, previousResponseID: previousResponseID)
+  ) async throws -> AsyncThrowingStream<StreamingResponse, Error> {
+    let item = Item.inputMessage(
+      InputMessage(role: .user, content: [.text(.init(text: userText))])
+    )
+    return try await streamRaw(
+      items: [item] + additionalItems,
+      previousResponseID: previousResponseID
+    )
   }
 
+  /// Starts a raw-only streaming turn from prebuilt input items.
   @available(macOS 15.0, *)
-  public func stream(
+  public func streamRaw(
     items: [Item] = [],
     previousResponseID: String? = nil
-  ) async throws -> AsyncThrowingStream<StreamEvent, Error> {
-    AsyncThrowingStream { continuation in
-      Task {
-        do {
-          try await streamAdvance(
-            newItems: items,
-            previousResponseID: previousResponseID,
-            continuation: continuation
-          )
-        } catch {
-          client.logger.error("Stream failed with error: \(error)")
-          continuation.finish(throwing: error)
-        }
-      }
-    }
+  ) async throws -> AsyncThrowingStream<StreamingResponse, Error> {
+    let (rawStream, rawEmitter) = Self.makeRawStream(bufferLimit: Self.streamBufferLimit)
+
+    startStreamTask(
+      newItems: items,
+      previousResponseID: previousResponseID,
+      pluginRuntimes: [],
+      rawEmitter: rawEmitter
+    )
+    return rawStream
   }
 
   private func advance(newItems: [Item], previousResponseID: String? = nil) async throws -> String {
@@ -88,11 +202,11 @@ public actor ResponseSession {
       input: .items(newItems.map { .item($0) }),
       model: model,
       previousResponseId: previousResponseID,
-      tools: allTools  // Tools always need to be sent even if previousResponseID is provided
+      tools: allTools
     )
 
     var generatedText = ""
-    var newItems: [Item] = []
+    var toolOutputItems: [Item] = []
 
     try await withThrowingTaskGroup(of: Item.self) { group in
       for output in response.output {
@@ -106,19 +220,18 @@ public actor ResponseSession {
               $0 += refusal.refusal
             }
           }
+
         case .functionToolCall(let toolCall):
-          client.logger.debug("Tool call: \(toolCall.name)")
           guard let tool = functionTools[toolCall.name] else {
-            client.logger.error("Unknown tool")
             throw ResponseSessionError.unknownTool(named: toolCall.name)
           }
-          group.addTask { [logger = client.logger] in
+          group.addTask {
             let result = try await tool.call(arguments: toolCall.arguments)
-            logger.debug("Tool call result: \(result)")
             return .functionCallOutputItemParam(
               .init(callId: toolCall.callId, output: result)
             )
           }
+
         case .computerToolCall, .fileSearchToolCall, .reasoning, .webSearchToolCall,
           .compactionBody, .imageGenToolCall, .codeInterpreterToolCall, .localShellToolCall,
           .functionShellCall, .functionShellCallOutput, .applyPatchToolCall,
@@ -128,112 +241,230 @@ public actor ResponseSession {
         }
       }
 
-      for try await item in group { newItems.append(item) }
+      for try await item in group {
+        toolOutputItems.append(item)
+      }
     }
 
-    // If we had tool calls, append their outputs to history,
-    // then recurse until the assistant produces a plain reply.
-    if !newItems.isEmpty {
-      return try await advance(newItems: newItems, previousResponseID: response.id)
+    if !toolOutputItems.isEmpty {
+      return try await advance(newItems: toolOutputItems, previousResponseID: response.id)
     }
 
     return generatedText
   }
 
   @available(macOS 15.0, *)
-  private func streamAdvance(
+  private func streamLoop(
     newItems: [Item],
     previousResponseID: String?,
-    continuation: AsyncThrowingStream<StreamEvent, Error>.Continuation
+    pluginRuntimes: [AnyPluginRuntime],
+    rawEmitter: StreamEmitter<StreamingResponse>
   ) async throws {
-    client.logger.debug(
-      "Starting streamAdvance with previousResponseID: \(previousResponseID ?? "none")")
-
-    let stream = try await client.streamCreateResponse(
-      input: .items(newItems.map { .item($0) }),
-      model: model,
-      previousResponseId: previousResponseID,
-      tools: allTools  // Tools always need to be sent even if previousResponseID is provided
+    var pendingItems = newItems
+    var currentPreviousResponseID = previousResponseID
+    var context = StreamPluginContext(
+      executeFunctionTool: { [self] name, arguments in
+        try await executeFunctionTool(named: name, arguments: arguments)
+      }
     )
-    var newItems: [Item] = []
-    var responseID: String?
 
-    for try await event in stream {
-      continuation.yield(.others(event))
+    while true {
+      let stream = try await client.streamCreateResponse(
+        input: .items(pendingItems.map { .item($0) }),
+        model: model,
+        previousResponseId: currentPreviousResponseID,
+        tools: allTools
+      )
 
-      switch event {
-      case .created(let response):
-        responseID = response.id
-        client.logger.debug("Received response.created for response ID: \(response.id)")
+      var latestResponseID = currentPreviousResponseID
 
-      case .inProgress(let response):
-        responseID = response.id
-        client.logger.debug("Received response.in_progress for response ID: \(response.id)")
+      for try await event in stream {
+        rawEmitter.yield(event)
 
-      case .outputText(let text):
-        switch text {
-        case .delta(let delta, _, _, _):
-          client.logger.debug("Received text delta: \(delta)")
-          continuation.yield(.output(delta, isFinal: false))
-        case .done(let text, _, _, _):
-          client.logger.debug("Received complete text: \(text)")
-          continuation.yield(.output(text, isFinal: true))
-        case .annotation:
-          client.logger.debug("Received annotation")
-          break
-        }
-
-      case .outputItem(let item):
-        switch item {
-        case .done(let outputItem, _):
-          if case .functionToolCall(let toolCall) = outputItem {
-            client.logger.debug("Received complete function tool call for: \(toolCall.name)")
-            continuation.yield(.toolCalled(name: toolCall.name, arguments: toolCall.arguments))
-
-            guard let tool = functionTools[toolCall.name] else {
-              throw ResponseSessionError.unknownTool(named: toolCall.name)
-            }
-
-            do {
-              client.logger.debug("Executing tool call for: \(toolCall.name)")
-              let result = try await tool.call(arguments: toolCall.arguments)
-              client.logger.debug("Tool call result: \(result)")
-              newItems.append(
-                .functionCallOutputItemParam(
-                  .init(callId: toolCall.callId, output: result)
-                ))
-            } catch {
-              throw error
-            }
-          }
+        switch event {
+        case .created(let response):
+          latestResponseID = response.id
+        case .inProgress(let response):
+          latestResponseID = response.id
+        case .completed(let response):
+          latestResponseID = response.id
         default:
           break
         }
 
-      case .completed(let response):
-        client.logger.debug("Stream completed with response ID: \(response.id)")
-        responseID = response.id
-        continuation.yield(.completed(responseID: response.id))
-        break
+        for runtime in pluginRuntimes {
+          try await runtime.consume(event, &context)
+        }
+      }
 
-      case .error(let message, let code, let param):
-        client.logger.error(
-          "Stream error: \(message) (code: \(code ?? "unknown"), param: \(param ?? "none"))")
-        throw ResponseSessionError.unknownTool(named: message)
+      let followUpItems = context.drainFollowUpItems()
+      guard !followUpItems.isEmpty else { break }
 
-      default:
-        client.logger.debug("Received event: \(event.value)")
+      guard let latestResponseID else {
+        throw ResponseSessionError.missingResponseIDForContinuation
+      }
+
+      pendingItems = followUpItems
+      currentPreviousResponseID = latestResponseID
+    }
+
+    for runtime in pluginRuntimes {
+      try await runtime.finishPlugin(&context)
+    }
+  }
+
+  @available(macOS 15.0, *)
+  private func startStreamTask(
+    newItems: [Item],
+    previousResponseID: String?,
+    pluginRuntimes: [AnyPluginRuntime],
+    rawEmitter: StreamEmitter<StreamingResponse>
+  ) {
+    Task {
+      do {
+        try await self.streamLoop(
+          newItems: newItems,
+          previousResponseID: previousResponseID,
+          pluginRuntimes: pluginRuntimes,
+          rawEmitter: rawEmitter
+        )
+
+        rawEmitter.finish()
+        for runtime in pluginRuntimes {
+          runtime.finishStream(nil)
+        }
+      } catch {
+        rawEmitter.finish(throwing: error)
+        for runtime in pluginRuntimes {
+          runtime.finishStream(error)
+        }
+      }
+    }
+  }
+
+  private func executeFunctionTool(named name: String, arguments: String) async throws -> String {
+    guard let tool = functionTools[name] else {
+      throw ResponseSessionError.unknownTool(named: name)
+    }
+
+    let maxAttempts: Int
+    switch errorPolicy {
+    case .retry(let count):
+      maxAttempts = max(1, count + 1)
+    default:
+      maxAttempts = 1
+    }
+
+    var attempt = 0
+    var lastError: Error?
+    while attempt < maxAttempts {
+      do {
+        return try await tool.call(arguments: arguments)
+      } catch {
+        lastError = error
+        attempt += 1
       }
     }
 
-    // Handle recursion if we have tool call results
-    if !newItems.isEmpty, let responseID {
-      // Recursively stream the next response with tool call results
-      try await streamAdvance(
-        newItems: newItems, previousResponseID: responseID, continuation: continuation
-      )
-    } else {
-      continuation.finish()
+    guard let lastError else {
+      throw ResponseSessionError.toolExecutionFailed(name: name)
+    }
+
+    switch errorPolicy {
+    case .failFast, .retry:
+      throw lastError
+    case .returnAsMessage:
+      return "Tool '\(name)' failed: \(String(describing: lastError))"
+    case .askAssistantToClarify(let systemMessage):
+      return systemMessage(lastError)
     }
   }
+
+  @available(macOS 15.0, *)
+  private static func makeRawStream(
+    bufferLimit: Int
+  ) -> (AsyncThrowingStream<StreamingResponse, Error>, StreamEmitter<StreamingResponse>) {
+    var continuation: AsyncThrowingStream<StreamingResponse, Error>.Continuation?
+    let stream = AsyncThrowingStream<StreamingResponse, Error>(
+      bufferingPolicy: .bufferingNewest(bufferLimit)
+    ) { createdContinuation in
+      continuation = createdContinuation
+    }
+
+    guard let continuation else {
+      preconditionFailure("raw stream continuation was not initialized")
+    }
+
+    let emitter = StreamEmitter(continuation: continuation)
+    return (stream, emitter)
+  }
+
+  @available(macOS 15.0, *)
+  private static func makePluginRuntime<P: ResponseStreamPlugin>(
+    plugin: P,
+    type _: P.Type,
+    bufferLimit: Int
+  ) -> (PluginChannel<P>, AnyPluginRuntime) {
+    var continuation: AsyncThrowingStream<P.Event, Error>.Continuation?
+    let stream = AsyncThrowingStream<P.Event, Error>(
+      bufferingPolicy: .bufferingNewest(bufferLimit)
+    ) { createdContinuation in
+      continuation = createdContinuation
+    }
+
+    guard let continuation else {
+      preconditionFailure("plugin stream continuation was not initialized")
+    }
+
+    let emitter = StreamEmitter(continuation: continuation)
+    let channel = PluginChannel<P>(
+      events: stream,
+      droppedCountProvider: { emitter.droppedCount() }
+    )
+    let runtime = AnyPluginRuntime(
+      consume: { event, context in
+        guard let pluginEvent = try await plugin.consume(event, context: &context) else { return }
+        emitter.yield(pluginEvent)
+      },
+      finishPlugin: { context in
+        guard let pluginEvent = try await plugin.finish(context: &context) else { return }
+        emitter.yield(pluginEvent)
+      },
+      finishStream: { error in
+        emitter.finish(throwing: error)
+      }
+    )
+    return (channel, runtime)
+  }
+
+  @available(macOS 15.0, *)
+  private static func makePluginRuntimes<each Plugin: ResponseStreamPlugin>(
+    plugins: repeat each Plugin,
+    bufferLimit: Int
+  ) -> ((repeat PluginChannel<each Plugin>), [AnyPluginRuntime]) {
+    var runtimes: [AnyPluginRuntime] = []
+
+    func makeChannel<P: ResponseStreamPlugin>(_ plugin: P) -> PluginChannel<P> {
+      let (channel, runtime) = Self.makePluginRuntime(
+        plugin: plugin,
+        type: P.self,
+        bufferLimit: bufferLimit
+      )
+      runtimes.append(runtime)
+      return channel
+    }
+
+    let channels = (repeat makeChannel(each plugins))
+    return (channels, runtimes)
+  }
+}
+
+@available(macOS 15.0, *)
+private struct AnyPluginRuntime: Sendable {
+  let consume: @Sendable (
+    _ event: StreamingResponse,
+    _ context: inout StreamPluginContext
+  ) async throws -> Void
+  let finishPlugin: @Sendable (_ context: inout StreamPluginContext) async throws -> Void
+  let finishStream: @Sendable (_ error: Error?) -> Void
 }

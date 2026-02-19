@@ -34,6 +34,10 @@ let package = Package(
     .package(url: "https://github.com/ajevans99/swift-json-schema.git", .upToNextMinor(from: "0.5.0")),
     // 🪵 Logging
     .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
+    // 🔀 Enum case key paths and macros
+    .package(url: "https://github.com/pointfreeco/swift-case-paths", from: "1.0.0"),
+    // 🧾 Better diffs in tests
+    .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.3.3"),
   ],
   targets: [
     .target(
@@ -44,11 +48,16 @@ let package = Package(
         .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
         .product(name: "JSONSchema", package: "swift-json-schema"),
         .product(name: "JSONSchemaBuilder", package: "swift-json-schema"),
+        .product(name: "CasePaths", package: "swift-case-paths"),
       ]
     ),
     .testTarget(
       name: "OpenAIKitTests",
-      dependencies: ["OpenAIKit", "OpenAICore"],
+      dependencies: [
+        "OpenAIKit",
+        "OpenAICore",
+        .product(name: "CustomDump", package: "swift-custom-dump"),
+      ],
       resources: [
         .copy("Fixtures")
       ]

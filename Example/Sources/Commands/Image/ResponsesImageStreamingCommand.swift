@@ -43,63 +43,80 @@ struct ResponsesImageStreamingCommand: AsyncParsableCommand {
 
     await session.register(openAITool: .imageGen(imageGenTool))
 
-    let stream = try await session.stream(prompt)
-    var finalizedImageCallIDs = Set<String>()
+    let handle = try await session.stream(
+      prompt,
+      plugins: TextPlugin(), ImagePlugin()
+    )
+    let (textChannel, imageChannel) = handle.pluginEvents
 
-    for try await event in stream {
-      switch event {
-      case .output(let text, let isFinal):
-        if isFinal {
-          print(text)
-        } else {
-          print(text, terminator: "")
+    try await withThrowingTaskGroup(of: Void.self) { group in
+      group.addTask {
+        for try await event in textChannel.events {
+          switch event {
+          case .delta(let text):
+            print(text, terminator: "")
+          case .completed(let text):
+            print(text)
+          }
         }
-      case .toolCalled(let name, let arguments):
-        print("Tool called: \(name) with arguments: \(arguments)")
-      case .completed(let responseID):
-        print("Response completed: \(responseID)")
-      case .others(
-        .imageGenCall(.partialImage(let itemId, _, let base64, let partialImageIndex, _))):
-        do {
-
-          let savedImage = try ImageUtils.savePartialImage(
-            base64Data: base64,
-            imageId: itemId,
-            partialIndex: partialImageIndex,
-            imagesDirectory: imagesDirectory
-          )
-          print("Partial image saved to: \(savedImage.url)")
-        } catch {
-          print("Error saving partial image: \(error)")
-        }
-      case .others(.outputItem(.done(.imageGenToolCall(let item), _))):
-        print("Image generation call completed: \(item.id) (\(item.status.rawValue))")
-        do {
-          try Self.persistFinalImageIfPresent(
-            item: item,
-            imagesDirectory: imagesDirectory,
-            finalizedImageCallIDs: &finalizedImageCallIDs
-          )
-        } catch {
-          print("Error saving final image: \(error)")
-        }
-      case .others:
-        break
       }
+
+      group.addTask {
+        var finalizedImageCallIDs = Set<String>()
+        for try await event in imageChannel.events {
+          switch event {
+          case .partial(let itemID, _, let base64, let partialIndex, _):
+            do {
+              let savedImage = try ImageUtils.savePartialImage(
+                base64Data: base64,
+                imageId: itemID,
+                partialIndex: partialIndex,
+                imagesDirectory: imagesDirectory
+              )
+              print("Partial image saved to: \(savedImage.url)")
+            } catch {
+              print("Error saving partial image: \(error)")
+            }
+
+          case .completed(let itemID, let status, let resultBase64):
+            print("Image generation call completed: \(itemID) (\(status))")
+            do {
+              try Self.persistFinalImageIfPresent(
+                itemID: itemID,
+                resultBase64: resultBase64,
+                imagesDirectory: imagesDirectory,
+                finalizedImageCallIDs: &finalizedImageCallIDs
+              )
+            } catch {
+              print("Error saving final image: \(error)")
+            }
+          }
+        }
+      }
+      group.addTask {
+        for try await rawEvent in handle.raw {
+          if case .completed(let response) = rawEvent {
+            print("Response completed: \(response.id)")
+          }
+        }
+      }
+
+      try await group.waitForAll()
     }
   }
 
   private static func persistFinalImageIfPresent(
-    item: Components.Schemas.ImageGenToolCall,
+    itemID: String,
+    resultBase64: String?,
     imagesDirectory: URL,
     finalizedImageCallIDs: inout Set<String>
   ) throws {
-    guard let result = item.result, !result.isEmpty else { return }
-    guard finalizedImageCallIDs.insert(item.id).inserted else { return }
+    guard let resultBase64, !resultBase64.isEmpty else { return }
+    guard finalizedImageCallIDs.insert(itemID).inserted else { return }
 
     let savedImages = try ImageUtils.saveBase64Images(
-      images: [result],
-      imageId: item.id,
+      images: [resultBase64],
+      imageId: itemID,
       imagesDirectory: imagesDirectory
     )
 
