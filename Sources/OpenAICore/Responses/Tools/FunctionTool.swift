@@ -20,15 +20,37 @@ public struct FunctionTool: Sendable {
 
   public init(_ tool: Components.Schemas.FunctionTool) {
     self.name = tool.name
-    self.description = nil
-    self.parameters = [:]
-    self.strict = true
+    self.description = tool.description
+    if let parameters = tool.parameters {
+      var mapped: [String: OpenAPIValueContainer] = [:]
+      for (key, value) in parameters.value {
+        mapped[key] =
+          (try? OpenAPIValueContainer(unvalidatedValue: value))
+          ?? OpenAPIValueContainer(nilLiteral: ())
+      }
+      self.parameters = mapped
+    } else {
+      self.parameters = [:]
+    }
+    self.strict = tool.strict ?? true
   }
 
   public func toOpenAPI() -> Components.Schemas.FunctionTool {
-    Components.Schemas.FunctionTool(
+    let parameterObject: OpenAPIObjectContainer?
+    if parameters.isEmpty {
+      parameterObject = nil
+    } else {
+      parameterObject = try? OpenAPIObjectContainer(
+        unvalidatedValue: parameters.mapValues(\.value)
+      )
+    }
+
+    return Components.Schemas.FunctionTool(
       _type: .function,
-      name: name
+      name: name,
+      description: description,
+      parameters: parameterObject,
+      strict: strict
     )
   }
 }

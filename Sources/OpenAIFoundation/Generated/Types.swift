@@ -13921,21 +13921,45 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/FunctionTool/name`.
             public var name: Swift.String
+            /// A description of the function. Used by the model to determine whether or not to call the function.
+            ///
+            /// - Remark: Added by swift-openai patch: missing generated field from FunctionTool schema.
+            public var description: Swift.String?
+            /// A JSON schema object describing the parameters of the function.
+            ///
+            /// - Remark: Added by swift-openai patch: missing generated field from FunctionTool schema.
+            public var parameters: OpenAPIRuntime.OpenAPIObjectContainer?
+            /// Whether to enforce strict parameter validation. Default `true`.
+            ///
+            /// - Remark: Added by swift-openai patch: missing generated field from FunctionTool schema.
+            public var strict: Swift.Bool?
             /// Creates a new `FunctionTool`.
             ///
             /// - Parameters:
             ///   - _type: The type of the function tool. Always `function`.
             ///   - name: The name of the function to call.
+            ///   - description: A description of the function.
+            ///   - parameters: A JSON schema object describing the parameters of the function.
+            ///   - strict: Whether to enforce strict parameter validation.
             public init(
                 _type: Components.Schemas.FunctionTool._TypePayload,
-                name: Swift.String
+                name: Swift.String,
+                description: Swift.String? = nil,
+                parameters: OpenAPIRuntime.OpenAPIObjectContainer? = nil,
+                strict: Swift.Bool? = nil
             ) {
                 self._type = _type
                 self.name = name
+                self.description = description
+                self.parameters = parameters
+                self.strict = strict
             }
             public enum CodingKeys: String, CodingKey {
                 case _type = "type"
                 case name
+                case description
+                case parameters
+                case strict
             }
         }
         /// - Remark: Generated from `#/components/schemas/RankerVersionType`.
