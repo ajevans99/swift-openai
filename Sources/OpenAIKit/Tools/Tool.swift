@@ -18,16 +18,53 @@ public protocol Toolable: Sendable {
 
 public enum CallError: Error {
   case invalidParameters(issues: [ParseIssue])
+  case invalidParameterValidation(result: ValidationResult)
+  case invalidParametersAndValidation(issues: [ParseIssue], result: ValidationResult)
+  case invalidParameterDecoding(errorDescription: String)
 }
 
 extension Toolable {
-  func call(arguments: String) async throws -> String {
-    let parameters = try parameters.parse(instance: arguments)
-    switch parameters {
-    case .valid(let parameters):
+  public func call(arguments: String) async throws -> String {
+    try await call(arguments: arguments, messaging: DefaultToolCallMessaging())
+  }
+
+  public func call<M: ToolCallMessaging>(
+    arguments: String,
+    messaging: M
+  ) async throws -> String {
+    do {
+      let parameters = try self.parameters.parseAndValidate(instance: arguments)
       return try await call(parameters: parameters)
-    case .invalid(let issues):
+    } catch ParseAndValidateIssue.parsingFailed(let issues) {
+      messaging.parsingFailed(
+        .init(toolName: name, arguments: arguments, issues: issues)
+      )
       throw CallError.invalidParameters(issues: issues)
+    } catch ParseAndValidateIssue.validationFailed(let result) {
+      messaging.validationFailed(
+        .init(toolName: name, arguments: arguments, result: result)
+      )
+      throw CallError.invalidParameterValidation(result: result)
+    } catch ParseAndValidateIssue.parsingAndValidationFailed(let issues, let result) {
+      messaging.parsingAndValidationFailed(
+        .init(
+          toolName: name,
+          arguments: arguments,
+          parseIssues: issues,
+          validationResult: result
+        )
+      )
+      throw CallError.invalidParametersAndValidation(issues: issues, result: result)
+    } catch ParseAndValidateIssue.decodingFailed(let error) {
+      messaging.decodingFailed(
+        .init(toolName: name, arguments: arguments, error: error)
+      )
+      throw CallError.invalidParameterDecoding(errorDescription: String(describing: error))
+    } catch {
+      messaging.decodingFailed(
+        .init(toolName: name, arguments: arguments, error: error)
+      )
+      throw CallError.invalidParameterDecoding(errorDescription: String(describing: error))
     }
   }
 }

@@ -35,6 +35,7 @@ public actor ResponseSession {
   private let client: OpenAI
   private let model: Model
   private let errorPolicy: ToolErrorPolicy
+  private let toolCallMessaging: any ToolCallMessaging
 
   private var functionTools: [String: any Toolable] = [:]
   private var openAITools: [OpenAICore.Tool] = []
@@ -49,14 +50,17 @@ public actor ResponseSession {
   ///   - client: The configured OpenAI client.
   ///   - model: The model used for all turns in this session.
   ///   - errorPolicy: Behavior to apply when function tools fail.
+  ///   - toolCallMessaging: Observability hooks for tool call parsing failures.
   public init(
     client: OpenAI,
     model: Model,
-    errorPolicy: ToolErrorPolicy = .failFast
+    errorPolicy: ToolErrorPolicy = .failFast,
+    toolCallMessaging: any ToolCallMessaging = DefaultToolCallMessaging()
   ) {
     self.client = client
     self.model = model
     self.errorPolicy = errorPolicy
+    self.toolCallMessaging = toolCallMessaging
   }
 
   /// Registers a function tool on the session.
@@ -362,7 +366,7 @@ public actor ResponseSession {
       named: name,
       policy: policyOverride ?? errorPolicy
     ) {
-      try await tool.call(arguments: arguments)
+      try await tool.call(arguments: arguments, messaging: toolCallMessaging)
     }
   }
 
