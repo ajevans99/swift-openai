@@ -45,7 +45,9 @@ public struct InputImageContent: Sendable {
   public func toOpenAPI() -> Components.Schemas.InputImageContent {
     Components.Schemas.InputImageContent(
       _type: .inputImage,
-      detail: detail.toOpenAPI()
+      detail: detail.toOpenAPI(),
+      imageUrl: imageUrl,
+      fileId: fileId
     )
   }
 }
@@ -93,8 +95,8 @@ public enum InputContent: Sendable {
       }
       self = .image(
         InputImageContent(
-          imageUrl: nil,
-          fileId: nil,
+          imageUrl: imageContent.imageUrl,
+          fileId: imageContent.fileId,
           detail: detail
         )
       )

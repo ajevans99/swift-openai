@@ -100,7 +100,8 @@ public actor ResponseSession {
   public func send(
     _ userText: String,
     additionalItems: [Item] = [],
-    previousResponseID: String? = nil
+    previousResponseID: String? = nil,
+    metadata: [String: String]? = nil
   ) async throws -> String {
     let item = Item.inputMessage(
       InputMessage(role: .user, content: [.text(.init(text: userText))])
@@ -108,7 +109,8 @@ public actor ResponseSession {
 
     return try await advance(
       newItems: [item] + additionalItems,
-      previousResponseID: previousResponseID
+      previousResponseID: previousResponseID,
+      metadata: metadata
     )
   }
 
@@ -127,6 +129,7 @@ public actor ResponseSession {
     _ userText: String,
     additionalItems: [Item] = [],
     previousResponseID: String? = nil,
+    metadata: [String: String]? = nil,
     plugins: repeat each Plugin
   ) async throws -> ResponseStreamHandle<(repeat PluginChannel<each Plugin>)> {
     let item = Item.inputMessage(
@@ -136,6 +139,7 @@ public actor ResponseSession {
     return try await stream(
       items: [item] + additionalItems,
       previousResponseID: previousResponseID,
+      metadata: metadata,
       plugins: repeat each plugins
     )
   }
@@ -148,6 +152,7 @@ public actor ResponseSession {
   public func stream<each Plugin: ResponseStreamPlugin>(
     items: [Item] = [],
     previousResponseID: String? = nil,
+    metadata: [String: String]? = nil,
     plugins: repeat each Plugin
   ) async throws -> ResponseStreamHandle<(repeat PluginChannel<each Plugin>)> {
     let (rawStream, rawEmitter) = Self.makeRawStream(bufferLimit: Self.streamBufferLimit)
@@ -159,6 +164,7 @@ public actor ResponseSession {
     startStreamTask(
       newItems: items,
       previousResponseID: previousResponseID,
+      metadata: metadata,
       pluginRuntimes: pluginRuntimes,
       rawEmitter: rawEmitter
     )
@@ -173,14 +179,16 @@ public actor ResponseSession {
   public func streamRaw(
     _ userText: String,
     additionalItems: [Item] = [],
-    previousResponseID: String? = nil
+    previousResponseID: String? = nil,
+    metadata: [String: String]? = nil
   ) async throws -> AsyncThrowingStream<StreamingResponse, Error> {
     let item = Item.inputMessage(
       InputMessage(role: .user, content: [.text(.init(text: userText))])
     )
     return try await streamRaw(
       items: [item] + additionalItems,
-      previousResponseID: previousResponseID
+      previousResponseID: previousResponseID,
+      metadata: metadata
     )
   }
 
@@ -188,23 +196,30 @@ public actor ResponseSession {
   @available(macOS 15.0, *)
   public func streamRaw(
     items: [Item] = [],
-    previousResponseID: String? = nil
+    previousResponseID: String? = nil,
+    metadata: [String: String]? = nil
   ) async throws -> AsyncThrowingStream<StreamingResponse, Error> {
     let (rawStream, rawEmitter) = Self.makeRawStream(bufferLimit: Self.streamBufferLimit)
 
     startStreamTask(
       newItems: items,
       previousResponseID: previousResponseID,
+      metadata: metadata,
       pluginRuntimes: [],
       rawEmitter: rawEmitter
     )
     return rawStream
   }
 
-  private func advance(newItems: [Item], previousResponseID: String? = nil) async throws -> String {
+  private func advance(
+    newItems: [Item],
+    previousResponseID: String? = nil,
+    metadata: [String: String]? = nil
+  ) async throws -> String {
     let response = try await client.createResponse(
       input: .items(newItems.map { .item($0) }),
       model: model,
+      metadata: metadata,
       previousResponseId: previousResponseID,
       tools: allTools
     )
@@ -254,7 +269,11 @@ public actor ResponseSession {
     }
 
     if !toolOutputItems.isEmpty {
-      return try await advance(newItems: toolOutputItems, previousResponseID: response.id)
+      return try await advance(
+        newItems: toolOutputItems,
+        previousResponseID: response.id,
+        metadata: metadata
+      )
     }
 
     return generatedText
@@ -264,6 +283,7 @@ public actor ResponseSession {
   private func streamLoop(
     newItems: [Item],
     previousResponseID: String?,
+    metadata: [String: String]?,
     pluginRuntimes: [AnyPluginRuntime],
     rawEmitter: StreamEmitter<StreamingResponse>
   ) async throws {
@@ -283,6 +303,7 @@ public actor ResponseSession {
       let stream = try await client.streamCreateResponse(
         input: .items(pendingItems.map { .item($0) }),
         model: model,
+        metadata: metadata,
         previousResponseId: currentPreviousResponseID,
         tools: allTools
       )
@@ -328,6 +349,7 @@ public actor ResponseSession {
   private func startStreamTask(
     newItems: [Item],
     previousResponseID: String?,
+    metadata: [String: String]?,
     pluginRuntimes: [AnyPluginRuntime],
     rawEmitter: StreamEmitter<StreamingResponse>
   ) {
@@ -336,6 +358,7 @@ public actor ResponseSession {
         try await self.streamLoop(
           newItems: newItems,
           previousResponseID: previousResponseID,
+          metadata: metadata,
           pluginRuntimes: pluginRuntimes,
           rawEmitter: rawEmitter
         )

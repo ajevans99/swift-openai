@@ -61,7 +61,7 @@ public protocol APIProtocol: Sendable {
     /// - Remark: Generated from `#/paths//responses/{response_id}/delete(deleteResponse)`.
     func deleteResponse(_ input: Operations.DeleteResponse.Input) async throws -> Operations.DeleteResponse.Output
     /// Cancels a model response with the given ID. Only responses created with
-    /// the `background` parameter set to `true` can be cancelled. 
+    /// the `background` parameter set to `true` can be cancelled.
     /// [Learn more](/docs/guides/background).
     ///
     ///
@@ -176,7 +176,7 @@ extension APIProtocol {
         ))
     }
     /// Cancels a model response with the given ID. Only responses created with
-    /// the `background` parameter set to `true` can be cancelled. 
+    /// the `background` parameter set to `true` can be cancelled.
     /// [Learn more](/docs/guides/background).
     ///
     ///
@@ -733,7 +733,7 @@ public enum Components {
         ///
         /// - Remark: Generated from `#/components/schemas/ComputerScreenshotImage`.
         public struct ComputerScreenshotImage: Codable, Hashable, Sendable {
-            /// Specifies the event type. For a computer screenshot, this property is 
+            /// Specifies the event type. For a computer screenshot, this property is
             /// always set to `computer_screenshot`.
             ///
             ///
@@ -741,7 +741,7 @@ public enum Components {
             @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
                 case computerScreenshot = "computer_screenshot"
             }
-            /// Specifies the event type. For a computer screenshot, this property is 
+            /// Specifies the event type. For a computer screenshot, this property is
             /// always set to `computer_screenshot`.
             ///
             ///
@@ -758,7 +758,7 @@ public enum Components {
             /// Creates a new `ComputerScreenshotImage`.
             ///
             /// - Parameters:
-            ///   - _type: Specifies the event type. For a computer screenshot, this property is 
+            ///   - _type: Specifies the event type. For a computer screenshot, this property is
             ///   - imageUrl: The URL of the screenshot image.
             ///   - fileId: The identifier of an uploaded file that contains the screenshot.
             public init(
@@ -2149,7 +2149,7 @@ public enum Components {
                 }
             }
         }
-        /// A tool call to run a function. See the 
+        /// A tool call to run a function. See the
         /// [function calling guide](/docs/guides/function-calling) for more information.
         ///
         ///
@@ -3836,7 +3836,7 @@ public enum Components {
                 case content
             }
         }
-        /// A list of one or many input items to the model, containing different content 
+        /// A list of one or many input items to the model, containing different content
         /// types.
         ///
         ///
@@ -7393,8 +7393,8 @@ public enum Components {
                 case lastId = "last_id"
             }
         }
-        /// A logprob is the logarithmic probability that the model assigns to producing 
-        /// a particular token at a given position in the sequence. Less-negative (higher) 
+        /// A logprob is the logarithmic probability that the model assigns to producing
+        /// a particular token at a given position in the sequence. Less-negative (higher)
         /// logprob values indicate greater model confidence in that token choice.
         ///
         ///
@@ -9694,7 +9694,7 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/ResponseUsage/input_tokens_details`.
             public struct InputTokensDetailsPayload: Codable, Hashable, Sendable {
-                /// The number of tokens that were retrieved from the cache. 
+                /// The number of tokens that were retrieved from the cache.
                 /// [More on prompt caching](/docs/guides/prompt-caching).
                 ///
                 ///
@@ -9703,7 +9703,7 @@ public enum Components {
                 /// Creates a new `InputTokensDetailsPayload`.
                 ///
                 /// - Parameters:
-                ///   - cachedTokens: The number of tokens that were retrieved from the cache. 
+                ///   - cachedTokens: The number of tokens that were retrieved from the cache.
                 public init(cachedTokens: Swift.Int) {
                     self.cachedTokens = cachedTokens
                 }
@@ -9942,8 +9942,8 @@ public enum Components {
         }
         /// An object specifying the format that the model must output.
         ///
-        /// Configuring `{ "type": "json_schema" }` enables Structured Outputs, 
-        /// which ensures the model will match your supplied JSON schema. Learn more in the 
+        /// Configuring `{ "type": "json_schema" }` enables Structured Outputs,
+        /// which ensures the model will match your supplied JSON schema. Learn more in the
         /// [Structured Outputs guide](/docs/guides/structured-outputs).
         ///
         /// The default format is `{ "type": "text" }` with no additional options.
@@ -11664,21 +11664,49 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/InputImageContent/detail`.
             public var detail: Components.Schemas.ImageDetail
+            /// The URL of the image to be sent to the model.
+            public var imageUrl: Swift.String?
+            /// The file ID of the image to be sent to the model.
+            public var fileId: Swift.String?
             /// Creates a new `InputImageContent`.
             ///
             /// - Parameters:
             ///   - _type: The type of the input item. Always `input_image`.
             ///   - detail: The detail level of the image to be sent to the model. One of `high`, `low`, or `auto`. Defaults to `auto`.
+            ///   - imageUrl: The URL of the image to be sent to the model.
+            ///   - fileId: The file ID of the image to be sent to the model.
             public init(
                 _type: Components.Schemas.InputImageContent._TypePayload,
-                detail: Components.Schemas.ImageDetail
+                detail: Components.Schemas.ImageDetail,
+                imageUrl: Swift.String? = nil,
+                fileId: Swift.String? = nil
             ) {
                 self._type = _type
                 self.detail = detail
+                self.imageUrl = imageUrl
+                self.fileId = fileId
             }
             public enum CodingKeys: String, CodingKey {
                 case _type = "type"
                 case detail
+                case imageUrl = "image_url"
+                case fileId = "file_id"
+            }
+
+            public init(from decoder: any Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self._type = try container.decode(Components.Schemas.InputImageContent._TypePayload.self, forKey: ._type)
+                self.detail = try container.decodeIfPresent(Components.Schemas.ImageDetail.self, forKey: .detail) ?? .auto
+                self.imageUrl = try container.decodeIfPresent(Swift.String.self, forKey: .imageUrl)
+                self.fileId = try container.decodeIfPresent(Swift.String.self, forKey: .fileId)
+            }
+
+            public func encode(to encoder: any Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(self._type, forKey: ._type)
+                try container.encode(self.detail, forKey: .detail)
+                try container.encodeIfPresent(self.imageUrl, forKey: .imageUrl)
+                try container.encodeIfPresent(self.fileId, forKey: .fileId)
             }
         }
         /// A file input to the model.
@@ -16099,7 +16127,7 @@ public enum Operations {
         }
     }
     /// Cancels a model response with the given ID. Only responses created with
-    /// the `background` parameter set to `true` can be cancelled. 
+    /// the `background` parameter set to `true` can be cancelled.
     /// [Learn more](/docs/guides/background).
     ///
     ///
