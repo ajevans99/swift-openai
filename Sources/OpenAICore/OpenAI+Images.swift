@@ -48,11 +48,20 @@ extension OpenAI {
 
     let output = try await openAPIClient.createImage(input)
 
-    switch try output.ok.body {
-    case .json(let response):
-      return ImagesResponse(openAPI: response)
-    case .textEventStream:
-      throw ImagesError.incorrectEndpointForNonStreaming
+    switch output {
+    case .ok(let ok):
+      switch ok.body {
+      case .json(let response):
+        return ImagesResponse(openAPI: response)
+      case .textEventStream:
+        throw ImagesError.incorrectEndpointForNonStreaming
+      }
+    case .undocumented(let statusCode, let payload):
+      throw await makeUndocumentedResponseError(
+        statusCode: statusCode,
+        payload: payload,
+        operation: "createImage"
+      )
     }
   }
 
@@ -90,11 +99,20 @@ extension OpenAI {
 
     let output = try await openAPIClient.createImageEdit(input)
 
-    switch try output.ok.body {
-    case .json(let response):
-      return ImagesResponse(openAPI: response)
-    case .textEventStream:
-      throw ImagesError.incorrectEndpointForNonStreaming
+    switch output {
+    case .ok(let ok):
+      switch ok.body {
+      case .json(let response):
+        return ImagesResponse(openAPI: response)
+      case .textEventStream:
+        throw ImagesError.incorrectEndpointForNonStreaming
+      }
+    case .undocumented(let statusCode, let payload):
+      throw await makeUndocumentedResponseError(
+        statusCode: statusCode,
+        payload: payload,
+        operation: "editImage"
+      )
     }
   }
 }

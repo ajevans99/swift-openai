@@ -71,8 +71,15 @@ extension Toolable {
 
 extension Toolable {
   public func toFunctionTool() -> FunctionTool {
-    guard case .object(let parameters) = parameters.schemaValue else {
+    guard case .object(let rawParameters) = parameters.schemaValue else {
       fatalError("Boolean schemas are not supported at root level for tools")
+    }
+
+    var parameters = rawParameters
+    // OpenAI tool validation now expects object schemas to include an explicit
+    // `properties` key, even when a tool takes zero arguments.
+    if parameters["type"] == .string("object"), parameters["properties"] == nil {
+      parameters["properties"] = .object([:])
     }
 
     return FunctionTool(

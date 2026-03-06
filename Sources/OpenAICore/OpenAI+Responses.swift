@@ -77,11 +77,20 @@ extension OpenAI {
 
     let output = try await openAPIClient.createResponse(input)
 
-    switch try output.ok.body {
-    case .json(let response):
-      return Response(openAPI: response)
-    case .textEventStream:
-      throw CreateResponseError.incorrectEndpointForStreaming
+    switch output {
+    case .ok(let ok):
+      switch ok.body {
+      case .json(let response):
+        return Response(openAPI: response)
+      case .textEventStream:
+        throw CreateResponseError.incorrectEndpointForStreaming
+      }
+    case .undocumented(let statusCode, let payload):
+      throw await makeUndocumentedResponseError(
+        statusCode: statusCode,
+        payload: payload,
+        operation: "createResponse"
+      )
     }
   }
 
@@ -154,11 +163,20 @@ extension OpenAI {
     let output = try await openAPIClient.createResponse(input)
 
     let body: HTTPBody
-    switch try output.ok.body {
-    case .json:
-      throw CreateResponseError.incorrectEndpointForNonStreaming
-    case .textEventStream(let stream):
-      body = stream
+    switch output {
+    case .ok(let ok):
+      switch ok.body {
+      case .json:
+        throw CreateResponseError.incorrectEndpointForNonStreaming
+      case .textEventStream(let stream):
+        body = stream
+      }
+    case .undocumented(let statusCode, let payload):
+      throw await makeUndocumentedResponseError(
+        statusCode: statusCode,
+        payload: payload,
+        operation: "streamCreateResponse"
+      )
     }
 
     return AsyncThrowingStream { continuation in
@@ -265,9 +283,18 @@ extension OpenAI {
     )
     let output = try await openAPIClient.getResponse(input)
 
-    switch try output.ok.body {
-    case .json(let response):
-      return Response(openAPI: response)
+    switch output {
+    case .ok(let ok):
+      switch ok.body {
+      case .json(let response):
+        return Response(openAPI: response)
+      }
+    case .undocumented(let statusCode, let payload):
+      throw await makeUndocumentedResponseError(
+        statusCode: statusCode,
+        payload: payload,
+        operation: "getResponse"
+      )
     }
   }
 
@@ -290,8 +317,12 @@ extension OpenAI {
       return
     case .notFound:
       throw DeleteResponseError.notFound
-    case .undocumented:
-      throw DeleteResponseError.undocumented
+    case .undocumented(let statusCode, let payload):
+      throw await makeUndocumentedResponseError(
+        statusCode: statusCode,
+        payload: payload,
+        operation: "deleteResponse"
+      )
     }
   }
 
@@ -323,9 +354,18 @@ extension OpenAI {
     )
     let output = try await openAPIClient.listInputItems(input)
 
-    switch try output.ok.body {
-    case .json(let response):
-      return ListInputItemsResponse(openAPI: response)
+    switch output {
+    case .ok(let ok):
+      switch ok.body {
+      case .json(let response):
+        return ListInputItemsResponse(openAPI: response)
+      }
+    case .undocumented(let statusCode, let payload):
+      throw await makeUndocumentedResponseError(
+        statusCode: statusCode,
+        payload: payload,
+        operation: "listInputItems"
+      )
     }
   }
 }

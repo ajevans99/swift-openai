@@ -1,4 +1,7 @@
+import JSONSchema
+import JSONSchemaBuilder
 import OpenAICore
+import OpenAIKit
 import Testing
 
 @Suite("FunctionTool Serialization")
@@ -45,5 +48,32 @@ struct FunctionToolSerializationTests {
     #expect(roundTripped.parameters.isEmpty == false)
     let typeValue = roundTripped.parameters["type"]?.value as? String
     #expect(typeValue == "object")
+  }
+
+  @Test("Toolable zero-arg object schema includes empty properties")
+  func toolableZeroArgSchemaIncludesProperties() {
+    let tool = NoArgumentsTool().toFunctionTool().toOpenAPI()
+    let schema = tool.parameters?.value
+    let properties = schema?["properties"] as? [String: Any]
+
+    #expect(schema != nil)
+    #expect(properties != nil)
+    #expect(properties?.isEmpty == true)
+  }
+}
+
+private struct NoArgumentsTool: Toolable {
+  let name = "list-galleries"
+  let description: String? = "List galleries."
+  let strict = false
+
+  var parameters: some JSONSchemaComponent<Void> {
+    JSONObject {}
+      .additionalProperties { false }
+      .map { _ in () }
+  }
+
+  func call(parameters _: Void) async throws -> String {
+    "[]"
   }
 }
