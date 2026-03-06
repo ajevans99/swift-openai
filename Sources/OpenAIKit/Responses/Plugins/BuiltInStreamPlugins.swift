@@ -50,12 +50,25 @@ public struct ToolOrchestratorPlugin: ResponseStreamPlugin {
   }
 
   private let registry: FunctionToolRegistry
+  private let errorPolicyOverride: ToolErrorPolicy?
+  private let toolCallMessaging: any ToolCallMessaging
 
   /// Creates a tool orchestrator with optional plugin-local tools.
   ///
-  /// - Parameter tools: Function tools owned by this plugin.
-  public init(tools: [any Toolable] = []) {
+  /// - Parameters:
+  ///   - tools: Function tools owned by this plugin.
+  ///   - errorPolicy: Optional override for tool error behavior. If omitted,
+  ///     session-level policy is used for fallback lookup, while plugin-local
+  ///     tools default to fail-fast.
+  ///   - toolCallMessaging: Observability hooks for tool call parsing failures.
+  public init(
+    tools: [any Toolable] = [],
+    errorPolicy: ToolErrorPolicy? = nil,
+    toolCallMessaging: any ToolCallMessaging = DefaultToolCallMessaging()
+  ) {
     self.registry = FunctionToolRegistry(tools: tools)
+    self.errorPolicyOverride = errorPolicy
+    self.toolCallMessaging = toolCallMessaging
   }
 
   /// Registers a function tool in this plugin's local registry.
@@ -94,11 +107,18 @@ public struct ToolOrchestratorPlugin: ResponseStreamPlugin {
 
     let output: String
     if let tool = await registry.tool(named: toolCall.name) {
-      output = try await tool.call(arguments: toolCall.arguments)
+      let localPolicy = errorPolicyOverride ?? .failFast
+      output = try await executeToolWithPolicy(
+        named: toolCall.name,
+        policy: localPolicy
+      ) {
+        try await tool.call(arguments: toolCall.arguments, messaging: toolCallMessaging)
+      }
     } else {
       output = try await context.callFunctionTool(
         named: toolCall.name,
-        arguments: toolCall.arguments
+        arguments: toolCall.arguments,
+        errorPolicy: errorPolicyOverride
       )
     }
 

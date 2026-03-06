@@ -3,7 +3,7 @@ import JSONSchemaBuilder
 import OpenAICore
 import OpenAPIRuntime
 
-public protocol Toolable {
+public protocol Toolable: Sendable {
   associatedtype Component: JSONSchemaComponent
 
   var name: String { get }
@@ -18,24 +18,68 @@ public protocol Toolable {
 
 public enum CallError: Error {
   case invalidParameters(issues: [ParseIssue])
+  case invalidParameterValidation(result: ValidationResult)
+  case invalidParametersAndValidation(issues: [ParseIssue], result: ValidationResult)
+  case invalidParameterDecoding(errorDescription: String)
 }
 
 extension Toolable {
-  func call(arguments: String) async throws -> String {
-    let parameters = try parameters.parse(instance: arguments)
-    switch parameters {
-    case .valid(let parameters):
+  public func call(arguments: String) async throws -> String {
+    try await call(arguments: arguments, messaging: DefaultToolCallMessaging())
+  }
+
+  public func call<M: ToolCallMessaging>(
+    arguments: String,
+    messaging: M
+  ) async throws -> String {
+    do {
+      let parameters = try self.parameters.parseAndValidate(instance: arguments)
       return try await call(parameters: parameters)
-    case .invalid(let issues):
+    } catch ParseAndValidateIssue.parsingFailed(let issues) {
+      messaging.parsingFailed(
+        .init(toolName: name, arguments: arguments, issues: issues)
+      )
       throw CallError.invalidParameters(issues: issues)
+    } catch ParseAndValidateIssue.validationFailed(let result) {
+      messaging.validationFailed(
+        .init(toolName: name, arguments: arguments, result: result)
+      )
+      throw CallError.invalidParameterValidation(result: result)
+    } catch ParseAndValidateIssue.parsingAndValidationFailed(let issues, let result) {
+      messaging.parsingAndValidationFailed(
+        .init(
+          toolName: name,
+          arguments: arguments,
+          parseIssues: issues,
+          validationResult: result
+        )
+      )
+      throw CallError.invalidParametersAndValidation(issues: issues, result: result)
+    } catch ParseAndValidateIssue.decodingFailed(let error) {
+      messaging.decodingFailed(
+        .init(toolName: name, arguments: arguments, error: error)
+      )
+      throw CallError.invalidParameterDecoding(errorDescription: String(describing: error))
+    } catch {
+      messaging.decodingFailed(
+        .init(toolName: name, arguments: arguments, error: error)
+      )
+      throw CallError.invalidParameterDecoding(errorDescription: String(describing: error))
     }
   }
 }
 
 extension Toolable {
   public func toFunctionTool() -> FunctionTool {
-    guard case .object(let parameters) = parameters.schemaValue else {
+    guard case .object(let rawParameters) = parameters.schemaValue else {
       fatalError("Boolean schemas are not supported at root level for tools")
+    }
+
+    var parameters = rawParameters
+    // OpenAI tool validation now expects object schemas to include an explicit
+    // `properties` key, even when a tool takes zero arguments.
+    if parameters["type"] == .string("object"), parameters["properties"] == nil {
+      parameters["properties"] = .object([:])
     }
 
     return FunctionTool(

@@ -49,6 +49,16 @@ apply_transform \
   's/^(\s*)minimum:\s*(-?(?:\d+(?:\.\d+)?))\s*\n((?:\1maximum:\s*-?(?:\d+(?:\.\d+)?)\s*\n)?)\1exclusiveMinimum:\s*true\s*$/\1minimum: $2\n$3\1exclusiveMinimum: $2/mg;
    s/^(\s*)maximum:\s*(-?(?:\d+(?:\.\d+)?))\s*\n\1exclusiveMaximum:\s*true\s*$/\1maximum: $2\n\1exclusiveMaximum: $2/mg;'
 
+# Clamp invalid Int64 bounds emitted by the upstream spec.
+# Recent documents round ±Int64 limits to 9223372036854776000, which the
+# Swift generator parses as floating point and rejects for integer schemas.
+apply_transform \
+  "clamp invalid int64 bounds" \
+  's/^(\s*)minimum:\s*-9223372036854776000\s*$/\1minimum: -9223372036854775808/mg;
+   s/^(\s*)maximum:\s*9223372036854776000\s*$/\1maximum: 9223372036854775807/mg;
+   s/^(\s*)minimum:\s*-9\.223372036854776e\+18\s*$/\1minimum: -9223372036854775808/mg;
+   s/^(\s*)maximum:\s*9\.223372036854776e\+18\s*$/\1maximum: 9223372036854775807/mg;'
+
 # Ensure multipart image edit uploads have explicit image/mask content types.
 apply_transform \
   "add image-edit multipart encoding" \

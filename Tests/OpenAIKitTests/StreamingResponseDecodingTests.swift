@@ -120,7 +120,7 @@ struct StreamingResponseDecodingTests {
     let data = Data(payload.utf8)
     let item = try JSONDecoder().decode(Components.Schemas.OutputItem.self, from: data)
 
-    guard let imageCall = item.value8 else {
+    guard let imageCall = Self.extractImageGenToolCall(from: item) else {
       Issue.record("Expected output item to decode as ImageGenToolCall")
       return
     }
@@ -170,6 +170,20 @@ struct StreamingResponseDecodingTests {
   private static func decodeResponseStreamEvent(from payload: String) throws -> Components.Schemas.ResponseStreamEvent {
     let data = Data(payload.utf8)
     return try JSONDecoder().decode(Components.Schemas.ResponseStreamEvent.self, from: data)
+  }
+
+  private static func extractImageGenToolCall(
+    from item: Components.Schemas.OutputItem
+  ) -> Components.Schemas.ImageGenToolCall? {
+    for child in Mirror(reflecting: item).children {
+      let optionalMirror = Mirror(reflecting: child.value)
+      guard optionalMirror.displayStyle == .optional else { continue }
+      guard let wrappedValue = optionalMirror.children.first?.value else { continue }
+      if let imageCall = wrappedValue as? Components.Schemas.ImageGenToolCall {
+        return imageCall
+      }
+    }
+    return nil
   }
 
   private static func captureIntegers(pattern: String, in source: String) throws -> Set<Int> {

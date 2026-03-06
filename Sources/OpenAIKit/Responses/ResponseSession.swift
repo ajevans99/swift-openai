@@ -35,6 +35,7 @@ public actor ResponseSession {
   private let client: OpenAI
   private let model: Model
   private let errorPolicy: ToolErrorPolicy
+  private let toolCallMessaging: any ToolCallMessaging
 
   private var functionTools: [String: any Toolable] = [:]
   private var openAITools: [OpenAICore.Tool] = []
@@ -49,14 +50,17 @@ public actor ResponseSession {
   ///   - client: The configured OpenAI client.
   ///   - model: The model used for all turns in this session.
   ///   - errorPolicy: Behavior to apply when function tools fail.
+  ///   - toolCallMessaging: Observability hooks for tool call parsing failures.
   public init(
     client: OpenAI,
     model: Model,
-    errorPolicy: ToolErrorPolicy = .failFast
+    errorPolicy: ToolErrorPolicy = .failFast,
+    toolCallMessaging: any ToolCallMessaging = DefaultToolCallMessaging()
   ) {
     self.client = client
     self.model = model
     self.errorPolicy = errorPolicy
+    self.toolCallMessaging = toolCallMessaging
   }
 
   /// Registers a function tool on the session.
@@ -96,7 +100,8 @@ public actor ResponseSession {
   public func send(
     _ userText: String,
     additionalItems: [Item] = [],
-    previousResponseID: String? = nil
+    previousResponseID: String? = nil,
+    metadata: [String: String]? = nil
   ) async throws -> String {
     let item = Item.inputMessage(
       InputMessage(role: .user, content: [.text(.init(text: userText))])
@@ -104,7 +109,8 @@ public actor ResponseSession {
 
     return try await advance(
       newItems: [item] + additionalItems,
-      previousResponseID: previousResponseID
+      previousResponseID: previousResponseID,
+      metadata: metadata
     )
   }
 
@@ -123,6 +129,7 @@ public actor ResponseSession {
     _ userText: String,
     additionalItems: [Item] = [],
     previousResponseID: String? = nil,
+    metadata: [String: String]? = nil,
     plugins: repeat each Plugin
   ) async throws -> ResponseStreamHandle<(repeat PluginChannel<each Plugin>)> {
     let item = Item.inputMessage(
@@ -132,6 +139,7 @@ public actor ResponseSession {
     return try await stream(
       items: [item] + additionalItems,
       previousResponseID: previousResponseID,
+      metadata: metadata,
       plugins: repeat each plugins
     )
   }
@@ -144,6 +152,7 @@ public actor ResponseSession {
   public func stream<each Plugin: ResponseStreamPlugin>(
     items: [Item] = [],
     previousResponseID: String? = nil,
+    metadata: [String: String]? = nil,
     plugins: repeat each Plugin
   ) async throws -> ResponseStreamHandle<(repeat PluginChannel<each Plugin>)> {
     let (rawStream, rawEmitter) = Self.makeRawStream(bufferLimit: Self.streamBufferLimit)
@@ -155,6 +164,7 @@ public actor ResponseSession {
     startStreamTask(
       newItems: items,
       previousResponseID: previousResponseID,
+      metadata: metadata,
       pluginRuntimes: pluginRuntimes,
       rawEmitter: rawEmitter
     )
@@ -169,14 +179,16 @@ public actor ResponseSession {
   public func streamRaw(
     _ userText: String,
     additionalItems: [Item] = [],
-    previousResponseID: String? = nil
+    previousResponseID: String? = nil,
+    metadata: [String: String]? = nil
   ) async throws -> AsyncThrowingStream<StreamingResponse, Error> {
     let item = Item.inputMessage(
       InputMessage(role: .user, content: [.text(.init(text: userText))])
     )
     return try await streamRaw(
       items: [item] + additionalItems,
-      previousResponseID: previousResponseID
+      previousResponseID: previousResponseID,
+      metadata: metadata
     )
   }
 
@@ -184,23 +196,30 @@ public actor ResponseSession {
   @available(macOS 15.0, *)
   public func streamRaw(
     items: [Item] = [],
-    previousResponseID: String? = nil
+    previousResponseID: String? = nil,
+    metadata: [String: String]? = nil
   ) async throws -> AsyncThrowingStream<StreamingResponse, Error> {
     let (rawStream, rawEmitter) = Self.makeRawStream(bufferLimit: Self.streamBufferLimit)
 
     startStreamTask(
       newItems: items,
       previousResponseID: previousResponseID,
+      metadata: metadata,
       pluginRuntimes: [],
       rawEmitter: rawEmitter
     )
     return rawStream
   }
 
-  private func advance(newItems: [Item], previousResponseID: String? = nil) async throws -> String {
+  private func advance(
+    newItems: [Item],
+    previousResponseID: String? = nil,
+    metadata: [String: String]? = nil
+  ) async throws -> String {
     let response = try await client.createResponse(
       input: .items(newItems.map { .item($0) }),
       model: model,
+      metadata: metadata,
       previousResponseId: previousResponseID,
       tools: allTools
     )
@@ -222,21 +241,24 @@ public actor ResponseSession {
           }
 
         case .functionToolCall(let toolCall):
-          guard let tool = functionTools[toolCall.name] else {
-            throw ResponseSessionError.unknownTool(named: toolCall.name)
-          }
+          let toolName = toolCall.name
+          let toolArguments = toolCall.arguments
+          let callID = toolCall.callId
           group.addTask {
-            let result = try await tool.call(arguments: toolCall.arguments)
+            let result = try await self.executeFunctionTool(
+              named: toolName,
+              arguments: toolArguments
+            )
             return .functionCallOutputItemParam(
-              .init(callId: toolCall.callId, output: result)
+              .init(callId: callID, output: result)
             )
           }
 
         case .computerToolCall, .fileSearchToolCall, .reasoning, .webSearchToolCall,
-          .compactionBody, .imageGenToolCall, .codeInterpreterToolCall, .localShellToolCall,
-          .functionShellCall, .functionShellCallOutput, .applyPatchToolCall,
-          .applyPatchToolCallOutput, .mcpToolCall, .mcpListTools, .mcpApprovalRequest,
-          .customToolCall:
+          .toolSearchCall, .toolSearchOutput, .compactionBody, .imageGenToolCall,
+          .codeInterpreterToolCall, .localShellToolCall, .functionShellCall,
+          .functionShellCallOutput, .applyPatchToolCall, .applyPatchToolCallOutput,
+          .mcpToolCall, .mcpListTools, .mcpApprovalRequest, .customToolCall:
           break
         }
       }
@@ -247,7 +269,11 @@ public actor ResponseSession {
     }
 
     if !toolOutputItems.isEmpty {
-      return try await advance(newItems: toolOutputItems, previousResponseID: response.id)
+      return try await advance(
+        newItems: toolOutputItems,
+        previousResponseID: response.id,
+        metadata: metadata
+      )
     }
 
     return generatedText
@@ -257,14 +283,19 @@ public actor ResponseSession {
   private func streamLoop(
     newItems: [Item],
     previousResponseID: String?,
+    metadata: [String: String]?,
     pluginRuntimes: [AnyPluginRuntime],
     rawEmitter: StreamEmitter<StreamingResponse>
   ) async throws {
     var pendingItems = newItems
     var currentPreviousResponseID = previousResponseID
     var context = StreamPluginContext(
-      executeFunctionTool: { [self] name, arguments in
-        try await executeFunctionTool(named: name, arguments: arguments)
+      executeFunctionTool: { [self] name, arguments, policy in
+        try await executeFunctionTool(
+          named: name,
+          arguments: arguments,
+          policyOverride: policy
+        )
       }
     )
 
@@ -272,6 +303,7 @@ public actor ResponseSession {
       let stream = try await client.streamCreateResponse(
         input: .items(pendingItems.map { .item($0) }),
         model: model,
+        metadata: metadata,
         previousResponseId: currentPreviousResponseID,
         tools: allTools
       )
@@ -317,6 +349,7 @@ public actor ResponseSession {
   private func startStreamTask(
     newItems: [Item],
     previousResponseID: String?,
+    metadata: [String: String]?,
     pluginRuntimes: [AnyPluginRuntime],
     rawEmitter: StreamEmitter<StreamingResponse>
   ) {
@@ -325,6 +358,7 @@ public actor ResponseSession {
         try await self.streamLoop(
           newItems: newItems,
           previousResponseID: previousResponseID,
+          metadata: metadata,
           pluginRuntimes: pluginRuntimes,
           rawEmitter: rawEmitter
         )
@@ -342,41 +376,20 @@ public actor ResponseSession {
     }
   }
 
-  private func executeFunctionTool(named name: String, arguments: String) async throws -> String {
+  private func executeFunctionTool(
+    named name: String,
+    arguments: String,
+    policyOverride: ToolErrorPolicy? = nil
+  ) async throws -> String {
     guard let tool = functionTools[name] else {
       throw ResponseSessionError.unknownTool(named: name)
     }
 
-    let maxAttempts: Int
-    switch errorPolicy {
-    case .retry(let count):
-      maxAttempts = max(1, count + 1)
-    default:
-      maxAttempts = 1
-    }
-
-    var attempt = 0
-    var lastError: Error?
-    while attempt < maxAttempts {
-      do {
-        return try await tool.call(arguments: arguments)
-      } catch {
-        lastError = error
-        attempt += 1
-      }
-    }
-
-    guard let lastError else {
-      throw ResponseSessionError.toolExecutionFailed(name: name)
-    }
-
-    switch errorPolicy {
-    case .failFast, .retry:
-      throw lastError
-    case .returnAsMessage:
-      return "Tool '\(name)' failed: \(String(describing: lastError))"
-    case .askAssistantToClarify(let systemMessage):
-      return systemMessage(lastError)
+    return try await executeToolWithPolicy(
+      named: name,
+      policy: policyOverride ?? errorPolicy
+    ) {
+      try await tool.call(arguments: arguments, messaging: toolCallMessaging)
     }
   }
 
@@ -461,10 +474,11 @@ public actor ResponseSession {
 
 @available(macOS 15.0, *)
 private struct AnyPluginRuntime: Sendable {
-  let consume: @Sendable (
-    _ event: StreamingResponse,
-    _ context: inout StreamPluginContext
-  ) async throws -> Void
+  let consume:
+    @Sendable (
+      _ event: StreamingResponse,
+      _ context: inout StreamPluginContext
+    ) async throws -> Void
   let finishPlugin: @Sendable (_ context: inout StreamPluginContext) async throws -> Void
   let finishStream: @Sendable (_ error: Error?) -> Void
 }

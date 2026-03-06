@@ -54,7 +54,10 @@ flows:
 
 ```swift
 let orchestrator = ToolOrchestratorPlugin(
-  tools: [WeatherTool(apiKey: "...")]
+  tools: [WeatherTool(apiKey: "...")],
+  errorPolicy: .askAssistantToClarify { error in
+    "Weather tool failed (\(error)). Ask the user to confirm location."
+  }
 )
 
 let handle = try await session.stream(
@@ -65,6 +68,13 @@ let handle = try await session.stream(
 
 Session-level ``ResponseSession/register(tool:)`` remains available and is used
 as a fallback lookup path for compatibility.
+
+When set, `ToolOrchestratorPlugin.errorPolicy` overrides handling for both:
+
+- plugin-local tools registered on the orchestrator, and
+- fallback execution through session-level tool registration.
+
+If omitted, fallback continues using the session-level default policy.
 
 ## Raw streaming
 

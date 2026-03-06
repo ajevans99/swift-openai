@@ -1,6 +1,7 @@
 import Foundation
 
-public enum ToolErrorPolicy {
+/// Policy describing how function-tool execution errors should be handled.
+public enum ToolErrorPolicy: Sendable {
   /// Bubble up immediately – caller sees the throw.
   case failFast
 
@@ -13,5 +14,43 @@ public enum ToolErrorPolicy {
 
   /// Treat as "tool call failed", append a system message asking
   /// the assistant to clarify or choose another tool.
-  case askAssistantToClarify(systemMessage: (Error) -> String)
+  case askAssistantToClarify(systemMessage: @Sendable (Error) -> String)
+}
+
+func executeToolWithPolicy(
+  named name: String,
+  policy: ToolErrorPolicy,
+  operation: () async throws -> String
+) async throws -> String {
+  let maxAttempts: Int
+  switch policy {
+  case .retry(let count):
+    maxAttempts = max(1, count + 1)
+  default:
+    maxAttempts = 1
+  }
+
+  var attempt = 0
+  var lastError: Error?
+  while attempt < maxAttempts {
+    do {
+      return try await operation()
+    } catch {
+      lastError = error
+      attempt += 1
+    }
+  }
+
+  guard let lastError else {
+    throw ResponseSessionError.toolExecutionFailed(name: name)
+  }
+
+  switch policy {
+  case .failFast, .retry:
+    throw lastError
+  case .returnAsMessage:
+    return "Tool '\(name)' failed: \(String(describing: lastError))"
+  case .askAssistantToClarify(let systemMessage):
+    return systemMessage(lastError)
+  }
 }

@@ -18,12 +18,14 @@ public struct InputImageContent: Sendable {
     case low
     case high
     case auto
+    case original
 
     public func toOpenAPI() -> Components.Schemas.ImageDetail {
       switch self {
       case .low: return .low
       case .high: return .high
       case .auto: return .auto
+      case .original: return .original
       }
     }
   }
@@ -45,7 +47,9 @@ public struct InputImageContent: Sendable {
   public func toOpenAPI() -> Components.Schemas.InputImageContent {
     Components.Schemas.InputImageContent(
       _type: .inputImage,
-      detail: detail.toOpenAPI()
+      detail: detail.toOpenAPI(),
+      imageUrl: imageUrl,
+      fileId: fileId
     )
   }
 }
@@ -68,9 +72,10 @@ public struct InputFileContent: Sendable {
   public func toOpenAPI() -> Components.Schemas.InputFileContent {
     Components.Schemas.InputFileContent(
       _type: .inputFile,
+      fileId: fileId,
       filename: filename,
-      fileUrl: nil,
-      fileData: fileData
+      fileData: fileData,
+      fileUrl: nil
     )
   }
 }
@@ -90,18 +95,19 @@ public enum InputContent: Sendable {
       case .auto: detail = .auto
       case .low: detail = .low
       case .high: detail = .high
+      case .original: detail = .original
       }
       self = .image(
         InputImageContent(
-          imageUrl: nil,
-          fileId: nil,
+          imageUrl: imageContent.imageUrl,
+          fileId: imageContent.fileId,
           detail: detail
         )
       )
     case .inputFileContent(let fileContent):
       self = .file(
         InputFileContent(
-          fileId: nil,
+          fileId: fileContent.fileId,
           filename: fileContent.filename,
           fileData: fileContent.fileData
         )

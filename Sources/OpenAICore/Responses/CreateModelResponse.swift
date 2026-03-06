@@ -17,10 +17,13 @@ public struct CreateResponse: Sendable {
   }
 
   public func toOpenAPI() -> Components.Schemas.CreateResponse {
-    Components.Schemas.CreateResponse(
+    var inputPayload = inputPayload.toOpenAPI()
+    inputPayload.previousResponseId = responseProperties.previousResponseId
+
+    return Components.Schemas.CreateResponse(
       value1: modelProperties.toOpenAPI(),
       value2: responseProperties.toOpenAPI(),
-      value3: inputPayload.toOpenAPI()
+      value3: inputPayload
     )
   }
 }

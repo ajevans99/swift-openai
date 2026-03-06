@@ -182,6 +182,7 @@ struct ResponseSessionStreamingTests {
     #expect(requestBodies.count == 2)
     #expect(requestBodies[1].contains(#""type" : "function_call_output""#))
     #expect(requestBodies[1].contains(#""call_id" : "call_weather_1""#))
+    #expect(requestBodies[1].contains(#""previous_response_id" : "resp_tool_1""#))
   }
 
   @Test("Tool orchestrator falls back to session-level tool registration")
@@ -268,6 +269,208 @@ struct ResponseSessionStreamingTests {
     }
   }
 
+  @Test("Tool orchestrator plugin-local returnAsMessage keeps stream alive")
+  func toolOrchestratorPluginLocalReturnAsMessage() async throws {
+    guard #available(macOS 15.0, *) else { return }
+    let arguments = #"{"location":"Denver"}"#
+    let transport = StreamQueueTransport(
+      payloads: [
+        Self.ssePayload([
+          Self.createdEvent(responseID: "resp_tool_err_1", sequenceNumber: 0),
+          Self.functionCallOutputItemDoneEvent(
+            itemID: "fc_err_1",
+            callID: "call_err_1",
+            name: "always_fail_weather",
+            arguments: arguments,
+            outputIndex: 0,
+            sequenceNumber: 1
+          ),
+          Self.completedEvent(responseID: "resp_tool_err_1", sequenceNumber: 2),
+        ]),
+        Self.ssePayload([
+          Self.createdEvent(responseID: "resp_tool_err_2", sequenceNumber: 0),
+          Self.completedEvent(responseID: "resp_tool_err_2", sequenceNumber: 1),
+        ]),
+      ]
+    )
+    let session = try Self.makeSession(transport: transport)
+    let orchestrator = ToolOrchestratorPlugin(
+      tools: [AlwaysFailWeatherTool()],
+      errorPolicy: .returnAsMessage
+    )
+
+    let handle = try await session.stream(
+      "Trigger a tool failure",
+      plugins: orchestrator
+    )
+    let toolChannel = handle.pluginEvents
+    let events = try await Self.collect(toolChannel.events)
+
+    #expect(events.count == 1)
+    if case .executed(_, _, _, let output) = events[0] {
+      #expect(output.contains("Tool 'always_fail_weather' failed:"))
+    } else {
+      Issue.record("Expected executed event")
+    }
+
+    let requestBodies = await transport.requestBodies()
+    #expect(requestBodies.count == 2)
+    #expect(requestBodies[1].contains(#""type" : "function_call_output""#))
+    #expect(requestBodies[1].contains("Tool 'always_fail_weather' failed:"))
+  }
+
+  @Test("Tool orchestrator plugin-local retry eventually succeeds")
+  func toolOrchestratorPluginLocalRetry() async throws {
+    guard #available(macOS 15.0, *) else { return }
+    let arguments = #"{"location":"Austin"}"#
+    let attempts = AttemptCounter()
+    let transport = StreamQueueTransport(
+      payloads: [
+        Self.ssePayload([
+          Self.createdEvent(responseID: "resp_retry_1", sequenceNumber: 0),
+          Self.functionCallOutputItemDoneEvent(
+            itemID: "fc_retry_1",
+            callID: "call_retry_1",
+            name: "flaky_weather",
+            arguments: arguments,
+            outputIndex: 0,
+            sequenceNumber: 1
+          ),
+          Self.completedEvent(responseID: "resp_retry_1", sequenceNumber: 2),
+        ]),
+        Self.ssePayload([
+          Self.createdEvent(responseID: "resp_retry_2", sequenceNumber: 0),
+          Self.completedEvent(responseID: "resp_retry_2", sequenceNumber: 1),
+        ]),
+      ]
+    )
+    let session = try Self.makeSession(transport: transport)
+    let orchestrator = ToolOrchestratorPlugin(
+      tools: [FlakyWeatherTool(attempts: attempts, failUntilAttempt: 2)],
+      errorPolicy: .retry(count: 2)
+    )
+
+    let handle = try await session.stream(
+      "Try tool retries",
+      plugins: orchestrator
+    )
+    let toolChannel = handle.pluginEvents
+    let events = try await Self.collect(toolChannel.events)
+
+    expectNoDifference(
+      events,
+      [
+        .executed(
+          name: "flaky_weather",
+          arguments: arguments,
+          callID: "call_retry_1",
+          output: "flaky-success:Austin:attempt_3"
+        )
+      ]
+    )
+    let recordedAttempts = await attempts.value()
+    #expect(recordedAttempts == 3)
+  }
+
+  @Test("Tool orchestrator fallback honors plugin error policy override")
+  func toolOrchestratorFallbackErrorPolicyOverride() async throws {
+    guard #available(macOS 15.0, *) else { return }
+    let arguments = #"{"location":"Chicago"}"#
+    let transport = StreamQueueTransport(
+      payloads: [
+        Self.ssePayload([
+          Self.createdEvent(responseID: "resp_override_1", sequenceNumber: 0),
+          Self.functionCallOutputItemDoneEvent(
+            itemID: "fc_override_1",
+            callID: "call_override_1",
+            name: "always_fail_weather",
+            arguments: arguments,
+            outputIndex: 0,
+            sequenceNumber: 1
+          ),
+          Self.completedEvent(responseID: "resp_override_1", sequenceNumber: 2),
+        ]),
+        Self.ssePayload([
+          Self.createdEvent(responseID: "resp_override_2", sequenceNumber: 0),
+          Self.completedEvent(responseID: "resp_override_2", sequenceNumber: 1),
+        ]),
+      ]
+    )
+    let session = try Self.makeSession(
+      transport: transport,
+      errorPolicy: .failFast
+    )
+    await session.register(tool: AlwaysFailWeatherTool())
+
+    let handle = try await session.stream(
+      "Use session fallback with plugin policy override",
+      plugins: ToolOrchestratorPlugin(
+        errorPolicy: .askAssistantToClarify { _ in
+          "Tool failed. Ask the user to verify location and retry."
+        }
+      )
+    )
+    let toolChannel = handle.pluginEvents
+    let events = try await Self.collect(toolChannel.events)
+
+    expectNoDifference(
+      events,
+      [
+        .executed(
+          name: "always_fail_weather",
+          arguments: arguments,
+          callID: "call_override_1",
+          output: "Tool failed. Ask the user to verify location and retry."
+        )
+      ]
+    )
+  }
+
+  @Test("Tool orchestrator fallback uses session policy when override is omitted")
+  func toolOrchestratorFallbackUsesSessionPolicyByDefault() async throws {
+    guard #available(macOS 15.0, *) else { return }
+    let arguments = #"{"location":"Phoenix"}"#
+    let transport = StreamQueueTransport(
+      payloads: [
+        Self.ssePayload([
+          Self.createdEvent(responseID: "resp_session_policy_1", sequenceNumber: 0),
+          Self.functionCallOutputItemDoneEvent(
+            itemID: "fc_session_policy_1",
+            callID: "call_session_policy_1",
+            name: "always_fail_weather",
+            arguments: arguments,
+            outputIndex: 0,
+            sequenceNumber: 1
+          ),
+          Self.completedEvent(responseID: "resp_session_policy_1", sequenceNumber: 2),
+        ]),
+        Self.ssePayload([
+          Self.createdEvent(responseID: "resp_session_policy_2", sequenceNumber: 0),
+          Self.completedEvent(responseID: "resp_session_policy_2", sequenceNumber: 1),
+        ]),
+      ]
+    )
+    let session = try Self.makeSession(
+      transport: transport,
+      errorPolicy: .returnAsMessage
+    )
+    await session.register(tool: AlwaysFailWeatherTool())
+
+    let handle = try await session.stream(
+      "Use session policy with orchestrator fallback",
+      plugins: ToolOrchestratorPlugin()
+    )
+    let toolChannel = handle.pluginEvents
+    let events = try await Self.collect(toolChannel.events)
+
+    #expect(events.count == 1)
+    if case .executed(_, _, _, let output) = events[0] {
+      #expect(output.contains("Tool 'always_fail_weather' failed:"))
+    } else {
+      Issue.record("Expected executed event")
+    }
+  }
+
   @Test("Plugin channels track dropped events when consumer is slower than producer")
   func droppedCountTracking() async throws {
     guard #available(macOS 15.0, *) else { return }
@@ -337,9 +540,16 @@ struct ResponseSessionStreamingTests {
 }
 
 extension ResponseSessionStreamingTests {
-  private static func makeSession(transport: some ClientTransport) throws -> ResponseSession {
+  private static func makeSession(
+    transport: some ClientTransport,
+    errorPolicy: ToolErrorPolicy = .failFast
+  ) throws -> ResponseSession {
     let client = try OpenAI(transport: transport, apiKey: "test-key")
-    return ResponseSession(client: client, model: .custom("gpt-5.2"))
+    return ResponseSession(
+      client: client,
+      model: .custom("gpt-5.2"),
+      errorPolicy: errorPolicy
+    )
   }
 
   private static func collect<S: AsyncSequence>(_ sequence: S) async throws -> [S.Element] {
@@ -581,5 +791,79 @@ private struct WeatherEchoTool: Toolable {
 
   func call(parameters: Input) async throws -> String {
     "\(prefix):\(parameters)"
+  }
+}
+
+private actor AttemptCounter {
+  private var attempts = 0
+
+  func next() -> Int {
+    attempts += 1
+    return attempts
+  }
+
+  func value() -> Int {
+    attempts
+  }
+}
+
+private struct ToolExecutionFailure: Error {
+  let message: String
+}
+
+private struct AlwaysFailWeatherTool: Toolable {
+  typealias Input = String
+
+  let name = "always_fail_weather"
+  let description: String? = "Always throws to test error policies"
+  let strict = true
+
+  var parameters: some JSONSchemaComponent<Input> {
+    JSONObject {
+      JSONProperty(key: "location") {
+        JSONString()
+      }
+      .required()
+    }
+    .additionalProperties {
+      false
+    }
+    .map(\.0)
+  }
+
+  func call(parameters _: Input) async throws -> String {
+    throw ToolExecutionFailure(message: "always fail")
+  }
+}
+
+private struct FlakyWeatherTool: Toolable {
+  typealias Input = String
+
+  let name = "flaky_weather"
+  let description: String? = "Fails first N attempts before succeeding"
+  let strict = true
+
+  let attempts: AttemptCounter
+  let failUntilAttempt: Int
+
+  var parameters: some JSONSchemaComponent<Input> {
+    JSONObject {
+      JSONProperty(key: "location") {
+        JSONString()
+      }
+      .required()
+    }
+    .additionalProperties {
+      false
+    }
+    .map(\.0)
+  }
+
+  func call(parameters: Input) async throws -> String {
+    let attempt = await attempts.next()
+    if attempt <= failUntilAttempt {
+      throw ToolExecutionFailure(message: "flaky fail at attempt \(attempt)")
+    }
+    return "flaky-success:\(parameters):attempt_\(attempt)"
   }
 }
