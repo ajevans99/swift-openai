@@ -728,6 +728,12 @@ public enum Components {
                 }
             }
         }
+        /// Flattened batched actions for `computer_use`. Each action includes an
+        /// `type` discriminator and action-specific fields.
+        ///
+        ///
+        /// - Remark: Generated from `#/components/schemas/ComputerActionList`.
+        public typealias ComputerActionList = [Components.Schemas.ComputerAction]
         /// A computer screenshot image used with the computer use tool.
         ///
         ///
@@ -802,7 +808,9 @@ public enum Components {
             /// - Remark: Generated from `#/components/schemas/ComputerToolCall/call_id`.
             public var callId: Swift.String
             /// - Remark: Generated from `#/components/schemas/ComputerToolCall/action`.
-            public var action: Components.Schemas.ComputerAction
+            public var action: Components.Schemas.ComputerAction?
+            /// - Remark: Generated from `#/components/schemas/ComputerToolCall/actions`.
+            public var actions: Components.Schemas.ComputerActionList?
             /// The pending safety checks for the computer call.
             ///
             ///
@@ -831,13 +839,15 @@ public enum Components {
             ///   - id: The unique ID of the computer call.
             ///   - callId: An identifier used when responding to the tool call with output.
             ///   - action:
+            ///   - actions:
             ///   - pendingSafetyChecks: The pending safety checks for the computer call.
             ///   - status: The status of the item. One of `in_progress`, `completed`, or
             public init(
                 _type: Components.Schemas.ComputerToolCall._TypePayload,
                 id: Swift.String,
                 callId: Swift.String,
-                action: Components.Schemas.ComputerAction,
+                action: Components.Schemas.ComputerAction? = nil,
+                actions: Components.Schemas.ComputerActionList? = nil,
                 pendingSafetyChecks: [Components.Schemas.ComputerCallSafetyCheckParam],
                 status: Components.Schemas.ComputerToolCall.StatusPayload
             ) {
@@ -845,6 +855,7 @@ public enum Components {
                 self.id = id
                 self.callId = callId
                 self.action = action
+                self.actions = actions
                 self.pendingSafetyChecks = pendingSafetyChecks
                 self.status = status
             }
@@ -853,6 +864,7 @@ public enum Components {
                 case id
                 case callId = "call_id"
                 case action
+                case actions
                 case pendingSafetyChecks = "pending_safety_checks"
                 case status
             }
@@ -1583,31 +1595,31 @@ public enum Components {
             public struct Value3Payload: Codable, Hashable, Sendable {
                 /// - Remark: Generated from `#/components/schemas/CreateResponse/value3/input`.
                 public var input: Components.Schemas.InputParam?
-                /// - Remark: Added by swift-openai patch: missing previous response linkage in generated schema.
-                public var previousResponseId: Swift.String?
-                /// - Remark: Added by swift-openai patch: missing stream flag in generated schema.
-                public var stream: Swift.Bool?
-                /// Creates a new `Value3Payload`.
-                ///
-                /// - Parameters:
-                ///   - input:
-                ///   - previousResponseId:
-                ///   - stream:
-                public init(
-                    input: Components.Schemas.InputParam? = nil,
-                    previousResponseId: Swift.String? = nil,
-                    stream: Swift.Bool? = nil
-                ) {
-                    self.input = input
-                    self.previousResponseId = previousResponseId
-                    self.stream = stream
-                }
-                public enum CodingKeys: String, CodingKey {
-                    case input
-                    case previousResponseId = "previous_response_id"
-                    case stream
-                }
+            /// - Remark: Added by swift-openai patch: missing previous response linkage in generated schema.
+            public var previousResponseId: Swift.String?
+            /// - Remark: Added by swift-openai patch: missing stream flag in generated schema.
+            public var stream: Swift.Bool?
+            /// Creates a new `Value3Payload`.
+            ///
+            /// - Parameters:
+            ///   - input:
+            ///   - previousResponseId:
+            ///   - stream:
+            public init(
+                input: Components.Schemas.InputParam? = nil,
+                previousResponseId: Swift.String? = nil,
+                stream: Swift.Bool? = nil
+            ) {
+                self.input = input
+                self.previousResponseId = previousResponseId
+                self.stream = stream
             }
+            public enum CodingKeys: String, CodingKey {
+                case input
+                case previousResponseId = "previous_response_id"
+                case stream
+            }
+        }
             /// - Remark: Generated from `#/components/schemas/CreateResponse/value3`.
             public var value3: Components.Schemas.CreateResponse.Value3Payload
             /// Creates a new `CreateResponse`.
@@ -1663,6 +1675,11 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CustomToolCall/call_id`.
             public var callId: Swift.String
+            /// The namespace of the custom tool being called.
+            ///
+            ///
+            /// - Remark: Generated from `#/components/schemas/CustomToolCall/namespace`.
+            public var namespace: Swift.String?
             /// The name of the custom tool being called.
             ///
             ///
@@ -1679,18 +1696,21 @@ public enum Components {
             ///   - _type: The type of the custom tool call. Always `custom_tool_call`.
             ///   - id: The unique ID of the custom tool call in the OpenAI platform.
             ///   - callId: An identifier used to map this custom tool call to a tool call output.
+            ///   - namespace: The namespace of the custom tool being called.
             ///   - name: The name of the custom tool being called.
             ///   - input: The input for the custom tool call generated by the model.
             public init(
                 _type: Components.Schemas.CustomToolCall._TypePayload,
                 id: Swift.String? = nil,
                 callId: Swift.String,
+                namespace: Swift.String? = nil,
                 name: Swift.String,
                 input: Swift.String
             ) {
                 self._type = _type
                 self.id = id
                 self.callId = callId
+                self.namespace = namespace
                 self.name = name
                 self.input = input
             }
@@ -1698,6 +1718,7 @@ public enum Components {
                 case _type = "type"
                 case id
                 case callId = "call_id"
+                case namespace
                 case name
                 case input
             }
@@ -2177,6 +2198,11 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/FunctionToolCall/call_id`.
             public var callId: Swift.String
+            /// The namespace of the function to run.
+            ///
+            ///
+            /// - Remark: Generated from `#/components/schemas/FunctionToolCall/namespace`.
+            public var namespace: Swift.String?
             /// The name of the function to run.
             ///
             ///
@@ -2209,6 +2235,7 @@ public enum Components {
             ///   - id: The unique ID of the function tool call.
             ///   - _type: The type of the function tool call. Always `function_call`.
             ///   - callId: The unique ID of the function tool call generated by the model.
+            ///   - namespace: The namespace of the function to run.
             ///   - name: The name of the function to run.
             ///   - arguments: A JSON string of the arguments to pass to the function.
             ///   - status: The status of the item. One of `in_progress`, `completed`, or
@@ -2216,6 +2243,7 @@ public enum Components {
                 id: Swift.String? = nil,
                 _type: Components.Schemas.FunctionToolCall._TypePayload,
                 callId: Swift.String,
+                namespace: Swift.String? = nil,
                 name: Swift.String,
                 arguments: Swift.String,
                 status: Components.Schemas.FunctionToolCall.StatusPayload? = nil
@@ -2223,6 +2251,7 @@ public enum Components {
                 self.id = id
                 self._type = _type
                 self.callId = callId
+                self.namespace = namespace
                 self.name = name
                 self.arguments = arguments
                 self.status = status
@@ -2231,6 +2260,7 @@ public enum Components {
                 case id
                 case _type = "type"
                 case callId = "call_id"
+                case namespace
                 case name
                 case arguments
                 case status
@@ -3961,6 +3991,10 @@ public enum Components {
             case functionToolCall(Components.Schemas.FunctionToolCall)
             /// - Remark: Generated from `#/components/schemas/Item/FunctionCallOutputItemParam`.
             case functionCallOutputItemParam(Components.Schemas.FunctionCallOutputItemParam)
+            /// - Remark: Generated from `#/components/schemas/Item/ToolSearchCallItemParam`.
+            case toolSearchCallItemParam(Components.Schemas.ToolSearchCallItemParam)
+            /// - Remark: Generated from `#/components/schemas/Item/ToolSearchOutputItemParam`.
+            case toolSearchOutputItemParam(Components.Schemas.ToolSearchOutputItemParam)
             /// - Remark: Generated from `#/components/schemas/Item/ReasoningItem`.
             case reasoningItem(Components.Schemas.ReasoningItem)
             /// - Remark: Generated from `#/components/schemas/Item/CompactionSummaryItemParam`.
@@ -4019,6 +4053,10 @@ public enum Components {
                     self = .functionToolCall(try .init(from: decoder))
                 case "FunctionCallOutputItemParam", "#/components/schemas/FunctionCallOutputItemParam":
                     self = .functionCallOutputItemParam(try .init(from: decoder))
+                case "ToolSearchCallItemParam", "#/components/schemas/ToolSearchCallItemParam":
+                    self = .toolSearchCallItemParam(try .init(from: decoder))
+                case "ToolSearchOutputItemParam", "#/components/schemas/ToolSearchOutputItemParam":
+                    self = .toolSearchOutputItemParam(try .init(from: decoder))
                 case "ReasoningItem", "#/components/schemas/ReasoningItem":
                     self = .reasoningItem(try .init(from: decoder))
                 case "CompactionSummaryItemParam", "#/components/schemas/CompactionSummaryItemParam":
@@ -4077,6 +4115,10 @@ public enum Components {
                     try value.encode(to: encoder)
                 case let .functionCallOutputItemParam(value):
                     try value.encode(to: encoder)
+                case let .toolSearchCallItemParam(value):
+                    try value.encode(to: encoder)
+                case let .toolSearchOutputItemParam(value):
+                    try value.encode(to: encoder)
                 case let .reasoningItem(value):
                     try value.encode(to: encoder)
                 case let .compactionSummaryItemParam(value):
@@ -4133,6 +4175,10 @@ public enum Components {
             case functionToolCallResource(Components.Schemas.FunctionToolCallResource)
             /// - Remark: Generated from `#/components/schemas/ItemResource/FunctionToolCallOutputResource`.
             case functionToolCallOutputResource(Components.Schemas.FunctionToolCallOutputResource)
+            /// - Remark: Generated from `#/components/schemas/ItemResource/ToolSearchCall`.
+            case toolSearchCall(Components.Schemas.ToolSearchCall)
+            /// - Remark: Generated from `#/components/schemas/ItemResource/ToolSearchOutput`.
+            case toolSearchOutput(Components.Schemas.ToolSearchOutput)
             /// - Remark: Generated from `#/components/schemas/ItemResource/ImageGenToolCall`.
             case imageGenToolCall(Components.Schemas.ImageGenToolCall)
             /// - Remark: Generated from `#/components/schemas/ItemResource/CodeInterpreterToolCall`.
@@ -4183,6 +4229,10 @@ public enum Components {
                     self = .functionToolCallResource(try .init(from: decoder))
                 case "FunctionToolCallOutputResource", "#/components/schemas/FunctionToolCallOutputResource":
                     self = .functionToolCallOutputResource(try .init(from: decoder))
+                case "ToolSearchCall", "#/components/schemas/ToolSearchCall":
+                    self = .toolSearchCall(try .init(from: decoder))
+                case "ToolSearchOutput", "#/components/schemas/ToolSearchOutput":
+                    self = .toolSearchOutput(try .init(from: decoder))
                 case "ImageGenToolCall", "#/components/schemas/ImageGenToolCall":
                     self = .imageGenToolCall(try .init(from: decoder))
                 case "CodeInterpreterToolCall", "#/components/schemas/CodeInterpreterToolCall":
@@ -4232,6 +4282,10 @@ public enum Components {
                 case let .functionToolCallResource(value):
                     try value.encode(to: encoder)
                 case let .functionToolCallOutputResource(value):
+                    try value.encode(to: encoder)
+                case let .toolSearchCall(value):
+                    try value.encode(to: encoder)
+                case let .toolSearchOutput(value):
                     try value.encode(to: encoder)
                 case let .imageGenToolCall(value):
                     try value.encode(to: encoder)
@@ -4724,6 +4778,11 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/MCPTool/server_description`.
             public var serverDescription: Swift.String?
+            /// Whether this MCP tool is deferred and discovered via tool search.
+            ///
+            ///
+            /// - Remark: Generated from `#/components/schemas/MCPTool/defer_loading`.
+            public var deferLoading: Swift.Bool?
             /// Creates a new `MCPTool`.
             ///
             /// - Parameters:
@@ -4733,13 +4792,15 @@ public enum Components {
             ///   - connectorId: Identifier for service connectors, like those available in ChatGPT. One of
             ///   - authorization: An OAuth access token that can be used with a remote MCP server, either
             ///   - serverDescription: Optional description of the MCP server, used to provide more context.
+            ///   - deferLoading: Whether this MCP tool is deferred and discovered via tool search.
             public init(
                 _type: Components.Schemas.MCPTool._TypePayload,
                 serverLabel: Swift.String,
                 serverUrl: Swift.String? = nil,
                 connectorId: Components.Schemas.MCPTool.ConnectorIdPayload? = nil,
                 authorization: Swift.String? = nil,
-                serverDescription: Swift.String? = nil
+                serverDescription: Swift.String? = nil,
+                deferLoading: Swift.Bool? = nil
             ) {
                 self._type = _type
                 self.serverLabel = serverLabel
@@ -4747,6 +4808,7 @@ public enum Components {
                 self.connectorId = connectorId
                 self.authorization = authorization
                 self.serverDescription = serverDescription
+                self.deferLoading = deferLoading
             }
             public enum CodingKeys: String, CodingKey {
                 case _type = "type"
@@ -4755,6 +4817,7 @@ public enum Components {
                 case connectorId = "connector_id"
                 case authorization
                 case serverDescription = "server_description"
+                case deferLoading = "defer_loading"
             }
         }
         /// An invocation of a tool on an MCP server.
@@ -4880,6 +4943,16 @@ public enum Components {
                 ])
             }
         }
+        /// Labels an `assistant` message as intermediate commentary (`commentary`) or the final answer (`final_answer`).
+        /// For models like `gpt-5.3-codex` and beyond, when sending follow-up requests, preserve and resend
+        /// phase on all assistant messages — dropping it can degrade performance. Not used for user messages.
+        ///
+        ///
+        /// - Remark: Generated from `#/components/schemas/MessagePhase`.
+        @frozen public enum MessagePhase: String, Codable, Hashable, Sendable, CaseIterable {
+            case commentary = "commentary"
+            case finalAnswer = "final_answer"
+        }
         /// - Remark: Generated from `#/components/schemas/ModelIdsResponses`.
         public struct ModelIdsResponses: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/ModelIdsResponses/value1`.
@@ -4950,6 +5023,8 @@ public enum Components {
             public var value1: Swift.String?
             /// - Remark: Generated from `#/components/schemas/ModelIdsShared/value2`.
             @frozen public enum Value2Payload: String, Codable, Hashable, Sendable, CaseIterable {
+                case gpt5_4 = "gpt-5.4"
+                case gpt5_3ChatLatest = "gpt-5.3-chat-latest"
                 case gpt5_2 = "gpt-5.2"
                 case gpt5_220251211 = "gpt-5.2-2025-12-11"
                 case gpt5_2ChatLatest = "gpt-5.2-chat-latest"
@@ -5077,7 +5152,7 @@ public enum Components {
             @available(*, deprecated)
             public var user: Swift.String?
             /// A stable identifier used to help detect users of your application that may be violating OpenAI's usage policies.
-            /// The IDs should be a string that uniquely identifies each user. We recommend hashing their username or email address, in order to avoid sending us any identifying information. [Learn more](/docs/guides/safety-best-practices#safety-identifiers).
+            /// The IDs should be a string that uniquely identifies each user, with a maximum length of 64 characters. We recommend hashing their username or email address, in order to avoid sending us any identifying information. [Learn more](/docs/guides/safety-best-practices#safety-identifiers).
             ///
             ///
             /// - Remark: Generated from `#/components/schemas/ModelResponseProperties/safety_identifier`.
@@ -5166,29 +5241,33 @@ public enum Components {
             /// - Remark: Generated from `#/components/schemas/OutputItem/value6`.
             public var value6: Components.Schemas.ReasoningItem?
             /// - Remark: Generated from `#/components/schemas/OutputItem/value7`.
-            public var value7: Components.Schemas.CompactionBody?
+            public var value7: Components.Schemas.ToolSearchCall?
             /// - Remark: Generated from `#/components/schemas/OutputItem/value8`.
-            public var value8: Components.Schemas.ImageGenToolCall?
+            public var value8: Components.Schemas.ToolSearchOutput?
             /// - Remark: Generated from `#/components/schemas/OutputItem/value9`.
-            public var value9: Components.Schemas.CodeInterpreterToolCall?
+            public var value9: Components.Schemas.CompactionBody?
             /// - Remark: Generated from `#/components/schemas/OutputItem/value10`.
-            public var value10: Components.Schemas.LocalShellToolCall?
+            public var value10: Components.Schemas.ImageGenToolCall?
             /// - Remark: Generated from `#/components/schemas/OutputItem/value11`.
-            public var value11: Components.Schemas.FunctionShellCall?
+            public var value11: Components.Schemas.CodeInterpreterToolCall?
             /// - Remark: Generated from `#/components/schemas/OutputItem/value12`.
-            public var value12: Components.Schemas.FunctionShellCallOutput?
+            public var value12: Components.Schemas.LocalShellToolCall?
             /// - Remark: Generated from `#/components/schemas/OutputItem/value13`.
-            public var value13: Components.Schemas.ApplyPatchToolCall?
+            public var value13: Components.Schemas.FunctionShellCall?
             /// - Remark: Generated from `#/components/schemas/OutputItem/value14`.
-            public var value14: Components.Schemas.ApplyPatchToolCallOutput?
+            public var value14: Components.Schemas.FunctionShellCallOutput?
             /// - Remark: Generated from `#/components/schemas/OutputItem/value15`.
-            public var value15: Components.Schemas.MCPToolCall?
+            public var value15: Components.Schemas.ApplyPatchToolCall?
             /// - Remark: Generated from `#/components/schemas/OutputItem/value16`.
-            public var value16: Components.Schemas.MCPListTools?
+            public var value16: Components.Schemas.ApplyPatchToolCallOutput?
             /// - Remark: Generated from `#/components/schemas/OutputItem/value17`.
-            public var value17: Components.Schemas.MCPApprovalRequest?
+            public var value17: Components.Schemas.MCPToolCall?
             /// - Remark: Generated from `#/components/schemas/OutputItem/value18`.
-            public var value18: Components.Schemas.CustomToolCall?
+            public var value18: Components.Schemas.MCPListTools?
+            /// - Remark: Generated from `#/components/schemas/OutputItem/value19`.
+            public var value19: Components.Schemas.MCPApprovalRequest?
+            /// - Remark: Generated from `#/components/schemas/OutputItem/value20`.
+            public var value20: Components.Schemas.CustomToolCall?
             /// Creates a new `OutputItem`.
             ///
             /// - Parameters:
@@ -5210,6 +5289,8 @@ public enum Components {
             ///   - value16:
             ///   - value17:
             ///   - value18:
+            ///   - value19:
+            ///   - value20:
             public init(
                 value1: Components.Schemas.OutputMessage? = nil,
                 value2: Components.Schemas.FileSearchToolCall? = nil,
@@ -5217,18 +5298,20 @@ public enum Components {
                 value4: Components.Schemas.WebSearchToolCall? = nil,
                 value5: Components.Schemas.ComputerToolCall? = nil,
                 value6: Components.Schemas.ReasoningItem? = nil,
-                value7: Components.Schemas.CompactionBody? = nil,
-                value8: Components.Schemas.ImageGenToolCall? = nil,
-                value9: Components.Schemas.CodeInterpreterToolCall? = nil,
-                value10: Components.Schemas.LocalShellToolCall? = nil,
-                value11: Components.Schemas.FunctionShellCall? = nil,
-                value12: Components.Schemas.FunctionShellCallOutput? = nil,
-                value13: Components.Schemas.ApplyPatchToolCall? = nil,
-                value14: Components.Schemas.ApplyPatchToolCallOutput? = nil,
-                value15: Components.Schemas.MCPToolCall? = nil,
-                value16: Components.Schemas.MCPListTools? = nil,
-                value17: Components.Schemas.MCPApprovalRequest? = nil,
-                value18: Components.Schemas.CustomToolCall? = nil
+                value7: Components.Schemas.ToolSearchCall? = nil,
+                value8: Components.Schemas.ToolSearchOutput? = nil,
+                value9: Components.Schemas.CompactionBody? = nil,
+                value10: Components.Schemas.ImageGenToolCall? = nil,
+                value11: Components.Schemas.CodeInterpreterToolCall? = nil,
+                value12: Components.Schemas.LocalShellToolCall? = nil,
+                value13: Components.Schemas.FunctionShellCall? = nil,
+                value14: Components.Schemas.FunctionShellCallOutput? = nil,
+                value15: Components.Schemas.ApplyPatchToolCall? = nil,
+                value16: Components.Schemas.ApplyPatchToolCallOutput? = nil,
+                value17: Components.Schemas.MCPToolCall? = nil,
+                value18: Components.Schemas.MCPListTools? = nil,
+                value19: Components.Schemas.MCPApprovalRequest? = nil,
+                value20: Components.Schemas.CustomToolCall? = nil
             ) {
                 self.value1 = value1
                 self.value2 = value2
@@ -5248,6 +5331,8 @@ public enum Components {
                 self.value16 = value16
                 self.value17 = value17
                 self.value18 = value18
+                self.value19 = value19
+                self.value20 = value20
             }
             public init(from decoder: any Decoder) throws {
                 var errors: [any Error] = []
@@ -5341,6 +5426,16 @@ public enum Components {
                 } catch {
                     errors.append(error)
                 }
+                do {
+                    self.value19 = try .init(from: decoder)
+                } catch {
+                    errors.append(error)
+                }
+                do {
+                    self.value20 = try .init(from: decoder)
+                } catch {
+                    errors.append(error)
+                }
                 try Swift.DecodingError.verifyAtLeastOneSchemaIsNotNil(
                     [
                         self.value1,
@@ -5360,7 +5455,9 @@ public enum Components {
                         self.value15,
                         self.value16,
                         self.value17,
-                        self.value18
+                        self.value18,
+                        self.value19,
+                        self.value20
                     ],
                     type: Self.self,
                     codingPath: decoder.codingPath,
@@ -5386,6 +5483,8 @@ public enum Components {
                 try self.value16?.encode(to: encoder)
                 try self.value17?.encode(to: encoder)
                 try self.value18?.encode(to: encoder)
+                try self.value19?.encode(to: encoder)
+                try self.value20?.encode(to: encoder)
             }
         }
         /// An output message from the model.
@@ -10064,6 +10163,8 @@ public enum Components {
             case functionTool(Components.Schemas.FunctionTool)
             /// - Remark: Generated from `#/components/schemas/Tool/FileSearchTool`.
             case fileSearchTool(Components.Schemas.FileSearchTool)
+            /// - Remark: Generated from `#/components/schemas/Tool/ComputerTool`.
+            case computerTool(Components.Schemas.ComputerTool)
             /// - Remark: Generated from `#/components/schemas/Tool/ComputerUsePreviewTool`.
             case computerUsePreviewTool(Components.Schemas.ComputerUsePreviewTool)
             /// - Remark: Generated from `#/components/schemas/Tool/WebSearchTool`.
@@ -10080,6 +10181,10 @@ public enum Components {
             case functionShellToolParam(Components.Schemas.FunctionShellToolParam)
             /// - Remark: Generated from `#/components/schemas/Tool/CustomToolParam`.
             case customToolParam(Components.Schemas.CustomToolParam)
+            /// - Remark: Generated from `#/components/schemas/Tool/NamespaceToolParam`.
+            case namespaceToolParam(Components.Schemas.NamespaceToolParam)
+            /// - Remark: Generated from `#/components/schemas/Tool/ToolSearchToolParam`.
+            case toolSearchToolParam(Components.Schemas.ToolSearchToolParam)
             /// - Remark: Generated from `#/components/schemas/Tool/WebSearchPreviewTool`.
             case webSearchPreviewTool(Components.Schemas.WebSearchPreviewTool)
             /// - Remark: Generated from `#/components/schemas/Tool/ApplyPatchToolParam`.
@@ -10098,6 +10203,8 @@ public enum Components {
                     self = .functionTool(try .init(from: decoder))
                 case "file_search", "FileSearchTool", "#/components/schemas/FileSearchTool":
                     self = .fileSearchTool(try .init(from: decoder))
+                case "ComputerTool", "#/components/schemas/ComputerTool":
+                    self = .computerTool(try .init(from: decoder))
                 case "computer_use_preview", "ComputerUsePreviewTool", "#/components/schemas/ComputerUsePreviewTool":
                     self = .computerUsePreviewTool(try .init(from: decoder))
                 case "web_search", "web_search_2025_08_26", "WebSearchTool", "#/components/schemas/WebSearchTool":
@@ -10114,6 +10221,10 @@ public enum Components {
                     self = .functionShellToolParam(try .init(from: decoder))
                 case "custom", "CustomToolParam", "#/components/schemas/CustomToolParam":
                     self = .customToolParam(try .init(from: decoder))
+                case "NamespaceToolParam", "#/components/schemas/NamespaceToolParam":
+                    self = .namespaceToolParam(try .init(from: decoder))
+                case "ToolSearchToolParam", "#/components/schemas/ToolSearchToolParam":
+                    self = .toolSearchToolParam(try .init(from: decoder))
                 case "web_search_preview", "web_search_preview_2025_03_11", "WebSearchPreviewTool", "#/components/schemas/WebSearchPreviewTool":
                     self = .webSearchPreviewTool(try .init(from: decoder))
                 case "apply_patch", "ApplyPatchToolParam", "#/components/schemas/ApplyPatchToolParam":
@@ -10132,6 +10243,8 @@ public enum Components {
                     try value.encode(to: encoder)
                 case let .fileSearchTool(value):
                     try value.encode(to: encoder)
+                case let .computerTool(value):
+                    try value.encode(to: encoder)
                 case let .computerUsePreviewTool(value):
                     try value.encode(to: encoder)
                 case let .webSearchTool(value):
@@ -10147,6 +10260,10 @@ public enum Components {
                 case let .functionShellToolParam(value):
                     try value.encode(to: encoder)
                 case let .customToolParam(value):
+                    try value.encode(to: encoder)
+                case let .namespaceToolParam(value):
+                    try value.encode(to: encoder)
+                case let .toolSearchToolParam(value):
                     try value.encode(to: encoder)
                 case let .webSearchPreviewTool(value):
                     try value.encode(to: encoder)
@@ -10500,7 +10617,9 @@ public enum Components {
             /// Allowed values are:
             /// - `file_search`
             /// - `web_search_preview`
+            /// - `computer`
             /// - `computer_use_preview`
+            /// - `computer_use`
             /// - `code_interpreter`
             /// - `image_generation`
             ///
@@ -10509,7 +10628,9 @@ public enum Components {
             @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
                 case fileSearch = "file_search"
                 case webSearchPreview = "web_search_preview"
+                case computer = "computer"
                 case computerUsePreview = "computer_use_preview"
+                case computerUse = "computer_use"
                 case webSearchPreview20250311 = "web_search_preview_2025_03_11"
                 case imageGeneration = "image_generation"
                 case codeInterpreter = "code_interpreter"
@@ -10520,7 +10641,9 @@ public enum Components {
             /// Allowed values are:
             /// - `file_search`
             /// - `web_search_preview`
+            /// - `computer`
             /// - `computer_use_preview`
+            /// - `computer_use`
             /// - `code_interpreter`
             /// - `image_generation`
             ///
@@ -11645,6 +11768,7 @@ public enum Components {
             case low = "low"
             case high = "high"
             case auto = "auto"
+            case original = "original"
         }
         /// An image input to the model. Learn about [image inputs](/docs/guides/vision).
         ///
@@ -11660,21 +11784,25 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/InputImageContent/type`.
             public var _type: Components.Schemas.InputImageContent._TypePayload
-            /// The detail level of the image to be sent to the model. One of `high`, `low`, or `auto`. Defaults to `auto`.
+            /// The detail level of the image to be sent to the model. One of `high`, `low`, `auto`, or `original`. Defaults to `auto`.
             ///
             /// - Remark: Generated from `#/components/schemas/InputImageContent/detail`.
             public var detail: Components.Schemas.ImageDetail
-            /// The URL of the image to be sent to the model.
+            /// The URL of the image to be sent to the model. A fully qualified URL or base64 encoded image in a data URL.
+            ///
+            /// - Remark: Restored by swift-openai patch from nullable anyOf schema.
             public var imageUrl: Swift.String?
-            /// The file ID of the image to be sent to the model.
+            /// The ID of the file to be sent to the model.
+            ///
+            /// - Remark: Restored by swift-openai patch from nullable anyOf schema.
             public var fileId: Swift.String?
             /// Creates a new `InputImageContent`.
             ///
             /// - Parameters:
             ///   - _type: The type of the input item. Always `input_image`.
-            ///   - detail: The detail level of the image to be sent to the model. One of `high`, `low`, or `auto`. Defaults to `auto`.
+            ///   - detail: The detail level of the image to be sent to the model. One of `high`, `low`, `auto`, or `original`. Defaults to `auto`.
             ///   - imageUrl: The URL of the image to be sent to the model.
-            ///   - fileId: The file ID of the image to be sent to the model.
+            ///   - fileId: The ID of the file to be sent to the model.
             public init(
                 _type: Components.Schemas.InputImageContent._TypePayload,
                 detail: Components.Schemas.ImageDetail,
@@ -11709,6 +11837,11 @@ public enum Components {
                 try container.encodeIfPresent(self.fileId, forKey: .fileId)
             }
         }
+        /// - Remark: Generated from `#/components/schemas/FileInputDetail`.
+        @frozen public enum FileInputDetail: String, Codable, Hashable, Sendable, CaseIterable {
+            case low = "low"
+            case high = "high"
+        }
         /// A file input to the model.
         ///
         /// - Remark: Generated from `#/components/schemas/InputFileContent`.
@@ -11723,42 +11856,58 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/InputFileContent/type`.
             public var _type: Components.Schemas.InputFileContent._TypePayload
+            /// The ID of the file to be sent to the model.
+            ///
+            /// - Remark: Restored by swift-openai patch from nullable anyOf schema.
+            public var fileId: Swift.String?
             /// The name of the file to be sent to the model.
             ///
             /// - Remark: Generated from `#/components/schemas/InputFileContent/filename`.
             public var filename: Swift.String?
-            /// The URL of the file to be sent to the model.
-            ///
-            /// - Remark: Generated from `#/components/schemas/InputFileContent/file_url`.
-            public var fileUrl: Swift.String?
             /// The content of the file to be sent to the model.
             ///
             ///
             /// - Remark: Generated from `#/components/schemas/InputFileContent/file_data`.
             public var fileData: Swift.String?
+            /// The URL of the file to be sent to the model.
+            ///
+            /// - Remark: Generated from `#/components/schemas/InputFileContent/file_url`.
+            public var fileUrl: Swift.String?
+            /// The detail level of the file to be sent to the model. One of `high` or `low`. Defaults to `high`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/InputFileContent/detail`.
+            public var detail: Components.Schemas.FileInputDetail?
             /// Creates a new `InputFileContent`.
             ///
             /// - Parameters:
             ///   - _type: The type of the input item. Always `input_file`.
+            ///   - fileId: The ID of the file to be sent to the model.
             ///   - filename: The name of the file to be sent to the model.
-            ///   - fileUrl: The URL of the file to be sent to the model.
             ///   - fileData: The content of the file to be sent to the model.
+            ///   - fileUrl: The URL of the file to be sent to the model.
+            ///   - detail: The detail level of the file to be sent to the model. One of `high` or `low`. Defaults to `high`.
             public init(
                 _type: Components.Schemas.InputFileContent._TypePayload,
+                fileId: Swift.String? = nil,
                 filename: Swift.String? = nil,
+                fileData: Swift.String? = nil,
                 fileUrl: Swift.String? = nil,
-                fileData: Swift.String? = nil
+                detail: Components.Schemas.FileInputDetail? = nil
             ) {
                 self._type = _type
+                self.fileId = fileId
                 self.filename = filename
-                self.fileUrl = fileUrl
                 self.fileData = fileData
+                self.fileUrl = fileUrl
+                self.detail = detail
             }
             public enum CodingKeys: String, CodingKey {
                 case _type = "type"
+                case fileId = "file_id"
                 case filename
-                case fileUrl = "file_url"
                 case fileData = "file_data"
+                case fileUrl = "file_url"
+                case detail
             }
         }
         /// - Remark: Generated from `#/components/schemas/ClickButtonType`.
@@ -12172,6 +12321,1279 @@ public enum Components {
             }
             public enum CodingKeys: String, CodingKey {
                 case id
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ToolSearchExecutionType`.
+        @frozen public enum ToolSearchExecutionType: String, Codable, Hashable, Sendable, CaseIterable {
+            case server = "server"
+            case client = "client"
+        }
+        /// - Remark: Generated from `#/components/schemas/FunctionCallStatus`.
+        @frozen public enum FunctionCallStatus: String, Codable, Hashable, Sendable, CaseIterable {
+            case inProgress = "in_progress"
+            case completed = "completed"
+            case incomplete = "incomplete"
+        }
+        /// - Remark: Generated from `#/components/schemas/ToolSearchCall`.
+        public struct ToolSearchCall: Codable, Hashable, Sendable {
+            /// The type of the item. Always `tool_search_call`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ToolSearchCall/type`.
+            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case toolSearchCall = "tool_search_call"
+            }
+            /// The type of the item. Always `tool_search_call`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ToolSearchCall/type`.
+            public var _type: Components.Schemas.ToolSearchCall._TypePayload
+            /// The unique ID of the tool search call item.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ToolSearchCall/id`.
+            public var id: Swift.String
+            /// Whether tool search was executed by the server or by the client.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ToolSearchCall/execution`.
+            public var execution: Components.Schemas.ToolSearchExecutionType
+            /// Arguments used for the tool search call.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ToolSearchCall/arguments`.
+            public var arguments: OpenAPIRuntime.OpenAPIValueContainer
+            /// The status of the tool search call item that was recorded.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ToolSearchCall/status`.
+            public var status: Components.Schemas.FunctionCallStatus
+            /// The identifier of the actor that created the item.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ToolSearchCall/created_by`.
+            public var createdBy: Swift.String?
+            /// Creates a new `ToolSearchCall`.
+            ///
+            /// - Parameters:
+            ///   - _type: The type of the item. Always `tool_search_call`.
+            ///   - id: The unique ID of the tool search call item.
+            ///   - execution: Whether tool search was executed by the server or by the client.
+            ///   - arguments: Arguments used for the tool search call.
+            ///   - status: The status of the tool search call item that was recorded.
+            ///   - createdBy: The identifier of the actor that created the item.
+            public init(
+                _type: Components.Schemas.ToolSearchCall._TypePayload,
+                id: Swift.String,
+                execution: Components.Schemas.ToolSearchExecutionType,
+                arguments: OpenAPIRuntime.OpenAPIValueContainer,
+                status: Components.Schemas.FunctionCallStatus,
+                createdBy: Swift.String? = nil
+            ) {
+                self._type = _type
+                self.id = id
+                self.execution = execution
+                self.arguments = arguments
+                self.status = status
+                self.createdBy = createdBy
+            }
+            public enum CodingKeys: String, CodingKey {
+                case _type = "type"
+                case id
+                case execution
+                case arguments
+                case status
+                case createdBy = "created_by"
+            }
+        }
+        /// Defines a function in your own code the model can choose to call. Learn more about [function calling](https://platform.openai.com/docs/guides/function-calling).
+        ///
+        /// - Remark: Generated from `#/components/schemas/FunctionTool`.
+        public struct FunctionTool: Codable, Hashable, Sendable {
+            /// The type of the function tool. Always `function`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FunctionTool/type`.
+            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case function = "function"
+            }
+            /// The type of the function tool. Always `function`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FunctionTool/type`.
+            public var _type: Components.Schemas.FunctionTool._TypePayload
+            /// The name of the function to call.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FunctionTool/name`.
+            public var name: Swift.String
+            /// A description of the function. Used by the model to determine whether or not to call the function.
+            ///
+            /// - Remark: Restored by swift-openai patch from nullable anyOf schema.
+            public var description: Swift.String?
+            /// A JSON schema object describing the parameters of the function.
+            ///
+            /// - Remark: Restored by swift-openai patch from nullable anyOf schema.
+            public var parameters: OpenAPIRuntime.OpenAPIObjectContainer?
+            /// Whether to enforce strict parameter validation. Default `true`.
+            ///
+            /// - Remark: Restored by swift-openai patch from nullable anyOf schema.
+            public var strict: Swift.Bool?
+            /// Whether this function is deferred and loaded via tool search.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FunctionTool/defer_loading`.
+            public var deferLoading: Swift.Bool?
+            /// Creates a new `FunctionTool`.
+            ///
+            /// - Parameters:
+            ///   - _type: The type of the function tool. Always `function`.
+            ///   - name: The name of the function to call.
+            ///   - description: A description of the function.
+            ///   - parameters: A JSON schema object describing the parameters of the function.
+            ///   - strict: Whether to enforce strict parameter validation.
+            ///   - deferLoading: Whether this function is deferred and loaded via tool search.
+            public init(
+                _type: Components.Schemas.FunctionTool._TypePayload,
+                name: Swift.String,
+                description: Swift.String? = nil,
+                parameters: OpenAPIRuntime.OpenAPIObjectContainer? = nil,
+                strict: Swift.Bool? = nil,
+                deferLoading: Swift.Bool? = nil
+            ) {
+                self._type = _type
+                self.name = name
+                self.description = description
+                self.parameters = parameters
+                self.strict = strict
+                self.deferLoading = deferLoading
+            }
+            public enum CodingKeys: String, CodingKey {
+                case _type = "type"
+                case name
+                case description
+                case parameters
+                case strict
+                case deferLoading = "defer_loading"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/RankerVersionType`.
+        @frozen public enum RankerVersionType: String, Codable, Hashable, Sendable, CaseIterable {
+            case auto = "auto"
+            case default20241115 = "default-2024-11-15"
+        }
+        /// - Remark: Generated from `#/components/schemas/HybridSearchOptions`.
+        public struct HybridSearchOptions: Codable, Hashable, Sendable {
+            /// The weight of the embedding in the reciprocal ranking fusion.
+            ///
+            /// - Remark: Generated from `#/components/schemas/HybridSearchOptions/embedding_weight`.
+            public var embeddingWeight: Swift.Double
+            /// The weight of the text in the reciprocal ranking fusion.
+            ///
+            /// - Remark: Generated from `#/components/schemas/HybridSearchOptions/text_weight`.
+            public var textWeight: Swift.Double
+            /// Creates a new `HybridSearchOptions`.
+            ///
+            /// - Parameters:
+            ///   - embeddingWeight: The weight of the embedding in the reciprocal ranking fusion.
+            ///   - textWeight: The weight of the text in the reciprocal ranking fusion.
+            public init(
+                embeddingWeight: Swift.Double,
+                textWeight: Swift.Double
+            ) {
+                self.embeddingWeight = embeddingWeight
+                self.textWeight = textWeight
+            }
+            public enum CodingKeys: String, CodingKey {
+                case embeddingWeight = "embedding_weight"
+                case textWeight = "text_weight"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/RankingOptions`.
+        public struct RankingOptions: Codable, Hashable, Sendable {
+            /// The ranker to use for the file search.
+            ///
+            /// - Remark: Generated from `#/components/schemas/RankingOptions/ranker`.
+            public var ranker: Components.Schemas.RankerVersionType?
+            /// The score threshold for the file search, a number between 0 and 1. Numbers closer to 1 will attempt to return only the most relevant results, but may return fewer results.
+            ///
+            /// - Remark: Generated from `#/components/schemas/RankingOptions/score_threshold`.
+            public var scoreThreshold: Swift.Double?
+            /// Weights that control how reciprocal rank fusion balances semantic embedding matches versus sparse keyword matches when hybrid search is enabled.
+            ///
+            /// - Remark: Generated from `#/components/schemas/RankingOptions/hybrid_search`.
+            public var hybridSearch: Components.Schemas.HybridSearchOptions?
+            /// Creates a new `RankingOptions`.
+            ///
+            /// - Parameters:
+            ///   - ranker: The ranker to use for the file search.
+            ///   - scoreThreshold: The score threshold for the file search, a number between 0 and 1. Numbers closer to 1 will attempt to return only the most relevant results, but may return fewer results.
+            ///   - hybridSearch: Weights that control how reciprocal rank fusion balances semantic embedding matches versus sparse keyword matches when hybrid search is enabled.
+            public init(
+                ranker: Components.Schemas.RankerVersionType? = nil,
+                scoreThreshold: Swift.Double? = nil,
+                hybridSearch: Components.Schemas.HybridSearchOptions? = nil
+            ) {
+                self.ranker = ranker
+                self.scoreThreshold = scoreThreshold
+                self.hybridSearch = hybridSearch
+            }
+            public enum CodingKeys: String, CodingKey {
+                case ranker
+                case scoreThreshold = "score_threshold"
+                case hybridSearch = "hybrid_search"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/Filters`.
+        public struct Filters: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/Filters/value1`.
+            public var value1: Components.Schemas.ComparisonFilter?
+            /// - Remark: Generated from `#/components/schemas/Filters/value2`.
+            public var value2: Components.Schemas.CompoundFilter?
+            /// Creates a new `Filters`.
+            ///
+            /// - Parameters:
+            ///   - value1:
+            ///   - value2:
+            public init(
+                value1: Components.Schemas.ComparisonFilter? = nil,
+                value2: Components.Schemas.CompoundFilter? = nil
+            ) {
+                self.value1 = value1
+                self.value2 = value2
+            }
+            public init(from decoder: any Decoder) throws {
+                var errors: [any Error] = []
+                do {
+                    self.value1 = try .init(from: decoder)
+                } catch {
+                    errors.append(error)
+                }
+                do {
+                    self.value2 = try .init(from: decoder)
+                } catch {
+                    errors.append(error)
+                }
+                try Swift.DecodingError.verifyAtLeastOneSchemaIsNotNil(
+                    [
+                        self.value1,
+                        self.value2
+                    ],
+                    type: Self.self,
+                    codingPath: decoder.codingPath,
+                    errors: errors
+                )
+            }
+            public func encode(to encoder: any Encoder) throws {
+                try self.value1?.encode(to: encoder)
+                try self.value2?.encode(to: encoder)
+            }
+        }
+        /// A tool that searches for relevant content from uploaded files. Learn more about the [file search tool](https://platform.openai.com/docs/guides/tools-file-search).
+        ///
+        /// - Remark: Generated from `#/components/schemas/FileSearchTool`.
+        public struct FileSearchTool: Codable, Hashable, Sendable {
+            /// The type of the file search tool. Always `file_search`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FileSearchTool/type`.
+            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case fileSearch = "file_search"
+            }
+            /// The type of the file search tool. Always `file_search`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FileSearchTool/type`.
+            public var _type: Components.Schemas.FileSearchTool._TypePayload
+            /// The IDs of the vector stores to search.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FileSearchTool/vector_store_ids`.
+            public var vectorStoreIds: [Swift.String]
+            /// The maximum number of results to return. This number should be between 1 and 50 inclusive.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FileSearchTool/max_num_results`.
+            public var maxNumResults: Swift.Int?
+            /// Ranking options for search.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FileSearchTool/ranking_options`.
+            public var rankingOptions: Components.Schemas.RankingOptions?
+            /// Creates a new `FileSearchTool`.
+            ///
+            /// - Parameters:
+            ///   - _type: The type of the file search tool. Always `file_search`.
+            ///   - vectorStoreIds: The IDs of the vector stores to search.
+            ///   - maxNumResults: The maximum number of results to return. This number should be between 1 and 50 inclusive.
+            ///   - rankingOptions: Ranking options for search.
+            public init(
+                _type: Components.Schemas.FileSearchTool._TypePayload,
+                vectorStoreIds: [Swift.String],
+                maxNumResults: Swift.Int? = nil,
+                rankingOptions: Components.Schemas.RankingOptions? = nil
+            ) {
+                self._type = _type
+                self.vectorStoreIds = vectorStoreIds
+                self.maxNumResults = maxNumResults
+                self.rankingOptions = rankingOptions
+            }
+            public enum CodingKeys: String, CodingKey {
+                case _type = "type"
+                case vectorStoreIds = "vector_store_ids"
+                case maxNumResults = "max_num_results"
+                case rankingOptions = "ranking_options"
+            }
+        }
+        /// A tool that controls a virtual computer. Learn more about the [computer tool](https://platform.openai.com/docs/guides/tools-computer-use).
+        ///
+        /// - Remark: Generated from `#/components/schemas/ComputerTool`.
+        public struct ComputerTool: Codable, Hashable, Sendable {
+            /// The type of the computer tool. Always `computer`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ComputerTool/type`.
+            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case computer = "computer"
+            }
+            /// The type of the computer tool. Always `computer`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ComputerTool/type`.
+            public var _type: Components.Schemas.ComputerTool._TypePayload
+            /// Creates a new `ComputerTool`.
+            ///
+            /// - Parameters:
+            ///   - _type: The type of the computer tool. Always `computer`.
+            public init(_type: Components.Schemas.ComputerTool._TypePayload) {
+                self._type = _type
+            }
+            public enum CodingKeys: String, CodingKey {
+                case _type = "type"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ComputerEnvironment`.
+        @frozen public enum ComputerEnvironment: String, Codable, Hashable, Sendable, CaseIterable {
+            case windows = "windows"
+            case mac = "mac"
+            case linux = "linux"
+            case ubuntu = "ubuntu"
+            case browser = "browser"
+        }
+        /// A tool that controls a virtual computer. Learn more about the [computer tool](https://platform.openai.com/docs/guides/tools-computer-use).
+        ///
+        /// - Remark: Generated from `#/components/schemas/ComputerUsePreviewTool`.
+        public struct ComputerUsePreviewTool: Codable, Hashable, Sendable {
+            /// The type of the computer use tool. Always `computer_use_preview`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ComputerUsePreviewTool/type`.
+            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case computerUsePreview = "computer_use_preview"
+            }
+            /// The type of the computer use tool. Always `computer_use_preview`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ComputerUsePreviewTool/type`.
+            public var _type: Components.Schemas.ComputerUsePreviewTool._TypePayload
+            /// The type of computer environment to control.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ComputerUsePreviewTool/environment`.
+            public var environment: Components.Schemas.ComputerEnvironment
+            /// The width of the computer display.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ComputerUsePreviewTool/display_width`.
+            public var displayWidth: Swift.Int
+            /// The height of the computer display.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ComputerUsePreviewTool/display_height`.
+            public var displayHeight: Swift.Int
+            /// Creates a new `ComputerUsePreviewTool`.
+            ///
+            /// - Parameters:
+            ///   - _type: The type of the computer use tool. Always `computer_use_preview`.
+            ///   - environment: The type of computer environment to control.
+            ///   - displayWidth: The width of the computer display.
+            ///   - displayHeight: The height of the computer display.
+            public init(
+                _type: Components.Schemas.ComputerUsePreviewTool._TypePayload,
+                environment: Components.Schemas.ComputerEnvironment,
+                displayWidth: Swift.Int,
+                displayHeight: Swift.Int
+            ) {
+                self._type = _type
+                self.environment = environment
+                self.displayWidth = displayWidth
+                self.displayHeight = displayHeight
+            }
+            public enum CodingKeys: String, CodingKey {
+                case _type = "type"
+                case environment
+                case displayWidth = "display_width"
+                case displayHeight = "display_height"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ContainerMemoryLimit`.
+        @frozen public enum ContainerMemoryLimit: String, Codable, Hashable, Sendable, CaseIterable {
+            case _1g = "1g"
+            case _4g = "4g"
+            case _16g = "16g"
+            case _64g = "64g"
+        }
+        /// Configuration for a code interpreter container. Optionally specify the IDs of the files to run the code on.
+        ///
+        /// - Remark: Generated from `#/components/schemas/AutoCodeInterpreterToolParam`.
+        public struct AutoCodeInterpreterToolParam: Codable, Hashable, Sendable {
+            /// Always `auto`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/AutoCodeInterpreterToolParam/type`.
+            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case auto = "auto"
+            }
+            /// Always `auto`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/AutoCodeInterpreterToolParam/type`.
+            public var _type: Components.Schemas.AutoCodeInterpreterToolParam._TypePayload
+            /// An optional list of uploaded files to make available to your code.
+            ///
+            /// - Remark: Generated from `#/components/schemas/AutoCodeInterpreterToolParam/file_ids`.
+            public var fileIds: [Swift.String]?
+            /// Network access policy for the container.
+            ///
+            /// - Remark: Generated from `#/components/schemas/AutoCodeInterpreterToolParam/network_policy`.
+            @frozen public enum NetworkPolicyPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/AutoCodeInterpreterToolParam/network_policy/ContainerNetworkPolicyDisabledParam`.
+                case containerNetworkPolicyDisabledParam(Components.Schemas.ContainerNetworkPolicyDisabledParam)
+                /// - Remark: Generated from `#/components/schemas/AutoCodeInterpreterToolParam/network_policy/ContainerNetworkPolicyAllowlistParam`.
+                case containerNetworkPolicyAllowlistParam(Components.Schemas.ContainerNetworkPolicyAllowlistParam)
+                public enum CodingKeys: String, CodingKey {
+                    case _type = "type"
+                }
+                public init(from decoder: any Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    let discriminator = try container.decode(
+                        Swift.String.self,
+                        forKey: ._type
+                    )
+                    switch discriminator {
+                    case "ContainerNetworkPolicyDisabledParam", "#/components/schemas/ContainerNetworkPolicyDisabledParam":
+                        self = .containerNetworkPolicyDisabledParam(try .init(from: decoder))
+                    case "ContainerNetworkPolicyAllowlistParam", "#/components/schemas/ContainerNetworkPolicyAllowlistParam":
+                        self = .containerNetworkPolicyAllowlistParam(try .init(from: decoder))
+                    default:
+                        throw Swift.DecodingError.unknownOneOfDiscriminator(
+                            discriminatorKey: CodingKeys._type,
+                            discriminatorValue: discriminator,
+                            codingPath: decoder.codingPath
+                        )
+                    }
+                }
+                public func encode(to encoder: any Encoder) throws {
+                    switch self {
+                    case let .containerNetworkPolicyDisabledParam(value):
+                        try value.encode(to: encoder)
+                    case let .containerNetworkPolicyAllowlistParam(value):
+                        try value.encode(to: encoder)
+                    }
+                }
+            }
+            /// Network access policy for the container.
+            ///
+            /// - Remark: Generated from `#/components/schemas/AutoCodeInterpreterToolParam/network_policy`.
+            public var networkPolicy: Components.Schemas.AutoCodeInterpreterToolParam.NetworkPolicyPayload?
+            /// Creates a new `AutoCodeInterpreterToolParam`.
+            ///
+            /// - Parameters:
+            ///   - _type: Always `auto`.
+            ///   - fileIds: An optional list of uploaded files to make available to your code.
+            ///   - networkPolicy: Network access policy for the container.
+            public init(
+                _type: Components.Schemas.AutoCodeInterpreterToolParam._TypePayload,
+                fileIds: [Swift.String]? = nil,
+                networkPolicy: Components.Schemas.AutoCodeInterpreterToolParam.NetworkPolicyPayload? = nil
+            ) {
+                self._type = _type
+                self.fileIds = fileIds
+                self.networkPolicy = networkPolicy
+            }
+            public enum CodingKeys: String, CodingKey {
+                case _type = "type"
+                case fileIds = "file_ids"
+                case networkPolicy = "network_policy"
+            }
+        }
+        /// Control how much effort the model will exert to match the style and features, especially facial features, of input images. This parameter is only supported for `gpt-image-1` and `gpt-image-1.5` and later models, unsupported for `gpt-image-1-mini`. Supports `high` and `low`. Defaults to `low`.
+        ///
+        /// - Remark: Generated from `#/components/schemas/InputFidelity`.
+        @frozen public enum InputFidelity: String, Codable, Hashable, Sendable, CaseIterable {
+            case high = "high"
+            case low = "low"
+        }
+        /// - Remark: Generated from `#/components/schemas/ImageGenActionEnum`.
+        @frozen public enum ImageGenActionEnum: String, Codable, Hashable, Sendable, CaseIterable {
+            case generate = "generate"
+            case edit = "edit"
+            case auto = "auto"
+        }
+        /// A tool that allows the model to execute shell commands in a local environment.
+        ///
+        /// - Remark: Generated from `#/components/schemas/LocalShellToolParam`.
+        public struct LocalShellToolParam: Codable, Hashable, Sendable {
+            /// The type of the local shell tool. Always `local_shell`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/LocalShellToolParam/type`.
+            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case localShell = "local_shell"
+            }
+            /// The type of the local shell tool. Always `local_shell`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/LocalShellToolParam/type`.
+            public var _type: Components.Schemas.LocalShellToolParam._TypePayload
+            /// Creates a new `LocalShellToolParam`.
+            ///
+            /// - Parameters:
+            ///   - _type: The type of the local shell tool. Always `local_shell`.
+            public init(_type: Components.Schemas.LocalShellToolParam._TypePayload) {
+                self._type = _type
+            }
+            public enum CodingKeys: String, CodingKey {
+                case _type = "type"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ContainerAutoParam`.
+        public struct ContainerAutoParam: Codable, Hashable, Sendable {
+            /// Automatically creates a container for this request
+            ///
+            /// - Remark: Generated from `#/components/schemas/ContainerAutoParam/type`.
+            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case containerAuto = "container_auto"
+            }
+            /// Automatically creates a container for this request
+            ///
+            /// - Remark: Generated from `#/components/schemas/ContainerAutoParam/type`.
+            public var _type: Components.Schemas.ContainerAutoParam._TypePayload
+            /// An optional list of uploaded files to make available to your code.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ContainerAutoParam/file_ids`.
+            public var fileIds: [Swift.String]?
+            /// Network access policy for the container.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ContainerAutoParam/network_policy`.
+            @frozen public enum NetworkPolicyPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/ContainerAutoParam/network_policy/ContainerNetworkPolicyDisabledParam`.
+                case containerNetworkPolicyDisabledParam(Components.Schemas.ContainerNetworkPolicyDisabledParam)
+                /// - Remark: Generated from `#/components/schemas/ContainerAutoParam/network_policy/ContainerNetworkPolicyAllowlistParam`.
+                case containerNetworkPolicyAllowlistParam(Components.Schemas.ContainerNetworkPolicyAllowlistParam)
+                public enum CodingKeys: String, CodingKey {
+                    case _type = "type"
+                }
+                public init(from decoder: any Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    let discriminator = try container.decode(
+                        Swift.String.self,
+                        forKey: ._type
+                    )
+                    switch discriminator {
+                    case "ContainerNetworkPolicyDisabledParam", "#/components/schemas/ContainerNetworkPolicyDisabledParam":
+                        self = .containerNetworkPolicyDisabledParam(try .init(from: decoder))
+                    case "ContainerNetworkPolicyAllowlistParam", "#/components/schemas/ContainerNetworkPolicyAllowlistParam":
+                        self = .containerNetworkPolicyAllowlistParam(try .init(from: decoder))
+                    default:
+                        throw Swift.DecodingError.unknownOneOfDiscriminator(
+                            discriminatorKey: CodingKeys._type,
+                            discriminatorValue: discriminator,
+                            codingPath: decoder.codingPath
+                        )
+                    }
+                }
+                public func encode(to encoder: any Encoder) throws {
+                    switch self {
+                    case let .containerNetworkPolicyDisabledParam(value):
+                        try value.encode(to: encoder)
+                    case let .containerNetworkPolicyAllowlistParam(value):
+                        try value.encode(to: encoder)
+                    }
+                }
+            }
+            /// Network access policy for the container.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ContainerAutoParam/network_policy`.
+            public var networkPolicy: Components.Schemas.ContainerAutoParam.NetworkPolicyPayload?
+            /// - Remark: Generated from `#/components/schemas/ContainerAutoParam/SkillsPayload`.
+            @frozen public enum SkillsPayloadPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/ContainerAutoParam/SkillsPayload/SkillReferenceParam`.
+                case skillReferenceParam(Components.Schemas.SkillReferenceParam)
+                /// - Remark: Generated from `#/components/schemas/ContainerAutoParam/SkillsPayload/InlineSkillParam`.
+                case inlineSkillParam(Components.Schemas.InlineSkillParam)
+                public enum CodingKeys: String, CodingKey {
+                    case _type = "type"
+                }
+                public init(from decoder: any Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    let discriminator = try container.decode(
+                        Swift.String.self,
+                        forKey: ._type
+                    )
+                    switch discriminator {
+                    case "SkillReferenceParam", "#/components/schemas/SkillReferenceParam":
+                        self = .skillReferenceParam(try .init(from: decoder))
+                    case "InlineSkillParam", "#/components/schemas/InlineSkillParam":
+                        self = .inlineSkillParam(try .init(from: decoder))
+                    default:
+                        throw Swift.DecodingError.unknownOneOfDiscriminator(
+                            discriminatorKey: CodingKeys._type,
+                            discriminatorValue: discriminator,
+                            codingPath: decoder.codingPath
+                        )
+                    }
+                }
+                public func encode(to encoder: any Encoder) throws {
+                    switch self {
+                    case let .skillReferenceParam(value):
+                        try value.encode(to: encoder)
+                    case let .inlineSkillParam(value):
+                        try value.encode(to: encoder)
+                    }
+                }
+            }
+            /// An optional list of skills referenced by id or inline data.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ContainerAutoParam/skills`.
+            public typealias SkillsPayload = [Components.Schemas.ContainerAutoParam.SkillsPayloadPayload]
+            /// An optional list of skills referenced by id or inline data.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ContainerAutoParam/skills`.
+            public var skills: Components.Schemas.ContainerAutoParam.SkillsPayload?
+            /// Creates a new `ContainerAutoParam`.
+            ///
+            /// - Parameters:
+            ///   - _type: Automatically creates a container for this request
+            ///   - fileIds: An optional list of uploaded files to make available to your code.
+            ///   - networkPolicy: Network access policy for the container.
+            ///   - skills: An optional list of skills referenced by id or inline data.
+            public init(
+                _type: Components.Schemas.ContainerAutoParam._TypePayload,
+                fileIds: [Swift.String]? = nil,
+                networkPolicy: Components.Schemas.ContainerAutoParam.NetworkPolicyPayload? = nil,
+                skills: Components.Schemas.ContainerAutoParam.SkillsPayload? = nil
+            ) {
+                self._type = _type
+                self.fileIds = fileIds
+                self.networkPolicy = networkPolicy
+                self.skills = skills
+            }
+            public enum CodingKeys: String, CodingKey {
+                case _type = "type"
+                case fileIds = "file_ids"
+                case networkPolicy = "network_policy"
+                case skills
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/LocalSkillParam`.
+        public struct LocalSkillParam: Codable, Hashable, Sendable {
+            /// The name of the skill.
+            ///
+            /// - Remark: Generated from `#/components/schemas/LocalSkillParam/name`.
+            public var name: Swift.String
+            /// The description of the skill.
+            ///
+            /// - Remark: Generated from `#/components/schemas/LocalSkillParam/description`.
+            public var description: Swift.String
+            /// The path to the directory containing the skill.
+            ///
+            /// - Remark: Generated from `#/components/schemas/LocalSkillParam/path`.
+            public var path: Swift.String
+            /// Creates a new `LocalSkillParam`.
+            ///
+            /// - Parameters:
+            ///   - name: The name of the skill.
+            ///   - description: The description of the skill.
+            ///   - path: The path to the directory containing the skill.
+            public init(
+                name: Swift.String,
+                description: Swift.String,
+                path: Swift.String
+            ) {
+                self.name = name
+                self.description = description
+                self.path = path
+            }
+            public enum CodingKeys: String, CodingKey {
+                case name
+                case description
+                case path
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/LocalEnvironmentParam`.
+        public struct LocalEnvironmentParam: Codable, Hashable, Sendable {
+            /// Use a local computer environment.
+            ///
+            /// - Remark: Generated from `#/components/schemas/LocalEnvironmentParam/type`.
+            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case local = "local"
+            }
+            /// Use a local computer environment.
+            ///
+            /// - Remark: Generated from `#/components/schemas/LocalEnvironmentParam/type`.
+            public var _type: Components.Schemas.LocalEnvironmentParam._TypePayload
+            /// An optional list of skills.
+            ///
+            /// - Remark: Generated from `#/components/schemas/LocalEnvironmentParam/skills`.
+            public var skills: [Components.Schemas.LocalSkillParam]?
+            /// Creates a new `LocalEnvironmentParam`.
+            ///
+            /// - Parameters:
+            ///   - _type: Use a local computer environment.
+            ///   - skills: An optional list of skills.
+            public init(
+                _type: Components.Schemas.LocalEnvironmentParam._TypePayload,
+                skills: [Components.Schemas.LocalSkillParam]? = nil
+            ) {
+                self._type = _type
+                self.skills = skills
+            }
+            public enum CodingKeys: String, CodingKey {
+                case _type = "type"
+                case skills
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ContainerReferenceParam`.
+        public struct ContainerReferenceParam: Codable, Hashable, Sendable {
+            /// References a container created with the /v1/containers endpoint
+            ///
+            /// - Remark: Generated from `#/components/schemas/ContainerReferenceParam/type`.
+            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case containerReference = "container_reference"
+            }
+            /// References a container created with the /v1/containers endpoint
+            ///
+            /// - Remark: Generated from `#/components/schemas/ContainerReferenceParam/type`.
+            public var _type: Components.Schemas.ContainerReferenceParam._TypePayload
+            /// The ID of the referenced container.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ContainerReferenceParam/container_id`.
+            public var containerId: Swift.String
+            /// Creates a new `ContainerReferenceParam`.
+            ///
+            /// - Parameters:
+            ///   - _type: References a container created with the /v1/containers endpoint
+            ///   - containerId: The ID of the referenced container.
+            public init(
+                _type: Components.Schemas.ContainerReferenceParam._TypePayload,
+                containerId: Swift.String
+            ) {
+                self._type = _type
+                self.containerId = containerId
+            }
+            public enum CodingKeys: String, CodingKey {
+                case _type = "type"
+                case containerId = "container_id"
+            }
+        }
+        /// A tool that allows the model to execute shell commands.
+        ///
+        /// - Remark: Generated from `#/components/schemas/FunctionShellToolParam`.
+        public struct FunctionShellToolParam: Codable, Hashable, Sendable {
+            /// The type of the shell tool. Always `shell`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FunctionShellToolParam/type`.
+            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case shell = "shell"
+            }
+            /// The type of the shell tool. Always `shell`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FunctionShellToolParam/type`.
+            public var _type: Components.Schemas.FunctionShellToolParam._TypePayload
+            /// Creates a new `FunctionShellToolParam`.
+            ///
+            /// - Parameters:
+            ///   - _type: The type of the shell tool. Always `shell`.
+            public init(_type: Components.Schemas.FunctionShellToolParam._TypePayload) {
+                self._type = _type
+            }
+            public enum CodingKeys: String, CodingKey {
+                case _type = "type"
+            }
+        }
+        /// Unconstrained free-form text.
+        ///
+        /// - Remark: Generated from `#/components/schemas/CustomTextFormatParam`.
+        public struct CustomTextFormatParam: Codable, Hashable, Sendable {
+            /// Unconstrained text format. Always `text`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CustomTextFormatParam/type`.
+            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case text = "text"
+            }
+            /// Unconstrained text format. Always `text`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CustomTextFormatParam/type`.
+            public var _type: Components.Schemas.CustomTextFormatParam._TypePayload
+            /// Creates a new `CustomTextFormatParam`.
+            ///
+            /// - Parameters:
+            ///   - _type: Unconstrained text format. Always `text`.
+            public init(_type: Components.Schemas.CustomTextFormatParam._TypePayload) {
+                self._type = _type
+            }
+            public enum CodingKeys: String, CodingKey {
+                case _type = "type"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/GrammarSyntax1`.
+        @frozen public enum GrammarSyntax1: String, Codable, Hashable, Sendable, CaseIterable {
+            case lark = "lark"
+            case regex = "regex"
+        }
+        /// A grammar defined by the user.
+        ///
+        /// - Remark: Generated from `#/components/schemas/CustomGrammarFormatParam`.
+        public struct CustomGrammarFormatParam: Codable, Hashable, Sendable {
+            /// Grammar format. Always `grammar`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CustomGrammarFormatParam/type`.
+            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case grammar = "grammar"
+            }
+            /// Grammar format. Always `grammar`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CustomGrammarFormatParam/type`.
+            public var _type: Components.Schemas.CustomGrammarFormatParam._TypePayload
+            /// The syntax of the grammar definition. One of `lark` or `regex`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CustomGrammarFormatParam/syntax`.
+            public var syntax: Components.Schemas.GrammarSyntax1
+            /// The grammar definition.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CustomGrammarFormatParam/definition`.
+            public var definition: Swift.String
+            /// Creates a new `CustomGrammarFormatParam`.
+            ///
+            /// - Parameters:
+            ///   - _type: Grammar format. Always `grammar`.
+            ///   - syntax: The syntax of the grammar definition. One of `lark` or `regex`.
+            ///   - definition: The grammar definition.
+            public init(
+                _type: Components.Schemas.CustomGrammarFormatParam._TypePayload,
+                syntax: Components.Schemas.GrammarSyntax1,
+                definition: Swift.String
+            ) {
+                self._type = _type
+                self.syntax = syntax
+                self.definition = definition
+            }
+            public enum CodingKeys: String, CodingKey {
+                case _type = "type"
+                case syntax
+                case definition
+            }
+        }
+        /// A custom tool that processes input using a specified format. Learn more about   [custom tools](/docs/guides/function-calling#custom-tools)
+        ///
+        /// - Remark: Generated from `#/components/schemas/CustomToolParam`.
+        public struct CustomToolParam: Codable, Hashable, Sendable {
+            /// The type of the custom tool. Always `custom`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CustomToolParam/type`.
+            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case custom = "custom"
+            }
+            /// The type of the custom tool. Always `custom`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CustomToolParam/type`.
+            public var _type: Components.Schemas.CustomToolParam._TypePayload
+            /// The name of the custom tool, used to identify it in tool calls.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CustomToolParam/name`.
+            public var name: Swift.String
+            /// Optional description of the custom tool, used to provide more context.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CustomToolParam/description`.
+            public var description: Swift.String?
+            /// The input format for the custom tool. Default is unconstrained text.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CustomToolParam/format`.
+            @frozen public enum FormatPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/CustomToolParam/format/CustomTextFormatParam`.
+                case customTextFormatParam(Components.Schemas.CustomTextFormatParam)
+                /// - Remark: Generated from `#/components/schemas/CustomToolParam/format/CustomGrammarFormatParam`.
+                case customGrammarFormatParam(Components.Schemas.CustomGrammarFormatParam)
+                public enum CodingKeys: String, CodingKey {
+                    case _type = "type"
+                }
+                public init(from decoder: any Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    let discriminator = try container.decode(
+                        Swift.String.self,
+                        forKey: ._type
+                    )
+                    switch discriminator {
+                    case "CustomTextFormatParam", "#/components/schemas/CustomTextFormatParam":
+                        self = .customTextFormatParam(try .init(from: decoder))
+                    case "CustomGrammarFormatParam", "#/components/schemas/CustomGrammarFormatParam":
+                        self = .customGrammarFormatParam(try .init(from: decoder))
+                    default:
+                        throw Swift.DecodingError.unknownOneOfDiscriminator(
+                            discriminatorKey: CodingKeys._type,
+                            discriminatorValue: discriminator,
+                            codingPath: decoder.codingPath
+                        )
+                    }
+                }
+                public func encode(to encoder: any Encoder) throws {
+                    switch self {
+                    case let .customTextFormatParam(value):
+                        try value.encode(to: encoder)
+                    case let .customGrammarFormatParam(value):
+                        try value.encode(to: encoder)
+                    }
+                }
+            }
+            /// The input format for the custom tool. Default is unconstrained text.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CustomToolParam/format`.
+            public var format: Components.Schemas.CustomToolParam.FormatPayload?
+            /// Whether this tool should be deferred and discovered via tool search.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CustomToolParam/defer_loading`.
+            public var deferLoading: Swift.Bool?
+            /// Creates a new `CustomToolParam`.
+            ///
+            /// - Parameters:
+            ///   - _type: The type of the custom tool. Always `custom`.
+            ///   - name: The name of the custom tool, used to identify it in tool calls.
+            ///   - description: Optional description of the custom tool, used to provide more context.
+            ///   - format: The input format for the custom tool. Default is unconstrained text.
+            ///   - deferLoading: Whether this tool should be deferred and discovered via tool search.
+            public init(
+                _type: Components.Schemas.CustomToolParam._TypePayload,
+                name: Swift.String,
+                description: Swift.String? = nil,
+                format: Components.Schemas.CustomToolParam.FormatPayload? = nil,
+                deferLoading: Swift.Bool? = nil
+            ) {
+                self._type = _type
+                self.name = name
+                self.description = description
+                self.format = format
+                self.deferLoading = deferLoading
+            }
+            public enum CodingKeys: String, CodingKey {
+                case _type = "type"
+                case name
+                case description
+                case format
+                case deferLoading = "defer_loading"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/EmptyModelParam`.
+        public typealias EmptyModelParam = OpenAPIRuntime.OpenAPIObjectContainer
+        /// - Remark: Generated from `#/components/schemas/FunctionToolParam`.
+        public struct FunctionToolParam: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/FunctionToolParam/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FunctionToolParam/type`.
+            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case function = "function"
+            }
+            /// - Remark: Generated from `#/components/schemas/FunctionToolParam/type`.
+            public var _type: Components.Schemas.FunctionToolParam._TypePayload
+            /// Creates a new `FunctionToolParam`.
+            ///
+            /// - Parameters:
+            ///   - name:
+            ///   - _type:
+            public init(
+                name: Swift.String,
+                _type: Components.Schemas.FunctionToolParam._TypePayload
+            ) {
+                self.name = name
+                self._type = _type
+            }
+            public enum CodingKeys: String, CodingKey {
+                case name
+                case _type = "type"
+            }
+        }
+        /// Groups function/custom tools under a shared namespace.
+        ///
+        /// - Remark: Generated from `#/components/schemas/NamespaceToolParam`.
+        public struct NamespaceToolParam: Codable, Hashable, Sendable {
+            /// The type of the tool. Always `namespace`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NamespaceToolParam/type`.
+            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case namespace = "namespace"
+            }
+            /// The type of the tool. Always `namespace`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NamespaceToolParam/type`.
+            public var _type: Components.Schemas.NamespaceToolParam._TypePayload
+            /// The namespace name used in tool calls (for example, `crm`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/NamespaceToolParam/name`.
+            public var name: Swift.String
+            /// A description of the namespace shown to the model.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NamespaceToolParam/description`.
+            public var description: Swift.String
+            /// A function or custom tool that belongs to a namespace.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NamespaceToolParam/ToolsPayload`.
+            @frozen public enum ToolsPayloadPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/NamespaceToolParam/ToolsPayload/FunctionToolParam`.
+                case functionToolParam(Components.Schemas.FunctionToolParam)
+                /// - Remark: Generated from `#/components/schemas/NamespaceToolParam/ToolsPayload/CustomToolParam`.
+                case customToolParam(Components.Schemas.CustomToolParam)
+                public enum CodingKeys: String, CodingKey {
+                    case _type = "type"
+                }
+                public init(from decoder: any Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    let discriminator = try container.decode(
+                        Swift.String.self,
+                        forKey: ._type
+                    )
+                    switch discriminator {
+                    case "FunctionToolParam", "#/components/schemas/FunctionToolParam":
+                        self = .functionToolParam(try .init(from: decoder))
+                    case "custom", "CustomToolParam", "#/components/schemas/CustomToolParam":
+                        self = .customToolParam(try .init(from: decoder))
+                    default:
+                        throw Swift.DecodingError.unknownOneOfDiscriminator(
+                            discriminatorKey: CodingKeys._type,
+                            discriminatorValue: discriminator,
+                            codingPath: decoder.codingPath
+                        )
+                    }
+                }
+                public func encode(to encoder: any Encoder) throws {
+                    switch self {
+                    case let .functionToolParam(value):
+                        try value.encode(to: encoder)
+                    case let .customToolParam(value):
+                        try value.encode(to: encoder)
+                    }
+                }
+            }
+            /// The function/custom tools available inside this namespace.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NamespaceToolParam/tools`.
+            public typealias ToolsPayload = [Components.Schemas.NamespaceToolParam.ToolsPayloadPayload]
+            /// The function/custom tools available inside this namespace.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NamespaceToolParam/tools`.
+            public var tools: Components.Schemas.NamespaceToolParam.ToolsPayload
+            /// Creates a new `NamespaceToolParam`.
+            ///
+            /// - Parameters:
+            ///   - _type: The type of the tool. Always `namespace`.
+            ///   - name: The namespace name used in tool calls (for example, `crm`).
+            ///   - description: A description of the namespace shown to the model.
+            ///   - tools: The function/custom tools available inside this namespace.
+            public init(
+                _type: Components.Schemas.NamespaceToolParam._TypePayload,
+                name: Swift.String,
+                description: Swift.String,
+                tools: Components.Schemas.NamespaceToolParam.ToolsPayload
+            ) {
+                self._type = _type
+                self.name = name
+                self.description = description
+                self.tools = tools
+            }
+            public enum CodingKeys: String, CodingKey {
+                case _type = "type"
+                case name
+                case description
+                case tools
+            }
+        }
+        /// Hosted or BYOT tool search configuration for deferred tools.
+        ///
+        /// - Remark: Generated from `#/components/schemas/ToolSearchToolParam`.
+        public struct ToolSearchToolParam: Codable, Hashable, Sendable {
+            /// The type of the tool. Always `tool_search`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ToolSearchToolParam/type`.
+            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case toolSearch = "tool_search"
+            }
+            /// The type of the tool. Always `tool_search`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ToolSearchToolParam/type`.
+            public var _type: Components.Schemas.ToolSearchToolParam._TypePayload
+            /// Whether tool search is executed by the server or by the client.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ToolSearchToolParam/execution`.
+            public var execution: Components.Schemas.ToolSearchExecutionType?
+            /// Creates a new `ToolSearchToolParam`.
+            ///
+            /// - Parameters:
+            ///   - _type: The type of the tool. Always `tool_search`.
+            ///   - execution: Whether tool search is executed by the server or by the client.
+            public init(
+                _type: Components.Schemas.ToolSearchToolParam._TypePayload,
+                execution: Components.Schemas.ToolSearchExecutionType? = nil
+            ) {
+                self._type = _type
+                self.execution = execution
+            }
+            public enum CodingKeys: String, CodingKey {
+                case _type = "type"
+                case execution
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ApproximateLocation`.
+        public struct ApproximateLocation: Codable, Hashable, Sendable {
+            /// The type of location approximation. Always `approximate`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ApproximateLocation/type`.
+            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case approximate = "approximate"
+            }
+            /// The type of location approximation. Always `approximate`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ApproximateLocation/type`.
+            public var _type: Components.Schemas.ApproximateLocation._TypePayload
+            /// Creates a new `ApproximateLocation`.
+            ///
+            /// - Parameters:
+            ///   - _type: The type of location approximation. Always `approximate`.
+            public init(_type: Components.Schemas.ApproximateLocation._TypePayload) {
+                self._type = _type
+            }
+            public enum CodingKeys: String, CodingKey {
+                case _type = "type"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SearchContextSize`.
+        @frozen public enum SearchContextSize: String, Codable, Hashable, Sendable, CaseIterable {
+            case low = "low"
+            case medium = "medium"
+            case high = "high"
+        }
+        /// - Remark: Generated from `#/components/schemas/SearchContentType`.
+        @frozen public enum SearchContentType: String, Codable, Hashable, Sendable, CaseIterable {
+            case text = "text"
+            case image = "image"
+        }
+        /// This tool searches the web for relevant results to use in a response. Learn more about the [web search tool](https://platform.openai.com/docs/guides/tools-web-search).
+        ///
+        /// - Remark: Generated from `#/components/schemas/WebSearchPreviewTool`.
+        public struct WebSearchPreviewTool: Codable, Hashable, Sendable {
+            /// The type of the web search tool. One of `web_search_preview` or `web_search_preview_2025_03_11`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WebSearchPreviewTool/type`.
+            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case webSearchPreview = "web_search_preview"
+                case webSearchPreview20250311 = "web_search_preview_2025_03_11"
+            }
+            /// The type of the web search tool. One of `web_search_preview` or `web_search_preview_2025_03_11`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WebSearchPreviewTool/type`.
+            public var _type: Components.Schemas.WebSearchPreviewTool._TypePayload
+            /// High level guidance for the amount of context window space to use for the search. One of `low`, `medium`, or `high`. `medium` is the default.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WebSearchPreviewTool/search_context_size`.
+            public var searchContextSize: Components.Schemas.SearchContextSize?
+            /// - Remark: Generated from `#/components/schemas/WebSearchPreviewTool/search_content_types`.
+            public var searchContentTypes: [Components.Schemas.SearchContentType]?
+            /// Creates a new `WebSearchPreviewTool`.
+            ///
+            /// - Parameters:
+            ///   - _type: The type of the web search tool. One of `web_search_preview` or `web_search_preview_2025_03_11`.
+            ///   - searchContextSize: High level guidance for the amount of context window space to use for the search. One of `low`, `medium`, or `high`. `medium` is the default.
+            ///   - searchContentTypes:
+            public init(
+                _type: Components.Schemas.WebSearchPreviewTool._TypePayload,
+                searchContextSize: Components.Schemas.SearchContextSize? = nil,
+                searchContentTypes: [Components.Schemas.SearchContentType]? = nil
+            ) {
+                self._type = _type
+                self.searchContextSize = searchContextSize
+                self.searchContentTypes = searchContentTypes
+            }
+            public enum CodingKeys: String, CodingKey {
+                case _type = "type"
+                case searchContextSize = "search_context_size"
+                case searchContentTypes = "search_content_types"
+            }
+        }
+        /// Allows the assistant to create, delete, or update files using unified diffs.
+        ///
+        /// - Remark: Generated from `#/components/schemas/ApplyPatchToolParam`.
+        public struct ApplyPatchToolParam: Codable, Hashable, Sendable {
+            /// The type of the tool. Always `apply_patch`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ApplyPatchToolParam/type`.
+            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case applyPatch = "apply_patch"
+            }
+            /// The type of the tool. Always `apply_patch`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ApplyPatchToolParam/type`.
+            public var _type: Components.Schemas.ApplyPatchToolParam._TypePayload
+            /// Creates a new `ApplyPatchToolParam`.
+            ///
+            /// - Parameters:
+            ///   - _type: The type of the tool. Always `apply_patch`.
+            public init(_type: Components.Schemas.ApplyPatchToolParam._TypePayload) {
+                self._type = _type
+            }
+            public enum CodingKeys: String, CodingKey {
+                case _type = "type"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/FunctionCallOutputStatusEnum`.
+        @frozen public enum FunctionCallOutputStatusEnum: String, Codable, Hashable, Sendable, CaseIterable {
+            case inProgress = "in_progress"
+            case completed = "completed"
+            case incomplete = "incomplete"
+        }
+        /// - Remark: Generated from `#/components/schemas/ToolSearchOutput`.
+        public struct ToolSearchOutput: Codable, Hashable, Sendable {
+            /// The type of the item. Always `tool_search_output`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ToolSearchOutput/type`.
+            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case toolSearchOutput = "tool_search_output"
+            }
+            /// The type of the item. Always `tool_search_output`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ToolSearchOutput/type`.
+            public var _type: Components.Schemas.ToolSearchOutput._TypePayload
+            /// The unique ID of the tool search output item.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ToolSearchOutput/id`.
+            public var id: Swift.String
+            /// Whether tool search was executed by the server or by the client.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ToolSearchOutput/execution`.
+            public var execution: Components.Schemas.ToolSearchExecutionType
+            /// The loaded tool definitions returned by tool search.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ToolSearchOutput/tools`.
+            public var tools: [Components.Schemas.Tool]
+            /// The status of the tool search output item that was recorded.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ToolSearchOutput/status`.
+            public var status: Components.Schemas.FunctionCallOutputStatusEnum
+            /// The identifier of the actor that created the item.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ToolSearchOutput/created_by`.
+            public var createdBy: Swift.String?
+            /// Creates a new `ToolSearchOutput`.
+            ///
+            /// - Parameters:
+            ///   - _type: The type of the item. Always `tool_search_output`.
+            ///   - id: The unique ID of the tool search output item.
+            ///   - execution: Whether tool search was executed by the server or by the client.
+            ///   - tools: The loaded tool definitions returned by tool search.
+            ///   - status: The status of the tool search output item that was recorded.
+            ///   - createdBy: The identifier of the actor that created the item.
+            public init(
+                _type: Components.Schemas.ToolSearchOutput._TypePayload,
+                id: Swift.String,
+                execution: Components.Schemas.ToolSearchExecutionType,
+                tools: [Components.Schemas.Tool],
+                status: Components.Schemas.FunctionCallOutputStatusEnum,
+                createdBy: Swift.String? = nil
+            ) {
+                self._type = _type
+                self.id = id
+                self.execution = execution
+                self.tools = tools
+                self.status = status
+                self.createdBy = createdBy
+            }
+            public enum CodingKeys: String, CodingKey {
+                case _type = "type"
+                case id
+                case execution
+                case tools
+                case status
+                case createdBy = "created_by"
             }
         }
         /// The logs output from the code interpreter.
@@ -12987,6 +14409,7 @@ public enum Components {
             case low = "low"
             case high = "high"
             case auto = "auto"
+            case original = "original"
         }
         /// - Remark: Generated from `#/components/schemas/FunctionCallItemStatus`.
         @frozen public enum FunctionCallItemStatus: String, Codable, Hashable, Sendable, CaseIterable {
@@ -13095,6 +14518,11 @@ public enum Components {
                 case _type = "type"
             }
         }
+        /// - Remark: Generated from `#/components/schemas/FileDetailEnum`.
+        @frozen public enum FileDetailEnum: String, Codable, Hashable, Sendable, CaseIterable {
+            case high = "high"
+            case low = "low"
+        }
         /// A file input to the model.
         ///
         /// - Remark: Generated from `#/components/schemas/InputFileContentParam`.
@@ -13109,15 +14537,25 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/InputFileContentParam/type`.
             public var _type: Components.Schemas.InputFileContentParam._TypePayload
+            /// The detail level of the file to be sent to the model. One of `high` or `low`. Defaults to `high`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/InputFileContentParam/detail`.
+            public var detail: Components.Schemas.FileDetailEnum?
             /// Creates a new `InputFileContentParam`.
             ///
             /// - Parameters:
             ///   - _type: The type of the input item. Always `input_file`.
-            public init(_type: Components.Schemas.InputFileContentParam._TypePayload) {
+            ///   - detail: The detail level of the file to be sent to the model. One of `high` or `low`. Defaults to `high`.
+            public init(
+                _type: Components.Schemas.InputFileContentParam._TypePayload,
+                detail: Components.Schemas.FileDetailEnum? = nil
+            ) {
                 self._type = _type
+                self.detail = detail
             }
             public enum CodingKeys: String, CodingKey {
                 case _type = "type"
+                case detail
             }
         }
         /// The output of a function tool call.
@@ -13253,6 +14691,88 @@ public enum Components {
                 case output
             }
         }
+        /// - Remark: Generated from `#/components/schemas/ToolSearchCallItemParam`.
+        public struct ToolSearchCallItemParam: Codable, Hashable, Sendable {
+            /// The item type. Always `tool_search_call`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ToolSearchCallItemParam/type`.
+            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case toolSearchCall = "tool_search_call"
+            }
+            /// The item type. Always `tool_search_call`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ToolSearchCallItemParam/type`.
+            public var _type: Components.Schemas.ToolSearchCallItemParam._TypePayload
+            /// Whether tool search was executed by the server or by the client.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ToolSearchCallItemParam/execution`.
+            public var execution: Components.Schemas.ToolSearchExecutionType?
+            /// The arguments supplied to the tool search call.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ToolSearchCallItemParam/arguments`.
+            public var arguments: Components.Schemas.EmptyModelParam
+            /// Creates a new `ToolSearchCallItemParam`.
+            ///
+            /// - Parameters:
+            ///   - _type: The item type. Always `tool_search_call`.
+            ///   - execution: Whether tool search was executed by the server or by the client.
+            ///   - arguments: The arguments supplied to the tool search call.
+            public init(
+                _type: Components.Schemas.ToolSearchCallItemParam._TypePayload,
+                execution: Components.Schemas.ToolSearchExecutionType? = nil,
+                arguments: Components.Schemas.EmptyModelParam
+            ) {
+                self._type = _type
+                self.execution = execution
+                self.arguments = arguments
+            }
+            public enum CodingKeys: String, CodingKey {
+                case _type = "type"
+                case execution
+                case arguments
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ToolSearchOutputItemParam`.
+        public struct ToolSearchOutputItemParam: Codable, Hashable, Sendable {
+            /// The item type. Always `tool_search_output`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ToolSearchOutputItemParam/type`.
+            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case toolSearchOutput = "tool_search_output"
+            }
+            /// The item type. Always `tool_search_output`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ToolSearchOutputItemParam/type`.
+            public var _type: Components.Schemas.ToolSearchOutputItemParam._TypePayload
+            /// Whether tool search was executed by the server or by the client.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ToolSearchOutputItemParam/execution`.
+            public var execution: Components.Schemas.ToolSearchExecutionType?
+            /// The loaded tool definitions returned by the tool search output.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ToolSearchOutputItemParam/tools`.
+            public var tools: [Components.Schemas.Tool]
+            /// Creates a new `ToolSearchOutputItemParam`.
+            ///
+            /// - Parameters:
+            ///   - _type: The item type. Always `tool_search_output`.
+            ///   - execution: Whether tool search was executed by the server or by the client.
+            ///   - tools: The loaded tool definitions returned by the tool search output.
+            public init(
+                _type: Components.Schemas.ToolSearchOutputItemParam._TypePayload,
+                execution: Components.Schemas.ToolSearchExecutionType? = nil,
+                tools: [Components.Schemas.Tool]
+            ) {
+                self._type = _type
+                self.execution = execution
+                self.tools = tools
+            }
+            public enum CodingKeys: String, CodingKey {
+                case _type = "type"
+                case execution
+                case tools
+            }
+        }
         /// A compaction item generated by the [`v1/responses/compact` API](/docs/api-reference/responses/compact).
         ///
         /// - Remark: Generated from `#/components/schemas/CompactionSummaryItemParam`.
@@ -13314,107 +14834,6 @@ public enum Components {
             case inProgress = "in_progress"
             case completed = "completed"
             case incomplete = "incomplete"
-        }
-        /// - Remark: Generated from `#/components/schemas/LocalSkillParam`.
-        public struct LocalSkillParam: Codable, Hashable, Sendable {
-            /// The name of the skill.
-            ///
-            /// - Remark: Generated from `#/components/schemas/LocalSkillParam/name`.
-            public var name: Swift.String
-            /// The description of the skill.
-            ///
-            /// - Remark: Generated from `#/components/schemas/LocalSkillParam/description`.
-            public var description: Swift.String
-            /// The path to the directory containing the skill.
-            ///
-            /// - Remark: Generated from `#/components/schemas/LocalSkillParam/path`.
-            public var path: Swift.String
-            /// Creates a new `LocalSkillParam`.
-            ///
-            /// - Parameters:
-            ///   - name: The name of the skill.
-            ///   - description: The description of the skill.
-            ///   - path: The path to the directory containing the skill.
-            public init(
-                name: Swift.String,
-                description: Swift.String,
-                path: Swift.String
-            ) {
-                self.name = name
-                self.description = description
-                self.path = path
-            }
-            public enum CodingKeys: String, CodingKey {
-                case name
-                case description
-                case path
-            }
-        }
-        /// - Remark: Generated from `#/components/schemas/LocalEnvironmentParam`.
-        public struct LocalEnvironmentParam: Codable, Hashable, Sendable {
-            /// Use a local computer environment.
-            ///
-            /// - Remark: Generated from `#/components/schemas/LocalEnvironmentParam/type`.
-            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case local = "local"
-            }
-            /// Use a local computer environment.
-            ///
-            /// - Remark: Generated from `#/components/schemas/LocalEnvironmentParam/type`.
-            public var _type: Components.Schemas.LocalEnvironmentParam._TypePayload
-            /// An optional list of skills.
-            ///
-            /// - Remark: Generated from `#/components/schemas/LocalEnvironmentParam/skills`.
-            public var skills: [Components.Schemas.LocalSkillParam]?
-            /// Creates a new `LocalEnvironmentParam`.
-            ///
-            /// - Parameters:
-            ///   - _type: Use a local computer environment.
-            ///   - skills: An optional list of skills.
-            public init(
-                _type: Components.Schemas.LocalEnvironmentParam._TypePayload,
-                skills: [Components.Schemas.LocalSkillParam]? = nil
-            ) {
-                self._type = _type
-                self.skills = skills
-            }
-            public enum CodingKeys: String, CodingKey {
-                case _type = "type"
-                case skills
-            }
-        }
-        /// - Remark: Generated from `#/components/schemas/ContainerReferenceParam`.
-        public struct ContainerReferenceParam: Codable, Hashable, Sendable {
-            /// References a container created with the /v1/containers endpoint
-            ///
-            /// - Remark: Generated from `#/components/schemas/ContainerReferenceParam/type`.
-            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case containerReference = "container_reference"
-            }
-            /// References a container created with the /v1/containers endpoint
-            ///
-            /// - Remark: Generated from `#/components/schemas/ContainerReferenceParam/type`.
-            public var _type: Components.Schemas.ContainerReferenceParam._TypePayload
-            /// The ID of the referenced container.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ContainerReferenceParam/container_id`.
-            public var containerId: Swift.String
-            /// Creates a new `ContainerReferenceParam`.
-            ///
-            /// - Parameters:
-            ///   - _type: References a container created with the /v1/containers endpoint
-            ///   - containerId: The ID of the referenced container.
-            public init(
-                _type: Components.Schemas.ContainerReferenceParam._TypePayload,
-                containerId: Swift.String
-            ) {
-                self._type = _type
-                self.containerId = containerId
-            }
-            public enum CodingKeys: String, CodingKey {
-                case _type = "type"
-                case containerId = "container_id"
-            }
         }
         /// A tool representing a request to execute one or more shell commands.
         ///
@@ -13929,821 +15348,6 @@ public enum Components {
             }
             public enum CodingKeys: String, CodingKey {
                 case id
-            }
-        }
-        /// Defines a function in your own code the model can choose to call. Learn more about [function calling](https://platform.openai.com/docs/guides/function-calling).
-        ///
-        /// - Remark: Generated from `#/components/schemas/FunctionTool`.
-        public struct FunctionTool: Codable, Hashable, Sendable {
-            /// The type of the function tool. Always `function`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/FunctionTool/type`.
-            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case function = "function"
-            }
-            /// The type of the function tool. Always `function`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/FunctionTool/type`.
-            public var _type: Components.Schemas.FunctionTool._TypePayload
-            /// The name of the function to call.
-            ///
-            /// - Remark: Generated from `#/components/schemas/FunctionTool/name`.
-            public var name: Swift.String
-            /// A description of the function. Used by the model to determine whether or not to call the function.
-            ///
-            /// - Remark: Added by swift-openai patch: missing generated field from FunctionTool schema.
-            public var description: Swift.String?
-            /// A JSON schema object describing the parameters of the function.
-            ///
-            /// - Remark: Added by swift-openai patch: missing generated field from FunctionTool schema.
-            public var parameters: OpenAPIRuntime.OpenAPIObjectContainer?
-            /// Whether to enforce strict parameter validation. Default `true`.
-            ///
-            /// - Remark: Added by swift-openai patch: missing generated field from FunctionTool schema.
-            public var strict: Swift.Bool?
-            /// Creates a new `FunctionTool`.
-            ///
-            /// - Parameters:
-            ///   - _type: The type of the function tool. Always `function`.
-            ///   - name: The name of the function to call.
-            ///   - description: A description of the function.
-            ///   - parameters: A JSON schema object describing the parameters of the function.
-            ///   - strict: Whether to enforce strict parameter validation.
-            public init(
-                _type: Components.Schemas.FunctionTool._TypePayload,
-                name: Swift.String,
-                description: Swift.String? = nil,
-                parameters: OpenAPIRuntime.OpenAPIObjectContainer? = nil,
-                strict: Swift.Bool? = nil
-            ) {
-                self._type = _type
-                self.name = name
-                self.description = description
-                self.parameters = parameters
-                self.strict = strict
-            }
-            public enum CodingKeys: String, CodingKey {
-                case _type = "type"
-                case name
-                case description
-                case parameters
-                case strict
-            }
-        }
-        /// - Remark: Generated from `#/components/schemas/RankerVersionType`.
-        @frozen public enum RankerVersionType: String, Codable, Hashable, Sendable, CaseIterable {
-            case auto = "auto"
-            case default20241115 = "default-2024-11-15"
-        }
-        /// - Remark: Generated from `#/components/schemas/HybridSearchOptions`.
-        public struct HybridSearchOptions: Codable, Hashable, Sendable {
-            /// The weight of the embedding in the reciprocal ranking fusion.
-            ///
-            /// - Remark: Generated from `#/components/schemas/HybridSearchOptions/embedding_weight`.
-            public var embeddingWeight: Swift.Double
-            /// The weight of the text in the reciprocal ranking fusion.
-            ///
-            /// - Remark: Generated from `#/components/schemas/HybridSearchOptions/text_weight`.
-            public var textWeight: Swift.Double
-            /// Creates a new `HybridSearchOptions`.
-            ///
-            /// - Parameters:
-            ///   - embeddingWeight: The weight of the embedding in the reciprocal ranking fusion.
-            ///   - textWeight: The weight of the text in the reciprocal ranking fusion.
-            public init(
-                embeddingWeight: Swift.Double,
-                textWeight: Swift.Double
-            ) {
-                self.embeddingWeight = embeddingWeight
-                self.textWeight = textWeight
-            }
-            public enum CodingKeys: String, CodingKey {
-                case embeddingWeight = "embedding_weight"
-                case textWeight = "text_weight"
-            }
-        }
-        /// - Remark: Generated from `#/components/schemas/RankingOptions`.
-        public struct RankingOptions: Codable, Hashable, Sendable {
-            /// The ranker to use for the file search.
-            ///
-            /// - Remark: Generated from `#/components/schemas/RankingOptions/ranker`.
-            public var ranker: Components.Schemas.RankerVersionType?
-            /// The score threshold for the file search, a number between 0 and 1. Numbers closer to 1 will attempt to return only the most relevant results, but may return fewer results.
-            ///
-            /// - Remark: Generated from `#/components/schemas/RankingOptions/score_threshold`.
-            public var scoreThreshold: Swift.Double?
-            /// Weights that control how reciprocal rank fusion balances semantic embedding matches versus sparse keyword matches when hybrid search is enabled.
-            ///
-            /// - Remark: Generated from `#/components/schemas/RankingOptions/hybrid_search`.
-            public var hybridSearch: Components.Schemas.HybridSearchOptions?
-            /// Creates a new `RankingOptions`.
-            ///
-            /// - Parameters:
-            ///   - ranker: The ranker to use for the file search.
-            ///   - scoreThreshold: The score threshold for the file search, a number between 0 and 1. Numbers closer to 1 will attempt to return only the most relevant results, but may return fewer results.
-            ///   - hybridSearch: Weights that control how reciprocal rank fusion balances semantic embedding matches versus sparse keyword matches when hybrid search is enabled.
-            public init(
-                ranker: Components.Schemas.RankerVersionType? = nil,
-                scoreThreshold: Swift.Double? = nil,
-                hybridSearch: Components.Schemas.HybridSearchOptions? = nil
-            ) {
-                self.ranker = ranker
-                self.scoreThreshold = scoreThreshold
-                self.hybridSearch = hybridSearch
-            }
-            public enum CodingKeys: String, CodingKey {
-                case ranker
-                case scoreThreshold = "score_threshold"
-                case hybridSearch = "hybrid_search"
-            }
-        }
-        /// - Remark: Generated from `#/components/schemas/Filters`.
-        public struct Filters: Codable, Hashable, Sendable {
-            /// - Remark: Generated from `#/components/schemas/Filters/value1`.
-            public var value1: Components.Schemas.ComparisonFilter?
-            /// - Remark: Generated from `#/components/schemas/Filters/value2`.
-            public var value2: Components.Schemas.CompoundFilter?
-            /// Creates a new `Filters`.
-            ///
-            /// - Parameters:
-            ///   - value1:
-            ///   - value2:
-            public init(
-                value1: Components.Schemas.ComparisonFilter? = nil,
-                value2: Components.Schemas.CompoundFilter? = nil
-            ) {
-                self.value1 = value1
-                self.value2 = value2
-            }
-            public init(from decoder: any Decoder) throws {
-                var errors: [any Error] = []
-                do {
-                    self.value1 = try .init(from: decoder)
-                } catch {
-                    errors.append(error)
-                }
-                do {
-                    self.value2 = try .init(from: decoder)
-                } catch {
-                    errors.append(error)
-                }
-                try Swift.DecodingError.verifyAtLeastOneSchemaIsNotNil(
-                    [
-                        self.value1,
-                        self.value2
-                    ],
-                    type: Self.self,
-                    codingPath: decoder.codingPath,
-                    errors: errors
-                )
-            }
-            public func encode(to encoder: any Encoder) throws {
-                try self.value1?.encode(to: encoder)
-                try self.value2?.encode(to: encoder)
-            }
-        }
-        /// A tool that searches for relevant content from uploaded files. Learn more about the [file search tool](https://platform.openai.com/docs/guides/tools-file-search).
-        ///
-        /// - Remark: Generated from `#/components/schemas/FileSearchTool`.
-        public struct FileSearchTool: Codable, Hashable, Sendable {
-            /// The type of the file search tool. Always `file_search`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/FileSearchTool/type`.
-            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case fileSearch = "file_search"
-            }
-            /// The type of the file search tool. Always `file_search`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/FileSearchTool/type`.
-            public var _type: Components.Schemas.FileSearchTool._TypePayload
-            /// The IDs of the vector stores to search.
-            ///
-            /// - Remark: Generated from `#/components/schemas/FileSearchTool/vector_store_ids`.
-            public var vectorStoreIds: [Swift.String]
-            /// The maximum number of results to return. This number should be between 1 and 50 inclusive.
-            ///
-            /// - Remark: Generated from `#/components/schemas/FileSearchTool/max_num_results`.
-            public var maxNumResults: Swift.Int?
-            /// Ranking options for search.
-            ///
-            /// - Remark: Generated from `#/components/schemas/FileSearchTool/ranking_options`.
-            public var rankingOptions: Components.Schemas.RankingOptions?
-            /// Creates a new `FileSearchTool`.
-            ///
-            /// - Parameters:
-            ///   - _type: The type of the file search tool. Always `file_search`.
-            ///   - vectorStoreIds: The IDs of the vector stores to search.
-            ///   - maxNumResults: The maximum number of results to return. This number should be between 1 and 50 inclusive.
-            ///   - rankingOptions: Ranking options for search.
-            public init(
-                _type: Components.Schemas.FileSearchTool._TypePayload,
-                vectorStoreIds: [Swift.String],
-                maxNumResults: Swift.Int? = nil,
-                rankingOptions: Components.Schemas.RankingOptions? = nil
-            ) {
-                self._type = _type
-                self.vectorStoreIds = vectorStoreIds
-                self.maxNumResults = maxNumResults
-                self.rankingOptions = rankingOptions
-            }
-            public enum CodingKeys: String, CodingKey {
-                case _type = "type"
-                case vectorStoreIds = "vector_store_ids"
-                case maxNumResults = "max_num_results"
-                case rankingOptions = "ranking_options"
-            }
-        }
-        /// - Remark: Generated from `#/components/schemas/ComputerEnvironment`.
-        @frozen public enum ComputerEnvironment: String, Codable, Hashable, Sendable, CaseIterable {
-            case windows = "windows"
-            case mac = "mac"
-            case linux = "linux"
-            case ubuntu = "ubuntu"
-            case browser = "browser"
-        }
-        /// A tool that controls a virtual computer. Learn more about the [computer tool](https://platform.openai.com/docs/guides/tools-computer-use).
-        ///
-        /// - Remark: Generated from `#/components/schemas/ComputerUsePreviewTool`.
-        public struct ComputerUsePreviewTool: Codable, Hashable, Sendable {
-            /// The type of the computer use tool. Always `computer_use_preview`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ComputerUsePreviewTool/type`.
-            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case computerUsePreview = "computer_use_preview"
-            }
-            /// The type of the computer use tool. Always `computer_use_preview`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ComputerUsePreviewTool/type`.
-            public var _type: Components.Schemas.ComputerUsePreviewTool._TypePayload
-            /// The type of computer environment to control.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ComputerUsePreviewTool/environment`.
-            public var environment: Components.Schemas.ComputerEnvironment
-            /// The width of the computer display.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ComputerUsePreviewTool/display_width`.
-            public var displayWidth: Swift.Int
-            /// The height of the computer display.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ComputerUsePreviewTool/display_height`.
-            public var displayHeight: Swift.Int
-            /// Creates a new `ComputerUsePreviewTool`.
-            ///
-            /// - Parameters:
-            ///   - _type: The type of the computer use tool. Always `computer_use_preview`.
-            ///   - environment: The type of computer environment to control.
-            ///   - displayWidth: The width of the computer display.
-            ///   - displayHeight: The height of the computer display.
-            public init(
-                _type: Components.Schemas.ComputerUsePreviewTool._TypePayload,
-                environment: Components.Schemas.ComputerEnvironment,
-                displayWidth: Swift.Int,
-                displayHeight: Swift.Int
-            ) {
-                self._type = _type
-                self.environment = environment
-                self.displayWidth = displayWidth
-                self.displayHeight = displayHeight
-            }
-            public enum CodingKeys: String, CodingKey {
-                case _type = "type"
-                case environment
-                case displayWidth = "display_width"
-                case displayHeight = "display_height"
-            }
-        }
-        /// - Remark: Generated from `#/components/schemas/ContainerMemoryLimit`.
-        @frozen public enum ContainerMemoryLimit: String, Codable, Hashable, Sendable, CaseIterable {
-            case _1g = "1g"
-            case _4g = "4g"
-            case _16g = "16g"
-            case _64g = "64g"
-        }
-        /// Configuration for a code interpreter container. Optionally specify the IDs of the files to run the code on.
-        ///
-        /// - Remark: Generated from `#/components/schemas/AutoCodeInterpreterToolParam`.
-        public struct AutoCodeInterpreterToolParam: Codable, Hashable, Sendable {
-            /// Always `auto`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/AutoCodeInterpreterToolParam/type`.
-            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case auto = "auto"
-            }
-            /// Always `auto`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/AutoCodeInterpreterToolParam/type`.
-            public var _type: Components.Schemas.AutoCodeInterpreterToolParam._TypePayload
-            /// An optional list of uploaded files to make available to your code.
-            ///
-            /// - Remark: Generated from `#/components/schemas/AutoCodeInterpreterToolParam/file_ids`.
-            public var fileIds: [Swift.String]?
-            /// Network access policy for the container.
-            ///
-            /// - Remark: Generated from `#/components/schemas/AutoCodeInterpreterToolParam/network_policy`.
-            @frozen public enum NetworkPolicyPayload: Codable, Hashable, Sendable {
-                /// - Remark: Generated from `#/components/schemas/AutoCodeInterpreterToolParam/network_policy/ContainerNetworkPolicyDisabledParam`.
-                case containerNetworkPolicyDisabledParam(Components.Schemas.ContainerNetworkPolicyDisabledParam)
-                /// - Remark: Generated from `#/components/schemas/AutoCodeInterpreterToolParam/network_policy/ContainerNetworkPolicyAllowlistParam`.
-                case containerNetworkPolicyAllowlistParam(Components.Schemas.ContainerNetworkPolicyAllowlistParam)
-                public enum CodingKeys: String, CodingKey {
-                    case _type = "type"
-                }
-                public init(from decoder: any Decoder) throws {
-                    let container = try decoder.container(keyedBy: CodingKeys.self)
-                    let discriminator = try container.decode(
-                        Swift.String.self,
-                        forKey: ._type
-                    )
-                    switch discriminator {
-                    case "ContainerNetworkPolicyDisabledParam", "#/components/schemas/ContainerNetworkPolicyDisabledParam":
-                        self = .containerNetworkPolicyDisabledParam(try .init(from: decoder))
-                    case "ContainerNetworkPolicyAllowlistParam", "#/components/schemas/ContainerNetworkPolicyAllowlistParam":
-                        self = .containerNetworkPolicyAllowlistParam(try .init(from: decoder))
-                    default:
-                        throw Swift.DecodingError.unknownOneOfDiscriminator(
-                            discriminatorKey: CodingKeys._type,
-                            discriminatorValue: discriminator,
-                            codingPath: decoder.codingPath
-                        )
-                    }
-                }
-                public func encode(to encoder: any Encoder) throws {
-                    switch self {
-                    case let .containerNetworkPolicyDisabledParam(value):
-                        try value.encode(to: encoder)
-                    case let .containerNetworkPolicyAllowlistParam(value):
-                        try value.encode(to: encoder)
-                    }
-                }
-            }
-            /// Network access policy for the container.
-            ///
-            /// - Remark: Generated from `#/components/schemas/AutoCodeInterpreterToolParam/network_policy`.
-            public var networkPolicy: Components.Schemas.AutoCodeInterpreterToolParam.NetworkPolicyPayload?
-            /// Creates a new `AutoCodeInterpreterToolParam`.
-            ///
-            /// - Parameters:
-            ///   - _type: Always `auto`.
-            ///   - fileIds: An optional list of uploaded files to make available to your code.
-            ///   - networkPolicy: Network access policy for the container.
-            public init(
-                _type: Components.Schemas.AutoCodeInterpreterToolParam._TypePayload,
-                fileIds: [Swift.String]? = nil,
-                networkPolicy: Components.Schemas.AutoCodeInterpreterToolParam.NetworkPolicyPayload? = nil
-            ) {
-                self._type = _type
-                self.fileIds = fileIds
-                self.networkPolicy = networkPolicy
-            }
-            public enum CodingKeys: String, CodingKey {
-                case _type = "type"
-                case fileIds = "file_ids"
-                case networkPolicy = "network_policy"
-            }
-        }
-        /// Control how much effort the model will exert to match the style and features, especially facial features, of input images. This parameter is only supported for `gpt-image-1` and `gpt-image-1.5` and later models, unsupported for `gpt-image-1-mini`. Supports `high` and `low`. Defaults to `low`.
-        ///
-        /// - Remark: Generated from `#/components/schemas/InputFidelity`.
-        @frozen public enum InputFidelity: String, Codable, Hashable, Sendable, CaseIterable {
-            case high = "high"
-            case low = "low"
-        }
-        /// - Remark: Generated from `#/components/schemas/ImageGenActionEnum`.
-        @frozen public enum ImageGenActionEnum: String, Codable, Hashable, Sendable, CaseIterable {
-            case generate = "generate"
-            case edit = "edit"
-            case auto = "auto"
-        }
-        /// A tool that allows the model to execute shell commands in a local environment.
-        ///
-        /// - Remark: Generated from `#/components/schemas/LocalShellToolParam`.
-        public struct LocalShellToolParam: Codable, Hashable, Sendable {
-            /// The type of the local shell tool. Always `local_shell`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/LocalShellToolParam/type`.
-            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case localShell = "local_shell"
-            }
-            /// The type of the local shell tool. Always `local_shell`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/LocalShellToolParam/type`.
-            public var _type: Components.Schemas.LocalShellToolParam._TypePayload
-            /// Creates a new `LocalShellToolParam`.
-            ///
-            /// - Parameters:
-            ///   - _type: The type of the local shell tool. Always `local_shell`.
-            public init(_type: Components.Schemas.LocalShellToolParam._TypePayload) {
-                self._type = _type
-            }
-            public enum CodingKeys: String, CodingKey {
-                case _type = "type"
-            }
-        }
-        /// - Remark: Generated from `#/components/schemas/ContainerAutoParam`.
-        public struct ContainerAutoParam: Codable, Hashable, Sendable {
-            /// Automatically creates a container for this request
-            ///
-            /// - Remark: Generated from `#/components/schemas/ContainerAutoParam/type`.
-            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case containerAuto = "container_auto"
-            }
-            /// Automatically creates a container for this request
-            ///
-            /// - Remark: Generated from `#/components/schemas/ContainerAutoParam/type`.
-            public var _type: Components.Schemas.ContainerAutoParam._TypePayload
-            /// An optional list of uploaded files to make available to your code.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ContainerAutoParam/file_ids`.
-            public var fileIds: [Swift.String]?
-            /// Network access policy for the container.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ContainerAutoParam/network_policy`.
-            @frozen public enum NetworkPolicyPayload: Codable, Hashable, Sendable {
-                /// - Remark: Generated from `#/components/schemas/ContainerAutoParam/network_policy/ContainerNetworkPolicyDisabledParam`.
-                case containerNetworkPolicyDisabledParam(Components.Schemas.ContainerNetworkPolicyDisabledParam)
-                /// - Remark: Generated from `#/components/schemas/ContainerAutoParam/network_policy/ContainerNetworkPolicyAllowlistParam`.
-                case containerNetworkPolicyAllowlistParam(Components.Schemas.ContainerNetworkPolicyAllowlistParam)
-                public enum CodingKeys: String, CodingKey {
-                    case _type = "type"
-                }
-                public init(from decoder: any Decoder) throws {
-                    let container = try decoder.container(keyedBy: CodingKeys.self)
-                    let discriminator = try container.decode(
-                        Swift.String.self,
-                        forKey: ._type
-                    )
-                    switch discriminator {
-                    case "ContainerNetworkPolicyDisabledParam", "#/components/schemas/ContainerNetworkPolicyDisabledParam":
-                        self = .containerNetworkPolicyDisabledParam(try .init(from: decoder))
-                    case "ContainerNetworkPolicyAllowlistParam", "#/components/schemas/ContainerNetworkPolicyAllowlistParam":
-                        self = .containerNetworkPolicyAllowlistParam(try .init(from: decoder))
-                    default:
-                        throw Swift.DecodingError.unknownOneOfDiscriminator(
-                            discriminatorKey: CodingKeys._type,
-                            discriminatorValue: discriminator,
-                            codingPath: decoder.codingPath
-                        )
-                    }
-                }
-                public func encode(to encoder: any Encoder) throws {
-                    switch self {
-                    case let .containerNetworkPolicyDisabledParam(value):
-                        try value.encode(to: encoder)
-                    case let .containerNetworkPolicyAllowlistParam(value):
-                        try value.encode(to: encoder)
-                    }
-                }
-            }
-            /// Network access policy for the container.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ContainerAutoParam/network_policy`.
-            public var networkPolicy: Components.Schemas.ContainerAutoParam.NetworkPolicyPayload?
-            /// - Remark: Generated from `#/components/schemas/ContainerAutoParam/SkillsPayload`.
-            @frozen public enum SkillsPayloadPayload: Codable, Hashable, Sendable {
-                /// - Remark: Generated from `#/components/schemas/ContainerAutoParam/SkillsPayload/SkillReferenceParam`.
-                case skillReferenceParam(Components.Schemas.SkillReferenceParam)
-                /// - Remark: Generated from `#/components/schemas/ContainerAutoParam/SkillsPayload/InlineSkillParam`.
-                case inlineSkillParam(Components.Schemas.InlineSkillParam)
-                public enum CodingKeys: String, CodingKey {
-                    case _type = "type"
-                }
-                public init(from decoder: any Decoder) throws {
-                    let container = try decoder.container(keyedBy: CodingKeys.self)
-                    let discriminator = try container.decode(
-                        Swift.String.self,
-                        forKey: ._type
-                    )
-                    switch discriminator {
-                    case "SkillReferenceParam", "#/components/schemas/SkillReferenceParam":
-                        self = .skillReferenceParam(try .init(from: decoder))
-                    case "InlineSkillParam", "#/components/schemas/InlineSkillParam":
-                        self = .inlineSkillParam(try .init(from: decoder))
-                    default:
-                        throw Swift.DecodingError.unknownOneOfDiscriminator(
-                            discriminatorKey: CodingKeys._type,
-                            discriminatorValue: discriminator,
-                            codingPath: decoder.codingPath
-                        )
-                    }
-                }
-                public func encode(to encoder: any Encoder) throws {
-                    switch self {
-                    case let .skillReferenceParam(value):
-                        try value.encode(to: encoder)
-                    case let .inlineSkillParam(value):
-                        try value.encode(to: encoder)
-                    }
-                }
-            }
-            /// An optional list of skills referenced by id or inline data.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ContainerAutoParam/skills`.
-            public typealias SkillsPayload = [Components.Schemas.ContainerAutoParam.SkillsPayloadPayload]
-            /// An optional list of skills referenced by id or inline data.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ContainerAutoParam/skills`.
-            public var skills: Components.Schemas.ContainerAutoParam.SkillsPayload?
-            /// Creates a new `ContainerAutoParam`.
-            ///
-            /// - Parameters:
-            ///   - _type: Automatically creates a container for this request
-            ///   - fileIds: An optional list of uploaded files to make available to your code.
-            ///   - networkPolicy: Network access policy for the container.
-            ///   - skills: An optional list of skills referenced by id or inline data.
-            public init(
-                _type: Components.Schemas.ContainerAutoParam._TypePayload,
-                fileIds: [Swift.String]? = nil,
-                networkPolicy: Components.Schemas.ContainerAutoParam.NetworkPolicyPayload? = nil,
-                skills: Components.Schemas.ContainerAutoParam.SkillsPayload? = nil
-            ) {
-                self._type = _type
-                self.fileIds = fileIds
-                self.networkPolicy = networkPolicy
-                self.skills = skills
-            }
-            public enum CodingKeys: String, CodingKey {
-                case _type = "type"
-                case fileIds = "file_ids"
-                case networkPolicy = "network_policy"
-                case skills
-            }
-        }
-        /// A tool that allows the model to execute shell commands.
-        ///
-        /// - Remark: Generated from `#/components/schemas/FunctionShellToolParam`.
-        public struct FunctionShellToolParam: Codable, Hashable, Sendable {
-            /// The type of the shell tool. Always `shell`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/FunctionShellToolParam/type`.
-            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case shell = "shell"
-            }
-            /// The type of the shell tool. Always `shell`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/FunctionShellToolParam/type`.
-            public var _type: Components.Schemas.FunctionShellToolParam._TypePayload
-            /// Creates a new `FunctionShellToolParam`.
-            ///
-            /// - Parameters:
-            ///   - _type: The type of the shell tool. Always `shell`.
-            public init(_type: Components.Schemas.FunctionShellToolParam._TypePayload) {
-                self._type = _type
-            }
-            public enum CodingKeys: String, CodingKey {
-                case _type = "type"
-            }
-        }
-        /// Unconstrained free-form text.
-        ///
-        /// - Remark: Generated from `#/components/schemas/CustomTextFormatParam`.
-        public struct CustomTextFormatParam: Codable, Hashable, Sendable {
-            /// Unconstrained text format. Always `text`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/CustomTextFormatParam/type`.
-            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case text = "text"
-            }
-            /// Unconstrained text format. Always `text`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/CustomTextFormatParam/type`.
-            public var _type: Components.Schemas.CustomTextFormatParam._TypePayload
-            /// Creates a new `CustomTextFormatParam`.
-            ///
-            /// - Parameters:
-            ///   - _type: Unconstrained text format. Always `text`.
-            public init(_type: Components.Schemas.CustomTextFormatParam._TypePayload) {
-                self._type = _type
-            }
-            public enum CodingKeys: String, CodingKey {
-                case _type = "type"
-            }
-        }
-        /// - Remark: Generated from `#/components/schemas/GrammarSyntax1`.
-        @frozen public enum GrammarSyntax1: String, Codable, Hashable, Sendable, CaseIterable {
-            case lark = "lark"
-            case regex = "regex"
-        }
-        /// A grammar defined by the user.
-        ///
-        /// - Remark: Generated from `#/components/schemas/CustomGrammarFormatParam`.
-        public struct CustomGrammarFormatParam: Codable, Hashable, Sendable {
-            /// Grammar format. Always `grammar`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/CustomGrammarFormatParam/type`.
-            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case grammar = "grammar"
-            }
-            /// Grammar format. Always `grammar`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/CustomGrammarFormatParam/type`.
-            public var _type: Components.Schemas.CustomGrammarFormatParam._TypePayload
-            /// The syntax of the grammar definition. One of `lark` or `regex`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/CustomGrammarFormatParam/syntax`.
-            public var syntax: Components.Schemas.GrammarSyntax1
-            /// The grammar definition.
-            ///
-            /// - Remark: Generated from `#/components/schemas/CustomGrammarFormatParam/definition`.
-            public var definition: Swift.String
-            /// Creates a new `CustomGrammarFormatParam`.
-            ///
-            /// - Parameters:
-            ///   - _type: Grammar format. Always `grammar`.
-            ///   - syntax: The syntax of the grammar definition. One of `lark` or `regex`.
-            ///   - definition: The grammar definition.
-            public init(
-                _type: Components.Schemas.CustomGrammarFormatParam._TypePayload,
-                syntax: Components.Schemas.GrammarSyntax1,
-                definition: Swift.String
-            ) {
-                self._type = _type
-                self.syntax = syntax
-                self.definition = definition
-            }
-            public enum CodingKeys: String, CodingKey {
-                case _type = "type"
-                case syntax
-                case definition
-            }
-        }
-        /// A custom tool that processes input using a specified format. Learn more about   [custom tools](/docs/guides/function-calling#custom-tools)
-        ///
-        /// - Remark: Generated from `#/components/schemas/CustomToolParam`.
-        public struct CustomToolParam: Codable, Hashable, Sendable {
-            /// The type of the custom tool. Always `custom`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/CustomToolParam/type`.
-            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case custom = "custom"
-            }
-            /// The type of the custom tool. Always `custom`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/CustomToolParam/type`.
-            public var _type: Components.Schemas.CustomToolParam._TypePayload
-            /// The name of the custom tool, used to identify it in tool calls.
-            ///
-            /// - Remark: Generated from `#/components/schemas/CustomToolParam/name`.
-            public var name: Swift.String
-            /// Optional description of the custom tool, used to provide more context.
-            ///
-            /// - Remark: Generated from `#/components/schemas/CustomToolParam/description`.
-            public var description: Swift.String?
-            /// The input format for the custom tool. Default is unconstrained text.
-            ///
-            /// - Remark: Generated from `#/components/schemas/CustomToolParam/format`.
-            @frozen public enum FormatPayload: Codable, Hashable, Sendable {
-                /// - Remark: Generated from `#/components/schemas/CustomToolParam/format/CustomTextFormatParam`.
-                case customTextFormatParam(Components.Schemas.CustomTextFormatParam)
-                /// - Remark: Generated from `#/components/schemas/CustomToolParam/format/CustomGrammarFormatParam`.
-                case customGrammarFormatParam(Components.Schemas.CustomGrammarFormatParam)
-                public enum CodingKeys: String, CodingKey {
-                    case _type = "type"
-                }
-                public init(from decoder: any Decoder) throws {
-                    let container = try decoder.container(keyedBy: CodingKeys.self)
-                    let discriminator = try container.decode(
-                        Swift.String.self,
-                        forKey: ._type
-                    )
-                    switch discriminator {
-                    case "CustomTextFormatParam", "#/components/schemas/CustomTextFormatParam":
-                        self = .customTextFormatParam(try .init(from: decoder))
-                    case "CustomGrammarFormatParam", "#/components/schemas/CustomGrammarFormatParam":
-                        self = .customGrammarFormatParam(try .init(from: decoder))
-                    default:
-                        throw Swift.DecodingError.unknownOneOfDiscriminator(
-                            discriminatorKey: CodingKeys._type,
-                            discriminatorValue: discriminator,
-                            codingPath: decoder.codingPath
-                        )
-                    }
-                }
-                public func encode(to encoder: any Encoder) throws {
-                    switch self {
-                    case let .customTextFormatParam(value):
-                        try value.encode(to: encoder)
-                    case let .customGrammarFormatParam(value):
-                        try value.encode(to: encoder)
-                    }
-                }
-            }
-            /// The input format for the custom tool. Default is unconstrained text.
-            ///
-            /// - Remark: Generated from `#/components/schemas/CustomToolParam/format`.
-            public var format: Components.Schemas.CustomToolParam.FormatPayload?
-            /// Creates a new `CustomToolParam`.
-            ///
-            /// - Parameters:
-            ///   - _type: The type of the custom tool. Always `custom`.
-            ///   - name: The name of the custom tool, used to identify it in tool calls.
-            ///   - description: Optional description of the custom tool, used to provide more context.
-            ///   - format: The input format for the custom tool. Default is unconstrained text.
-            public init(
-                _type: Components.Schemas.CustomToolParam._TypePayload,
-                name: Swift.String,
-                description: Swift.String? = nil,
-                format: Components.Schemas.CustomToolParam.FormatPayload? = nil
-            ) {
-                self._type = _type
-                self.name = name
-                self.description = description
-                self.format = format
-            }
-            public enum CodingKeys: String, CodingKey {
-                case _type = "type"
-                case name
-                case description
-                case format
-            }
-        }
-        /// - Remark: Generated from `#/components/schemas/ApproximateLocation`.
-        public struct ApproximateLocation: Codable, Hashable, Sendable {
-            /// The type of location approximation. Always `approximate`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ApproximateLocation/type`.
-            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case approximate = "approximate"
-            }
-            /// The type of location approximation. Always `approximate`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ApproximateLocation/type`.
-            public var _type: Components.Schemas.ApproximateLocation._TypePayload
-            /// Creates a new `ApproximateLocation`.
-            ///
-            /// - Parameters:
-            ///   - _type: The type of location approximation. Always `approximate`.
-            public init(_type: Components.Schemas.ApproximateLocation._TypePayload) {
-                self._type = _type
-            }
-            public enum CodingKeys: String, CodingKey {
-                case _type = "type"
-            }
-        }
-        /// - Remark: Generated from `#/components/schemas/SearchContextSize`.
-        @frozen public enum SearchContextSize: String, Codable, Hashable, Sendable, CaseIterable {
-            case low = "low"
-            case medium = "medium"
-            case high = "high"
-        }
-        /// This tool searches the web for relevant results to use in a response. Learn more about the [web search tool](https://platform.openai.com/docs/guides/tools-web-search).
-        ///
-        /// - Remark: Generated from `#/components/schemas/WebSearchPreviewTool`.
-        public struct WebSearchPreviewTool: Codable, Hashable, Sendable {
-            /// The type of the web search tool. One of `web_search_preview` or `web_search_preview_2025_03_11`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/WebSearchPreviewTool/type`.
-            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case webSearchPreview = "web_search_preview"
-                case webSearchPreview20250311 = "web_search_preview_2025_03_11"
-            }
-            /// The type of the web search tool. One of `web_search_preview` or `web_search_preview_2025_03_11`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/WebSearchPreviewTool/type`.
-            public var _type: Components.Schemas.WebSearchPreviewTool._TypePayload
-            /// High level guidance for the amount of context window space to use for the search. One of `low`, `medium`, or `high`. `medium` is the default.
-            ///
-            /// - Remark: Generated from `#/components/schemas/WebSearchPreviewTool/search_context_size`.
-            public var searchContextSize: Components.Schemas.SearchContextSize?
-            /// Creates a new `WebSearchPreviewTool`.
-            ///
-            /// - Parameters:
-            ///   - _type: The type of the web search tool. One of `web_search_preview` or `web_search_preview_2025_03_11`.
-            ///   - searchContextSize: High level guidance for the amount of context window space to use for the search. One of `low`, `medium`, or `high`. `medium` is the default.
-            public init(
-                _type: Components.Schemas.WebSearchPreviewTool._TypePayload,
-                searchContextSize: Components.Schemas.SearchContextSize? = nil
-            ) {
-                self._type = _type
-                self.searchContextSize = searchContextSize
-            }
-            public enum CodingKeys: String, CodingKey {
-                case _type = "type"
-                case searchContextSize = "search_context_size"
-            }
-        }
-        /// Allows the assistant to create, delete, or update files using unified diffs.
-        ///
-        /// - Remark: Generated from `#/components/schemas/ApplyPatchToolParam`.
-        public struct ApplyPatchToolParam: Codable, Hashable, Sendable {
-            /// The type of the tool. Always `apply_patch`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ApplyPatchToolParam/type`.
-            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case applyPatch = "apply_patch"
-            }
-            /// The type of the tool. Always `apply_patch`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ApplyPatchToolParam/type`.
-            public var _type: Components.Schemas.ApplyPatchToolParam._TypePayload
-            /// Creates a new `ApplyPatchToolParam`.
-            ///
-            /// - Parameters:
-            ///   - _type: The type of the tool. Always `apply_patch`.
-            public init(_type: Components.Schemas.ApplyPatchToolParam._TypePayload) {
-                self._type = _type
-            }
-            public enum CodingKeys: String, CodingKey {
-                case _type = "type"
             }
         }
         /// The output token details for the image generation.

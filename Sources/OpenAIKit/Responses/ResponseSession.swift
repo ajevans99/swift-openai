@@ -255,10 +255,10 @@ public actor ResponseSession {
           }
 
         case .computerToolCall, .fileSearchToolCall, .reasoning, .webSearchToolCall,
-          .compactionBody, .imageGenToolCall, .codeInterpreterToolCall, .localShellToolCall,
-          .functionShellCall, .functionShellCallOutput, .applyPatchToolCall,
-          .applyPatchToolCallOutput, .mcpToolCall, .mcpListTools, .mcpApprovalRequest,
-          .customToolCall:
+          .toolSearchCall, .toolSearchOutput, .compactionBody, .imageGenToolCall,
+          .codeInterpreterToolCall, .localShellToolCall, .functionShellCall,
+          .functionShellCallOutput, .applyPatchToolCall, .applyPatchToolCallOutput,
+          .mcpToolCall, .mcpListTools, .mcpApprovalRequest, .customToolCall:
           break
         }
       }
@@ -474,10 +474,11 @@ public actor ResponseSession {
 
 @available(macOS 15.0, *)
 private struct AnyPluginRuntime: Sendable {
-  let consume: @Sendable (
-    _ event: StreamingResponse,
-    _ context: inout StreamPluginContext
-  ) async throws -> Void
+  let consume:
+    @Sendable (
+      _ event: StreamingResponse,
+      _ context: inout StreamPluginContext
+    ) async throws -> Void
   let finishPlugin: @Sendable (_ context: inout StreamPluginContext) async throws -> Void
   let finishStream: @Sendable (_ error: Error?) -> Void
 }

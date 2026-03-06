@@ -5,6 +5,8 @@ public enum OutputItem: Sendable {
   case webSearchToolCall(Components.Schemas.WebSearchToolCall)
   case computerToolCall(Components.Schemas.ComputerToolCall)
   case reasoning(Components.Schemas.ReasoningItem)
+  case toolSearchCall(Components.Schemas.ToolSearchCall)
+  case toolSearchOutput(Components.Schemas.ToolSearchOutput)
   case compactionBody(Components.Schemas.CompactionBody)
   case imageGenToolCall(Components.Schemas.ImageGenToolCall)
   case codeInterpreterToolCall(Components.Schemas.CodeInterpreterToolCall)
@@ -31,29 +33,33 @@ public enum OutputItem: Sendable {
       self = .computerToolCall(computerToolCall)
     } else if let reasoning = openAPI.value6 {
       self = .reasoning(reasoning)
-    } else if let compactionBody = openAPI.value7 {
+    } else if let toolSearchCall = openAPI.value7 {
+      self = .toolSearchCall(toolSearchCall)
+    } else if let toolSearchOutput = openAPI.value8 {
+      self = .toolSearchOutput(toolSearchOutput)
+    } else if let compactionBody = openAPI.value9 {
       self = .compactionBody(compactionBody)
-    } else if let imageGenToolCall = openAPI.value8 {
+    } else if let imageGenToolCall = openAPI.value10 {
       self = .imageGenToolCall(imageGenToolCall)
-    } else if let codeInterpreterToolCall = openAPI.value9 {
+    } else if let codeInterpreterToolCall = openAPI.value11 {
       self = .codeInterpreterToolCall(codeInterpreterToolCall)
-    } else if let localShellToolCall = openAPI.value10 {
+    } else if let localShellToolCall = openAPI.value12 {
       self = .localShellToolCall(localShellToolCall)
-    } else if let functionShellCall = openAPI.value11 {
+    } else if let functionShellCall = openAPI.value13 {
       self = .functionShellCall(functionShellCall)
-    } else if let functionShellCallOutput = openAPI.value12 {
+    } else if let functionShellCallOutput = openAPI.value14 {
       self = .functionShellCallOutput(functionShellCallOutput)
-    } else if let applyPatchToolCall = openAPI.value13 {
+    } else if let applyPatchToolCall = openAPI.value15 {
       self = .applyPatchToolCall(applyPatchToolCall)
-    } else if let applyPatchToolCallOutput = openAPI.value14 {
+    } else if let applyPatchToolCallOutput = openAPI.value16 {
       self = .applyPatchToolCallOutput(applyPatchToolCallOutput)
-    } else if let mcpToolCall = openAPI.value15 {
+    } else if let mcpToolCall = openAPI.value17 {
       self = .mcpToolCall(mcpToolCall)
-    } else if let mcpListTools = openAPI.value16 {
+    } else if let mcpListTools = openAPI.value18 {
       self = .mcpListTools(mcpListTools)
-    } else if let mcpApprovalRequest = openAPI.value17 {
+    } else if let mcpApprovalRequest = openAPI.value19 {
       self = .mcpApprovalRequest(mcpApprovalRequest)
-    } else if let customToolCall = openAPI.value18 {
+    } else if let customToolCall = openAPI.value20 {
       self = .customToolCall(customToolCall)
     } else {
       print("Failed to parse OutputItem: \(openAPI)")
