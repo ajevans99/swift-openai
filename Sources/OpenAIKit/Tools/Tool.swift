@@ -75,12 +75,7 @@ extension Toolable {
       fatalError("Boolean schemas are not supported at root level for tools")
     }
 
-    var parameters = rawParameters
-    // OpenAI tool validation now expects object schemas to include an explicit
-    // `properties` key, even when a tool takes zero arguments.
-    if parameters["type"] == .string("object"), parameters["properties"] == nil {
-      parameters["properties"] = .object([:])
-    }
+    let parameters = Self.normalizeToolSchemaObject(rawParameters, strict: strict)
 
     return FunctionTool(
       name: name,
@@ -94,5 +89,93 @@ extension Toolable {
 
   public func toTool() -> OpenAICore.Tool {
     .function(toFunctionTool())
+  }
+
+  private static func normalizeToolSchemaObject(
+    _ schemaObject: [KeywordIdentifier: JSONValue],
+    strict: Bool
+  ) -> [KeywordIdentifier: JSONValue] {
+    var normalized = schemaObject.mapValues {
+      normalizeToolSchemaValue($0, strict: strict)
+    }
+
+    normalized = collapseNullableCompositions(in: normalized)
+
+    if normalized["type"] == .string("object"), normalized["properties"] == nil {
+      normalized["properties"] = .object([:])
+    }
+
+    if strict, normalized["type"] == .string("object"), normalized["additionalProperties"] == nil {
+      normalized["additionalProperties"] = .boolean(false)
+    }
+
+    if strict,
+      normalized["type"] == .string("object"),
+      let properties = normalized["properties"]?.object
+    {
+      let requiredKeys =
+        (normalized["required"]?.array?.compactMap(\.string) ?? []) + properties.keys
+      let deduplicated = Array(Set(requiredKeys)).sorted().map(JSONValue.string)
+      normalized["required"] = .array(deduplicated)
+    }
+
+    return normalized
+  }
+
+  private static func normalizeToolSchemaValue(
+    _ value: JSONValue,
+    strict: Bool
+  ) -> JSONValue {
+    switch value {
+    case .object(let object):
+      return .object(normalizeToolSchemaObject(object, strict: strict))
+    case .array(let array):
+      return .array(array.map { normalizeToolSchemaValue($0, strict: strict) })
+    default:
+      return value
+    }
+  }
+
+  private static func collapseNullableCompositions(
+    in schemaObject: [KeywordIdentifier: JSONValue]
+  ) -> [KeywordIdentifier: JSONValue] {
+    for keyword in ["oneOf", "anyOf"] {
+      guard let composition = schemaObject[keyword]?.array else { continue }
+
+      let nonNullBranches = composition.filter { !isNullSchema($0) }
+      guard nonNullBranches.count == 1, case .object(let branchObject) = nonNullBranches[0] else {
+        continue
+      }
+
+      var collapsed = schemaObject
+      collapsed.removeValue(forKey: keyword)
+      var nullableBranch = branchObject
+      nullableBranch["type"] = appendNullType(to: branchObject["type"])
+      collapsed.merge(nullableBranch) { current, _ in current }
+      return collapsed
+    }
+
+    return schemaObject
+  }
+
+  private static func isNullSchema(_ value: JSONValue) -> Bool {
+    guard case .object(let object) = value else { return false }
+    return object["type"] == .string("null")
+  }
+
+  private static func appendNullType(to value: JSONValue?) -> JSONValue? {
+    guard let value else { return nil }
+
+    switch value {
+    case .string(let string):
+      return .array([.string(string), .string("null")])
+    case .array(let values):
+      if values.contains(.string("null")) {
+        return .array(values)
+      }
+      return .array(values + [.string("null")])
+    default:
+      return value
+    }
   }
 }
