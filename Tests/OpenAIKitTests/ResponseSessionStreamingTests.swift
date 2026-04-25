@@ -537,6 +537,39 @@ struct ResponseSessionStreamingTests {
       ]
     )
   }
+
+  @Test("ResponseSession stream forwards reasoning options")
+  func responseSessionStreamForwardsReasoningOptions() async throws {
+    guard #available(macOS 15.0, *) else { return }
+    let transport = StreamQueueTransport(
+      payloads: [
+        Self.ssePayload([
+          Self.completedEvent(responseID: "resp_123", sequenceNumber: 0)
+        ])
+      ]
+    )
+    let session = try Self.makeSession(transport: transport)
+
+    let rawStream = try await session.streamRaw(
+      items: [
+        .inputMessage(
+          InputMessage(role: .user, content: [.text(.init(text: "Hello"))])
+        )
+      ],
+      requestOptions: .init(reasoning: Reasoning(effort: .medium, summary: .auto))
+    )
+
+    _ = try await Self.collectRawValues(rawStream)
+
+    let requestBodies = await transport.requestBodies()
+    #expect(requestBodies.count == 1)
+    let json = requestBodies[0]
+      .replacingOccurrences(of: " ", with: "")
+      .replacingOccurrences(of: "\n", with: "")
+    #expect(json.contains(#""reasoning""#))
+    #expect(json.contains(#""effort":"medium""#))
+    #expect(json.contains(#""summary":"auto""#))
+  }
 }
 
 extension ResponseSessionStreamingTests {
