@@ -8,13 +8,13 @@ public struct Reasoning: Sendable {
   }
 
   public init(openAPI: Components.Schemas.Reasoning) {
-    self.effort = openAPI.effort.map { ReasoningEffort(openAPI: $0.rawValue) }
+    self.effort = openAPI.effort.map(ReasoningEffort.init(openAPI:))
     self.summary = openAPI.summary.map { ReasoningSummary(openAPI: $0.rawValue) }
   }
 
   public func toOpenAPI() -> Components.Schemas.Reasoning {
     Components.Schemas.Reasoning(
-      effort: effort.map { Components.Schemas.ReasoningEffort(rawValue: $0.rawValue)! },
+      effort: effort?.toOpenAPI(),
       summary: summary?.rawValue
     )
   }
@@ -31,11 +31,48 @@ public enum ReasoningSummary: String, Codable, Sendable {
 }
 
 public enum ReasoningEffort: String, Codable, Sendable {
+  case none
+  case minimal
   case low
   case medium
   case high
+  case xhigh
+
+  public init(openAPI value: Components.Schemas.ReasoningEffort) {
+    switch value {
+    case .none:
+      self = .none
+    case .minimal:
+      self = .minimal
+    case .low:
+      self = .low
+    case .medium:
+      self = .medium
+    case .high:
+      self = .high
+    case .xhigh:
+      self = .xhigh
+    }
+  }
 
   public init(openAPI value: String) {
     self = ReasoningEffort(rawValue: value) ?? .medium
+  }
+
+  public func toOpenAPI() -> Components.Schemas.ReasoningEffort {
+    switch self {
+    case .none:
+      return .none
+    case .minimal:
+      return .minimal
+    case .low:
+      return .low
+    case .medium:
+      return .medium
+    case .high:
+      return .high
+    case .xhigh:
+      return .xhigh
+    }
   }
 }

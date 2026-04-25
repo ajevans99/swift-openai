@@ -65,9 +65,30 @@ struct ResponseSnapshotTests {
     #expect(json.contains("\"reasoning\""))
     #expect(json.contains("\"effort\":\"high\""))
     #expect(json.contains("\"summary\":\"detailed\""))
-    #expect(json.contains("\"max_output_tokens\":512") || json.contains("\"maxOutputTokens\":512"))
+    #expect(json.contains("\"max_output_tokens\":512"))
+    #expect(!json.contains("\"maxOutputTokens\":512"))
     #expect(json.contains("\"instructions\":\"Use the project instructions.\""))
     #expect(json.contains("\"stream\":true"))
+  }
+
+  @Test("ReasoningEffort maps all OpenAI wire values")
+  func reasoningEffortMapsAllOpenAIValues() {
+    let cases: [(ReasoningEffort, Components.Schemas.ReasoningEffort)] = [
+      (.none, .none),
+      (.minimal, .minimal),
+      (.low, .low),
+      (.medium, .medium),
+      (.high, .high),
+      (.xhigh, .xhigh),
+    ]
+
+    for (effort, openAPI) in cases {
+      #expect(effort.toOpenAPI() == openAPI)
+      #expect(ReasoningEffort(openAPI: openAPI) == effort)
+      #expect(ReasoningEffort(openAPI: effort.rawValue) == effort)
+    }
+
+    #expect(ReasoningEffort(openAPI: "unknown") == .medium)
   }
 
   @Test("Replay local fixtures decode successfully")

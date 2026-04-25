@@ -126,7 +126,18 @@ def replace_once(name: str, old: str, new: str) -> None:
         print(f"• {name} (no changes)")
 
 
-replace_once(
+def replace_required_once(name: str, old: str, new: str) -> None:
+    global text
+    if old in text:
+        text = text.replace(old, new, 1)
+        print(f"✓ {name}")
+    elif new in text:
+        print(f"• {name} (already applied)")
+    else:
+        raise RuntimeError(f"{name}: required generated patch target not found")
+
+
+replace_required_once(
     "restore Reasoning request fields",
     """public struct Reasoning: Codable, Hashable, Sendable {
             /// Creates a new `Reasoning`.
@@ -181,7 +192,7 @@ replace_once(
         }""",
 )
 
-replace_once(
+replace_required_once(
     "restore ResponseProperties request fields",
     """public struct ResponseProperties: Codable, Hashable, Sendable {
             /// Model ID used to generate the response, like `gpt-4o` or `o3`. OpenAI
@@ -294,7 +305,7 @@ replace_once(
         }""",
 )
 
-replace_once(
+replace_required_once(
     "restore CreateResponse value3 request fields",
     """public struct Value3Payload: Codable, Hashable, Sendable {
                 /// - Remark: Generated from `#/components/schemas/CreateResponse/value3/input`.
