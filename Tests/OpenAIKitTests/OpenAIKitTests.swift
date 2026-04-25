@@ -42,6 +42,34 @@ struct ResponseSnapshotTests {
     Self.envFlag("OPENAI_RECORD_SNAPSHOTS")
   }
 
+  @Test("CreateResponse serializes reasoning settings")
+  func createResponseSerializesReasoningSettings() throws {
+    let request = CreateResponse(
+      responseProperties: ResponseProperties(
+        model: .standard(.gpt5_4),
+        reasoning: Reasoning(effort: .high, summary: .detailed),
+        maxOutputTokens: 512,
+        instructions: "Use the project instructions.",
+        truncation: .auto
+      ),
+      inputPayload: CreateResponseInputPayload(
+        input: .text("Hello"),
+        store: true,
+        stream: true
+      )
+    )
+
+    let data = try JSONEncoder().encode(request.toOpenAPI())
+    let json = String(decoding: data, as: UTF8.self)
+
+    #expect(json.contains("\"reasoning\""))
+    #expect(json.contains("\"effort\":\"high\""))
+    #expect(json.contains("\"summary\":\"detailed\""))
+    #expect(json.contains("\"max_output_tokens\":512") || json.contains("\"maxOutputTokens\":512"))
+    #expect(json.contains("\"instructions\":\"Use the project instructions.\""))
+    #expect(json.contains("\"stream\":true"))
+  }
+
   @Test("Replay local fixtures decode successfully")
   func replaySnapshots() throws {
     for testCase in Self.snapshotCases {

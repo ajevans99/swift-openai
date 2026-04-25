@@ -1595,31 +1595,54 @@ public enum Components {
             public struct Value3Payload: Codable, Hashable, Sendable {
                 /// - Remark: Generated from `#/components/schemas/CreateResponse/value3/input`.
                 public var input: Components.Schemas.InputParam?
-            /// - Remark: Added by swift-openai patch: missing previous response linkage in generated schema.
-            public var previousResponseId: Swift.String?
-            /// - Remark: Added by swift-openai patch: missing stream flag in generated schema.
-            public var stream: Swift.Bool?
-            /// Creates a new `Value3Payload`.
-            ///
-            /// - Parameters:
-            ///   - input:
-            ///   - previousResponseId:
-            ///   - stream:
-            public init(
-                input: Components.Schemas.InputParam? = nil,
-                previousResponseId: Swift.String? = nil,
-                stream: Swift.Bool? = nil
-            ) {
-                self.input = input
-                self.previousResponseId = previousResponseId
-                self.stream = stream
+                /// Specify additional output data to include in the model response.
+                ///
+                /// - Remark: Restored by swift-openai patch from nullable anyOf schema.
+                public var include: [Components.Schemas.IncludeEnum]?
+                /// Whether to allow the model to run tool calls in parallel.
+                ///
+                /// - Remark: Restored by swift-openai patch from nullable anyOf schema.
+                public var parallelToolCalls: Swift.Bool?
+                /// Whether to store the generated model response for later retrieval.
+                ///
+                /// - Remark: Restored by swift-openai patch from nullable anyOf schema.
+                public var store: Swift.Bool?
+                /// A system or developer message inserted into the model context.
+                ///
+                /// - Remark: Restored by swift-openai patch from nullable anyOf schema.
+                public var instructions: Swift.String?
+                /// - Remark: Added by swift-openai patch: missing previous response linkage in generated schema.
+                public var previousResponseId: Swift.String?
+                /// - Remark: Added by swift-openai patch: missing stream flag in generated schema.
+                public var stream: Swift.Bool?
+                /// Creates a new `Value3Payload`.
+                public init(
+                    input: Components.Schemas.InputParam? = nil,
+                    include: [Components.Schemas.IncludeEnum]? = nil,
+                    parallelToolCalls: Swift.Bool? = nil,
+                    store: Swift.Bool? = nil,
+                    instructions: Swift.String? = nil,
+                    previousResponseId: Swift.String? = nil,
+                    stream: Swift.Bool? = nil
+                ) {
+                    self.input = input
+                    self.include = include
+                    self.parallelToolCalls = parallelToolCalls
+                    self.store = store
+                    self.instructions = instructions
+                    self.previousResponseId = previousResponseId
+                    self.stream = stream
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case input
+                    case include
+                    case parallelToolCalls = "parallel_tool_calls"
+                    case store
+                    case instructions
+                    case previousResponseId = "previous_response_id"
+                    case stream
+                }
             }
-            public enum CodingKeys: String, CodingKey {
-                case input
-                case previousResponseId = "previous_response_id"
-                case stream
-            }
-        }
             /// - Remark: Generated from `#/components/schemas/CreateResponse/value3`.
             public var value3: Components.Schemas.CreateResponse.Value3Payload
             /// Creates a new `CreateResponse`.
@@ -5615,9 +5638,52 @@ public enum Components {
         ///
         ///
         /// - Remark: Generated from `#/components/schemas/Reasoning`.
+        public enum ReasoningEffort: String, Codable, Hashable, Sendable, CaseIterable {
+            case none = "none"
+            case minimal = "minimal"
+            case low = "low"
+            case medium = "medium"
+            case high = "high"
+            case xhigh = "xhigh"
+        }
         public struct Reasoning: Codable, Hashable, Sendable {
+            @frozen public enum SummaryPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case auto = "auto"
+                case concise = "concise"
+                case detailed = "detailed"
+            }
+            /// Constrains effort on reasoning for reasoning models.
+            ///
+            /// - Remark: Restored by swift-openai patch from nullable anyOf schema.
+            public var effort: Components.Schemas.ReasoningEffort?
+            /// A summary of the reasoning performed by the model.
+            ///
+            /// - Remark: Restored by swift-openai patch from nullable anyOf schema.
+            public var summary: Components.Schemas.Reasoning.SummaryPayload?
+            /// Deprecated: use `summary` instead.
+            ///
+            /// - Remark: Restored by swift-openai patch from nullable anyOf schema.
+            public var generateSummary: Swift.String?
             /// Creates a new `Reasoning`.
-            public init() {}
+            ///
+            /// - Parameters:
+            ///   - effort: Constrains effort on reasoning for reasoning models.
+            ///   - summary: A summary of the reasoning performed by the model.
+            ///   - generateSummary: Deprecated reasoning summary setting.
+            public init(
+                effort: Components.Schemas.ReasoningEffort? = nil,
+                summary: Swift.String? = nil,
+                generateSummary: Swift.String? = nil
+            ) {
+                self.effort = effort
+                self.summary = summary.flatMap(Components.Schemas.Reasoning.SummaryPayload.init(rawValue:))
+                self.generateSummary = generateSummary
+            }
+            public enum CodingKeys: String, CodingKey {
+                case effort
+                case summary
+                case generateSummary = "generate_summary"
+            }
         }
         /// A description of the chain of thought used by a reasoning model while generating
         /// a response. Be sure to include these items in your `input` to the Responses API
@@ -8190,43 +8256,72 @@ public enum Components {
         }
         /// - Remark: Generated from `#/components/schemas/ResponseProperties`.
         public struct ResponseProperties: Codable, Hashable, Sendable {
-            /// Model ID used to generate the response, like `gpt-4o` or `o3`. OpenAI
-            /// offers a wide range of models with different capabilities, performance
-            /// characteristics, and price points. Refer to the [model guide](/docs/models)
-            /// to browse and compare available models.
+            @frozen public enum TruncationPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case auto = "auto"
+                case disabled = "disabled"
+            }
+            /// The unique ID of the previous response to the model.
             ///
+            /// - Remark: Restored by swift-openai patch from nullable anyOf schema.
+            public var previousResponseId: Swift.String?
+            /// Model ID used to generate the response, like `gpt-4o` or `o3`.
             ///
             /// - Remark: Generated from `#/components/schemas/ResponseProperties/model`.
             public var model: Components.Schemas.ModelIdsResponses?
+            /// Reasoning configuration for the response.
+            ///
+            /// - Remark: Restored by swift-openai patch from nullable anyOf schema.
+            public var reasoning: Components.Schemas.Reasoning?
+            /// An upper bound for generated output tokens.
+            ///
+            /// - Remark: Restored by swift-openai patch from nullable anyOf schema.
+            public var maxOutputTokens: Swift.Int?
+            /// A system or developer message inserted into the model context.
+            ///
+            /// - Remark: Restored by swift-openai patch from CreateResponse schema.
+            public var instructions: Swift.String?
             /// - Remark: Generated from `#/components/schemas/ResponseProperties/text`.
             public var text: Components.Schemas.ResponseTextParam?
             /// - Remark: Generated from `#/components/schemas/ResponseProperties/tools`.
             public var tools: Components.Schemas.ToolsArray?
             /// - Remark: Generated from `#/components/schemas/ResponseProperties/tool_choice`.
             public var toolChoice: Components.Schemas.ToolChoiceParam?
-            /// Creates a new `ResponseProperties`.
+            /// The truncation strategy to use for the model response.
             ///
-            /// - Parameters:
-            ///   - model: Model ID used to generate the response, like `gpt-4o` or `o3`. OpenAI
-            ///   - text:
-            ///   - tools:
-            ///   - toolChoice:
+            /// - Remark: Restored by swift-openai patch from nullable anyOf schema.
+            public var truncation: Components.Schemas.ResponseProperties.TruncationPayload?
+            /// Creates a new `ResponseProperties`.
             public init(
+                previousResponseId: Swift.String? = nil,
                 model: Components.Schemas.ModelIdsResponses? = nil,
+                reasoning: Components.Schemas.Reasoning? = nil,
+                maxOutputTokens: Swift.Int? = nil,
+                instructions: Swift.String? = nil,
                 text: Components.Schemas.ResponseTextParam? = nil,
                 tools: Components.Schemas.ToolsArray? = nil,
-                toolChoice: Components.Schemas.ToolChoiceParam? = nil
+                toolChoice: Components.Schemas.ToolChoiceParam? = nil,
+                truncation: Components.Schemas.ResponseProperties.TruncationPayload? = nil
             ) {
+                self.previousResponseId = previousResponseId
                 self.model = model
+                self.reasoning = reasoning
+                self.maxOutputTokens = maxOutputTokens
+                self.instructions = instructions
                 self.text = text
                 self.tools = tools
                 self.toolChoice = toolChoice
+                self.truncation = truncation
             }
             public enum CodingKeys: String, CodingKey {
+                case previousResponseId = "previous_response_id"
                 case model
+                case reasoning
+                case maxOutputTokens = "max_output_tokens"
+                case instructions
                 case text
                 case tools
                 case toolChoice = "tool_choice"
+                case truncation
             }
         }
         /// Emitted when a response is queued and waiting to be processed.

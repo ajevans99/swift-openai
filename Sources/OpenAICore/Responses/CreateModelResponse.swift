@@ -102,10 +102,15 @@ public struct ResponseProperties: Sendable {
 
   public func toOpenAPI() -> Components.Schemas.ResponseProperties {
     .init(
+      previousResponseId: previousResponseId,
       model: model.toOpenAPI(),
+      reasoning: reasoning?.toOpenAPI(),
+      maxOutputTokens: maxOutputTokens,
+      instructions: instructions,
       text: text,
       tools: tools,
-      toolChoice: toolChoice
+      toolChoice: toolChoice,
+      truncation: truncation?.toOpenAPI()
     )
   }
 }
@@ -134,6 +139,9 @@ public struct CreateResponseInputPayload: Sendable {
   public func toOpenAPI() -> Components.Schemas.CreateResponse.Value3Payload {
     Components.Schemas.CreateResponse.Value3Payload(
       input: input.toOpenAPI(),
+      include: include?.map { $0.toOpenAPI() },
+      parallelToolCalls: parallelToolCalls,
+      store: store,
       stream: stream
     )
   }
@@ -152,6 +160,17 @@ public enum Includable: Sendable {
       return .message_inputImage_imageUrl
     case .computerCallOutputImage:
       return .computerCallOutput_output_imageUrl
+    }
+  }
+}
+
+public extension Truncation {
+  func toOpenAPI() -> Components.Schemas.ResponseProperties.TruncationPayload {
+    switch self {
+    case .auto:
+      return .auto
+    case .disabled:
+      return .disabled
     }
   }
 }
