@@ -31,6 +31,7 @@ public enum OutputItem: Sendable {
     } else if let computerToolCall = openAPI.value5 {
       self = .computerToolCall(computerToolCall)
     } else if openAPI.value6 != nil {
+      // Intentionally drop raw reasoning items; only provider-provided summaries may be surfaced.
       return nil
     } else if let toolSearchCall = openAPI.value7 {
       self = .toolSearchCall(toolSearchCall)

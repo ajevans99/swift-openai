@@ -55,6 +55,7 @@ let package = Package(
         "OpenAIKit",
         "OpenAICore",
         .product(name: "CustomDump", package: "swift-custom-dump"),
+        .product(name: "Logging", package: "swift-log"),
       ],
       resources: [
         .copy("Fixtures")

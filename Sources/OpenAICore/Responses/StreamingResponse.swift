@@ -673,8 +673,10 @@ public enum StreamingResponse: Sendable {
     } else if let event = openAPI.value28 {
       self = .reasoningSummaryText(ReasoningSummaryText(openAPI: event))
     } else if openAPI.value29 != nil {
+      // Intentionally drop raw reasoning_text deltas to avoid exposing hidden reasoning.
       return nil
     } else if openAPI.value30 != nil {
+      // Intentionally drop raw reasoning_text completions to avoid exposing hidden reasoning.
       return nil
     } else if let event = openAPI.value31 {
       self = .refusal(Refusal(openAPI: event))

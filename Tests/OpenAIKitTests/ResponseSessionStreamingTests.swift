@@ -3,6 +3,7 @@ import Foundation
 import HTTPTypes
 import JSONSchema
 import JSONSchemaBuilder
+import Logging
 import OpenAICore
 import OpenAIKit
 import OpenAPIRuntime
@@ -570,6 +571,44 @@ struct ResponseSessionStreamingTests {
     #expect(json.contains(#""effort":"medium""#))
     #expect(json.contains(#""summary":"auto""#))
   }
+
+  @Test("Raw reasoning SSE decode failures do not log hidden payload text")
+  func rawReasoningSSEDecodeFailuresDoNotLogHiddenPayloadText() async throws {
+    guard #available(macOS 15.0, *) else { return }
+
+    let hiddenDelta = "provider-hidden-reasoning-delta"
+    let hiddenDone = "provider-hidden-reasoning-done"
+    let logCapture = CapturingLogStorage()
+    var logger = Logger(label: "swift-openai-test") { _ in
+      CapturingLogHandler(storage: logCapture)
+    }
+    logger.logLevel = .debug
+
+    let transport = StreamQueueTransport(
+      payloads: [
+        Self.ssePayload([
+          Self.malformedReasoningTextDeltaEvent(delta: hiddenDelta, sequenceNumber: 0),
+          Self.malformedReasoningTextDoneEvent(text: hiddenDone, sequenceNumber: 1),
+          Self.reasoningSummaryTextDeltaEvent(delta: "safe summary", sequenceNumber: 2),
+          Self.completedEvent(responseID: "resp_reasoning_privacy", sequenceNumber: 3),
+        ])
+      ]
+    )
+    let client = try OpenAI(transport: transport, apiKey: "test-key", logger: logger)
+    let stream = try await client.streamCreateResponse(input: .text("Hello"), model: .custom("gpt-5.2"))
+
+    var values: [String] = []
+    for try await event in stream {
+      values.append(event.value)
+    }
+
+    let logs = logCapture.messages.joined(separator: "\n")
+    #expect(values.contains("response.reasoning_summary_text.delta"))
+    #expect(!values.contains("response.reasoning_text.delta"))
+    #expect(!values.contains("response.reasoning_text.done"))
+    #expect(!logs.contains(hiddenDelta))
+    #expect(!logs.contains(hiddenDone))
+  }
 }
 
 extension ResponseSessionStreamingTests {
@@ -719,6 +758,42 @@ extension ResponseSessionStreamingTests {
     ])
   }
 
+  private static func malformedReasoningTextDeltaEvent(
+    delta: String,
+    sequenceNumber: Int
+  ) -> String {
+    jsonString([
+      "type": "response.reasoning_text.delta",
+      "delta": delta,
+      "sequence_number": sequenceNumber,
+    ])
+  }
+
+  private static func malformedReasoningTextDoneEvent(
+    text: String,
+    sequenceNumber: Int
+  ) -> String {
+    jsonString([
+      "type": "response.reasoning_text.done",
+      "text": text,
+      "sequence_number": sequenceNumber,
+    ])
+  }
+
+  private static func reasoningSummaryTextDeltaEvent(
+    delta: String,
+    sequenceNumber: Int
+  ) -> String {
+    jsonString([
+      "type": "response.reasoning_summary_text.delta",
+      "item_id": "rs_privacy",
+      "output_index": 0,
+      "summary_index": 0,
+      "delta": delta,
+      "sequence_number": sequenceNumber,
+    ])
+  }
+
   private static func responseObject(id: String, status: String) -> [String: Any] {
     [
       "id": id,
@@ -799,6 +874,44 @@ private actor StreamQueueState {
 private enum StreamQueueStateError: Error {
   case missingQueuedResponse
   case unexpectedOperation(String)
+}
+
+private final class CapturingLogStorage: @unchecked Sendable {
+  private let lock = NSLock()
+  private var capturedMessages: [String] = []
+
+  var messages: [String] {
+    lock.withLock { capturedMessages }
+  }
+
+  func append(_ message: String) {
+    lock.withLock {
+      capturedMessages.append(message)
+    }
+  }
+}
+
+private struct CapturingLogHandler: LogHandler {
+  let storage: CapturingLogStorage
+  var metadata: Logger.Metadata = [:]
+  var logLevel: Logger.Level = .trace
+
+  subscript(metadataKey metadataKey: String) -> Logger.Metadata.Value? {
+    get { metadata[metadataKey] }
+    set { metadata[metadataKey] = newValue }
+  }
+
+  func log(
+    level: Logger.Level,
+    message: Logger.Message,
+    metadata: Logger.Metadata?,
+    source: String,
+    file: String,
+    function: String,
+    line: UInt
+  ) {
+    storage.append(message.description)
+  }
 }
 
 private struct WeatherEchoTool: Toolable {
