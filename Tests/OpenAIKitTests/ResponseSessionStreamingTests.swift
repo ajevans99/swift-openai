@@ -598,12 +598,17 @@ struct ResponseSessionStreamingTests {
     let stream = try await client.streamCreateResponse(input: .text("Hello"), model: .custom("gpt-5.2"))
 
     var values: [String] = []
+    var summaryDeltas: [String] = []
     for try await event in stream {
       values.append(event.value)
+      if case .reasoningSummaryText(.delta(let delta, _, _, _)) = event {
+        summaryDeltas.append(delta)
+      }
     }
 
     let logs = logCapture.messages.joined(separator: "\n")
     #expect(values.contains("response.reasoning_summary_text.delta"))
+    #expect(summaryDeltas.contains("safe summary"))
     #expect(!values.contains("response.reasoning_text.delta"))
     #expect(!values.contains("response.reasoning_text.done"))
     #expect(!logs.contains(hiddenDelta))
@@ -762,22 +767,14 @@ extension ResponseSessionStreamingTests {
     delta: String,
     sequenceNumber: Int
   ) -> String {
-    jsonString([
-      "type": "response.reasoning_text.delta",
-      "delta": delta,
-      "sequence_number": sequenceNumber,
-    ])
+    #"{"type":"response.reasoning_text.delta","delta":"\#(delta)","sequence_number":\#(sequenceNumber)"#
   }
 
   private static func malformedReasoningTextDoneEvent(
     text: String,
     sequenceNumber: Int
   ) -> String {
-    jsonString([
-      "type": "response.reasoning_text.done",
-      "text": text,
-      "sequence_number": sequenceNumber,
-    ])
+    #"{"type":"response.reasoning_text.done","text":"\#(text)","sequence_number":\#(sequenceNumber)"#
   }
 
   private static func reasoningSummaryTextDeltaEvent(
