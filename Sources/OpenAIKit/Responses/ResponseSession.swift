@@ -286,7 +286,7 @@ public actor ResponseSession {
             )
           }
 
-        case .computerToolCall, .fileSearchToolCall, .reasoning, .webSearchToolCall,
+        case .computerToolCall, .fileSearchToolCall, .webSearchToolCall,
           .toolSearchCall, .toolSearchOutput, .compactionBody, .imageGenToolCall,
           .codeInterpreterToolCall, .localShellToolCall, .functionShellCall,
           .functionShellCallOutput, .applyPatchToolCall, .applyPatchToolCallOutput,

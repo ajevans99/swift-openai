@@ -484,38 +484,6 @@ public enum StreamingResponse: Sendable {
     }
   }
 
-  public enum Reasoning: Sendable {
-    case delta(delta: String, itemId: String, outputIndex: Int, contentIndex: Int, sequenceNumber: Int)
-    case done(text: String, itemId: String, outputIndex: Int, contentIndex: Int, sequenceNumber: Int)
-
-    public var value: String {
-      switch self {
-      case .delta: "delta"
-      case .done: "done"
-      }
-    }
-
-    public init(openAPI: Components.Schemas.ResponseReasoningTextDeltaEvent) {
-      self = .delta(
-        delta: openAPI.delta,
-        itemId: openAPI.itemId,
-        outputIndex: openAPI.outputIndex,
-        contentIndex: openAPI.contentIndex,
-        sequenceNumber: openAPI.sequenceNumber
-      )
-    }
-
-    public init(openAPI: Components.Schemas.ResponseReasoningTextDoneEvent) {
-      self = .done(
-        text: openAPI.text,
-        itemId: openAPI.itemId,
-        outputIndex: openAPI.outputIndex,
-        contentIndex: openAPI.contentIndex,
-        sequenceNumber: openAPI.sequenceNumber
-      )
-    }
-  }
-
   public enum Queued: Sendable {
     case queued(response: Response, sequenceNumber: Int)
 
@@ -612,7 +580,6 @@ public enum StreamingResponse: Sendable {
   case imageGenCall(ImageGenCall)
   case mcpCall(MCPCall)
   case mcpListTools(MCPListTools)
-  case reasoning(Reasoning)
   case queued(Queued)
   case outputTextAnnotation(OutputTextAnnotation)
   case customToolCallInput(CustomToolCallInput)
@@ -640,7 +607,6 @@ public enum StreamingResponse: Sendable {
     case .imageGenCall(let call): "response.image_gen_call.\(call.value)"
     case .mcpCall(let call): "response.mcp_call.\(call.value)"
     case .mcpListTools(let tools): "response.mcp_list_tools.\(tools.value)"
-    case .reasoning(let reasoning): "response.reasoning.\(reasoning.value)"
     case .queued(let queued): "response.queued.\(queued.value)"
     case .outputTextAnnotation(let annotation): "response.output_text_annotation.\(annotation.value)"
     case .customToolCallInput(let custom): "response.custom_tool_call_input.\(custom.value)"
@@ -706,10 +672,10 @@ public enum StreamingResponse: Sendable {
       self = .reasoningSummaryText(ReasoningSummaryText(openAPI: event))
     } else if let event = openAPI.value28 {
       self = .reasoningSummaryText(ReasoningSummaryText(openAPI: event))
-    } else if let event = openAPI.value29 {
-      self = .reasoning(Reasoning(openAPI: event))
-    } else if let event = openAPI.value30 {
-      self = .reasoning(Reasoning(openAPI: event))
+    } else if openAPI.value29 != nil {
+      return nil
+    } else if openAPI.value30 != nil {
+      return nil
     } else if let event = openAPI.value31 {
       self = .refusal(Refusal(openAPI: event))
     } else if let event = openAPI.value32 {
