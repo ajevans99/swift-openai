@@ -46,6 +46,129 @@ apply_transform \
    s/case "RefusalContent", "#\/components\/schemas\/RefusalContent":/case "refusal", "RefusalContent", "#\/components\/schemas\/RefusalContent":/g;
    s/case "ReasoningTextContent", "#\/components\/schemas\/ReasoningTextContent":/case "reasoning_text", "ReasoningTextContent", "#\/components\/schemas\/ReasoningTextContent":/g;'
 
+# swift-openapi-generator also emits schema-name discriminators for input
+# content unions, while API payloads use `input_text`, `input_image`, and
+# `input_file`.
+apply_transform \
+  "accept wire input-content discriminator values" \
+  's/case "InputTextContent", "#\/components\/schemas\/InputTextContent":/case "input_text", "InputTextContent", "#\/components\/schemas\/InputTextContent":/g;
+   s/case "InputImageContent", "#\/components\/schemas\/InputImageContent":/case "input_image", "InputImageContent", "#\/components\/schemas\/InputImageContent":/g;
+   s/case "InputFileContent", "#\/components\/schemas\/InputFileContent":/case "input_file", "InputFileContent", "#\/components\/schemas\/InputFileContent":/g;
+   s/case "InputTextContentParam", "#\/components\/schemas\/InputTextContentParam":/case "input_text", "InputTextContentParam", "#\/components\/schemas\/InputTextContentParam":/g;
+   s/case "InputImageContentParamAutoParam", "#\/components\/schemas\/InputImageContentParamAutoParam":/case "input_image", "InputImageContentParamAutoParam", "#\/components\/schemas\/InputImageContentParamAutoParam":/g;
+   s/case "InputFileContentParam", "#\/components\/schemas\/InputFileContentParam":/case "input_file", "InputFileContentParam", "#\/components\/schemas\/InputFileContentParam":/g;'
+
+# The generator emits schema-name discriminator cases for OutputItem, but the
+# API returns wire values like `message`, `function_call`, and
+# `image_generation_call`.
+apply_transform \
+  "accept wire output-item discriminator values" \
+  's/case "OutputMessage", "#\/components\/schemas\/OutputMessage":/case "message", "OutputMessage", "#\/components\/schemas\/OutputMessage":/g;
+   s/case "FileSearchToolCall", "#\/components\/schemas\/FileSearchToolCall":/case "file_search_call", "FileSearchToolCall", "#\/components\/schemas\/FileSearchToolCall":/g;
+   s/case "FunctionToolCall", "#\/components\/schemas\/FunctionToolCall":/case "function_call", "FunctionToolCall", "#\/components\/schemas\/FunctionToolCall":/g;
+   s/case "FunctionToolCallOutputResource", "#\/components\/schemas\/FunctionToolCallOutputResource":/case "function_call_output", "FunctionToolCallOutputResource", "#\/components\/schemas\/FunctionToolCallOutputResource":/g;
+   s/case "WebSearchToolCall", "#\/components\/schemas\/WebSearchToolCall":/case "web_search_call", "WebSearchToolCall", "#\/components\/schemas\/WebSearchToolCall":/g;
+   s/case "ComputerToolCall", "#\/components\/schemas\/ComputerToolCall":/case "computer_call", "ComputerToolCall", "#\/components\/schemas\/ComputerToolCall":/g;
+   s/case "ComputerToolCallOutputResource", "#\/components\/schemas\/ComputerToolCallOutputResource":/case "computer_call_output", "ComputerToolCallOutputResource", "#\/components\/schemas\/ComputerToolCallOutputResource":/g;
+   s/case "ReasoningItem", "#\/components\/schemas\/ReasoningItem":/case "reasoning", "ReasoningItem", "#\/components\/schemas\/ReasoningItem":/g;
+   s/case "ToolSearchCall", "#\/components\/schemas\/ToolSearchCall":/case "tool_search_call", "ToolSearchCall", "#\/components\/schemas\/ToolSearchCall":/g;
+   s/case "ToolSearchOutput", "#\/components\/schemas\/ToolSearchOutput":/case "tool_search_output", "ToolSearchOutput", "#\/components\/schemas\/ToolSearchOutput":/g;
+   s/case "CompactionBody", "#\/components\/schemas\/CompactionBody":/case "compaction", "CompactionBody", "#\/components\/schemas\/CompactionBody":/g;
+   s/case "ImageGenToolCall", "#\/components\/schemas\/ImageGenToolCall":/case "image_generation_call", "ImageGenToolCall", "#\/components\/schemas\/ImageGenToolCall":/g;
+   s/case "CodeInterpreterToolCall", "#\/components\/schemas\/CodeInterpreterToolCall":/case "code_interpreter_call", "CodeInterpreterToolCall", "#\/components\/schemas\/CodeInterpreterToolCall":/g;
+   s/case "LocalShellToolCall", "#\/components\/schemas\/LocalShellToolCall":/case "local_shell_call", "LocalShellToolCall", "#\/components\/schemas\/LocalShellToolCall":/g;
+   s/case "LocalShellToolCallOutput", "#\/components\/schemas\/LocalShellToolCallOutput":/case "local_shell_call_output", "LocalShellToolCallOutput", "#\/components\/schemas\/LocalShellToolCallOutput":/g;
+   s/case "FunctionShellCall", "#\/components\/schemas\/FunctionShellCall":/case "shell_call", "FunctionShellCall", "#\/components\/schemas\/FunctionShellCall":/g;
+   s/case "FunctionShellCallOutput", "#\/components\/schemas\/FunctionShellCallOutput":/case "shell_call_output", "FunctionShellCallOutput", "#\/components\/schemas\/FunctionShellCallOutput":/g;
+   s/case "ApplyPatchToolCall", "#\/components\/schemas\/ApplyPatchToolCall":/case "apply_patch_call", "ApplyPatchToolCall", "#\/components\/schemas\/ApplyPatchToolCall":/g;
+   s/case "ApplyPatchToolCallOutput", "#\/components\/schemas\/ApplyPatchToolCallOutput":/case "apply_patch_call_output", "ApplyPatchToolCallOutput", "#\/components\/schemas\/ApplyPatchToolCallOutput":/g;
+   s/case "MCPToolCall", "#\/components\/schemas\/MCPToolCall":/case "mcp_call", "MCPToolCall", "#\/components\/schemas\/MCPToolCall":/g;
+   s/case "MCPListTools", "#\/components\/schemas\/MCPListTools":/case "mcp_list_tools", "MCPListTools", "#\/components\/schemas\/MCPListTools":/g;
+   s/case "MCPApprovalRequest", "#\/components\/schemas\/MCPApprovalRequest":/case "mcp_approval_request", "MCPApprovalRequest", "#\/components\/schemas\/MCPApprovalRequest":/g;
+   s/case "MCPApprovalResponseResource", "#\/components\/schemas\/MCPApprovalResponseResource":/case "mcp_approval_response", "MCPApprovalResponseResource", "#\/components\/schemas\/MCPApprovalResponseResource":/g;
+   s/case "CustomToolCall", "#\/components\/schemas\/CustomToolCall":/case "custom_tool_call", "CustomToolCall", "#\/components\/schemas\/CustomToolCall":/g;
+   s/case "CustomToolCallOutputResource", "#\/components\/schemas\/CustomToolCallOutputResource":/case "custom_tool_call_output", "CustomToolCallOutputResource", "#\/components\/schemas\/CustomToolCallOutputResource":/g;'
+
+# Item and ItemResource use the same API wire discriminator values as output
+# items, and message items need role-based fallback because input and output
+# messages both use `"type": "message"`.
+TYPES_FILE="$TYPES_FILE" python3 - <<'PY'
+import os
+from pathlib import Path
+
+path = Path(os.environ["TYPES_FILE"])
+text = path.read_text()
+
+
+def replace_once(name: str, old: str, new: str) -> None:
+    global text
+    if new in text:
+        print(f"• {name} (already applied)")
+        return
+    if old not in text:
+        raise SystemExit(f"Missing generated block for patch: {name}")
+    text = text.replace(old, new, 1)
+    print(f"✓ {name}")
+
+
+replace_once(
+    "disambiguate Item message discriminator",
+    '''                case "InputMessage", "#/components/schemas/InputMessage":
+                    self = .inputMessage(try .init(from: decoder))
+                case "message", "OutputMessage", "#/components/schemas/OutputMessage":
+                    self = .outputMessage(try .init(from: decoder))''',
+    '''                case "message":
+                    do {
+                        self = .inputMessage(try .init(from: decoder))
+                    } catch {
+                        self = .outputMessage(try .init(from: decoder))
+                    }
+                case "InputMessage", "#/components/schemas/InputMessage":
+                    self = .inputMessage(try .init(from: decoder))
+                case "OutputMessage", "#/components/schemas/OutputMessage":
+                    self = .outputMessage(try .init(from: decoder))''',
+)
+
+replace_once(
+    "disambiguate ItemResource message discriminator",
+    '''                case "InputMessageResource", "#/components/schemas/InputMessageResource":
+                    self = .inputMessageResource(try .init(from: decoder))
+                case "message", "OutputMessage", "#/components/schemas/OutputMessage":
+                    self = .outputMessage(try .init(from: decoder))''',
+    '''                case "message":
+                    do {
+                        self = .inputMessageResource(try .init(from: decoder))
+                    } catch {
+                        self = .outputMessage(try .init(from: decoder))
+                    }
+                case "InputMessageResource", "#/components/schemas/InputMessageResource":
+                    self = .inputMessageResource(try .init(from: decoder))
+                case "OutputMessage", "#/components/schemas/OutputMessage":
+                    self = .outputMessage(try .init(from: decoder))''',
+)
+
+aliases = [
+    ('case "ComputerCallOutputItemParam", "#/components/schemas/ComputerCallOutputItemParam":', 'case "computer_call_output", "ComputerCallOutputItemParam", "#/components/schemas/ComputerCallOutputItemParam":'),
+    ('case "FunctionCallOutputItemParam", "#/components/schemas/FunctionCallOutputItemParam":', 'case "function_call_output", "FunctionCallOutputItemParam", "#/components/schemas/FunctionCallOutputItemParam":'),
+    ('case "ToolSearchCallItemParam", "#/components/schemas/ToolSearchCallItemParam":', 'case "tool_search_call", "ToolSearchCallItemParam", "#/components/schemas/ToolSearchCallItemParam":'),
+    ('case "ToolSearchOutputItemParam", "#/components/schemas/ToolSearchOutputItemParam":', 'case "tool_search_output", "ToolSearchOutputItemParam", "#/components/schemas/ToolSearchOutputItemParam":'),
+    ('case "CompactionSummaryItemParam", "#/components/schemas/CompactionSummaryItemParam":', 'case "compaction", "CompactionSummaryItemParam", "#/components/schemas/CompactionSummaryItemParam":'),
+    ('case "FunctionShellCallItemParam", "#/components/schemas/FunctionShellCallItemParam":', 'case "shell_call", "FunctionShellCallItemParam", "#/components/schemas/FunctionShellCallItemParam":'),
+    ('case "FunctionShellCallOutputItemParam", "#/components/schemas/FunctionShellCallOutputItemParam":', 'case "shell_call_output", "FunctionShellCallOutputItemParam", "#/components/schemas/FunctionShellCallOutputItemParam":'),
+    ('case "ApplyPatchToolCallItemParam", "#/components/schemas/ApplyPatchToolCallItemParam":', 'case "apply_patch_call", "ApplyPatchToolCallItemParam", "#/components/schemas/ApplyPatchToolCallItemParam":'),
+    ('case "ApplyPatchToolCallOutputItemParam", "#/components/schemas/ApplyPatchToolCallOutputItemParam":', 'case "apply_patch_call_output", "ApplyPatchToolCallOutputItemParam", "#/components/schemas/ApplyPatchToolCallOutputItemParam":'),
+    ('case "MCPApprovalResponse", "#/components/schemas/MCPApprovalResponse":', 'case "mcp_approval_response", "MCPApprovalResponse", "#/components/schemas/MCPApprovalResponse":'),
+    ('case "CustomToolCallOutput", "#/components/schemas/CustomToolCallOutput":', 'case "custom_tool_call_output", "CustomToolCallOutput", "#/components/schemas/CustomToolCallOutput":'),
+    ('case "FunctionToolCallResource", "#/components/schemas/FunctionToolCallResource":', 'case "function_call", "FunctionToolCallResource", "#/components/schemas/FunctionToolCallResource":'),
+    ('case "CustomToolCallResource", "#/components/schemas/CustomToolCallResource":', 'case "custom_tool_call", "CustomToolCallResource", "#/components/schemas/CustomToolCallResource":'),
+]
+
+for old, new in aliases:
+    replace_once(f"add alias {new.split(',')[0]}", old, new)
+
+path.write_text(text)
+PY
+
 # The generator emits schema-name discriminator cases for Tool, but the API returns
 # wire values like `image_generation` in `response.created` / `response.in_progress`.
 apply_transform \

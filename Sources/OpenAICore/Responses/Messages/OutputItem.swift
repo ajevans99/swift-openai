@@ -2,14 +2,17 @@ public enum OutputItem: Sendable {
   case message(OutputMessage)
   case fileSearchToolCall(Components.Schemas.FileSearchToolCall)
   case functionToolCall(Components.Schemas.FunctionToolCall)
+  case functionToolCallOutputResource(Components.Schemas.FunctionToolCallOutputResource)
   case webSearchToolCall(Components.Schemas.WebSearchToolCall)
   case computerToolCall(Components.Schemas.ComputerToolCall)
+  case computerToolCallOutputResource(Components.Schemas.ComputerToolCallOutputResource)
   case toolSearchCall(Components.Schemas.ToolSearchCall)
   case toolSearchOutput(Components.Schemas.ToolSearchOutput)
   case compactionBody(Components.Schemas.CompactionBody)
   case imageGenToolCall(Components.Schemas.ImageGenToolCall)
   case codeInterpreterToolCall(Components.Schemas.CodeInterpreterToolCall)
   case localShellToolCall(Components.Schemas.LocalShellToolCall)
+  case localShellToolCallOutput(Components.Schemas.LocalShellToolCallOutput)
   case functionShellCall(Components.Schemas.FunctionShellCall)
   case functionShellCallOutput(Components.Schemas.FunctionShellCallOutput)
   case applyPatchToolCall(Components.Schemas.ApplyPatchToolCall)
@@ -17,53 +20,63 @@ public enum OutputItem: Sendable {
   case mcpToolCall(Components.Schemas.MCPToolCall)
   case mcpListTools(Components.Schemas.MCPListTools)
   case mcpApprovalRequest(Components.Schemas.MCPApprovalRequest)
+  case mcpApprovalResponseResource(Components.Schemas.MCPApprovalResponseResource)
   case customToolCall(Components.Schemas.CustomToolCall)
+  case customToolCallOutputResource(Components.Schemas.CustomToolCallOutputResource)
 
   public init?(_ openAPI: Components.Schemas.OutputItem) {
-    if let message = openAPI.value1 {
+    switch openAPI {
+    case .outputMessage(let message):
       self = .message(OutputMessage(message))
-    } else if let fileSearchToolCall = openAPI.value2 {
+    case .fileSearchToolCall(let fileSearchToolCall):
       self = .fileSearchToolCall(fileSearchToolCall)
-    } else if let functionToolCall = openAPI.value3 {
+    case .functionToolCall(let functionToolCall):
       self = .functionToolCall(functionToolCall)
-    } else if let webSearchToolCall = openAPI.value4 {
+    case .functionToolCallOutputResource(let functionToolCallOutputResource):
+      self = .functionToolCallOutputResource(functionToolCallOutputResource)
+    case .webSearchToolCall(let webSearchToolCall):
       self = .webSearchToolCall(webSearchToolCall)
-    } else if let computerToolCall = openAPI.value5 {
+    case .computerToolCall(let computerToolCall):
       self = .computerToolCall(computerToolCall)
-    } else if openAPI.value6 != nil {
+    case .computerToolCallOutputResource(let computerToolCallOutputResource):
+      self = .computerToolCallOutputResource(computerToolCallOutputResource)
+    case .reasoningItem:
       // Intentionally drop raw reasoning items; only provider-provided summaries may be surfaced.
       return nil
-    } else if let toolSearchCall = openAPI.value7 {
+    case .toolSearchCall(let toolSearchCall):
       self = .toolSearchCall(toolSearchCall)
-    } else if let toolSearchOutput = openAPI.value8 {
+    case .toolSearchOutput(let toolSearchOutput):
       self = .toolSearchOutput(toolSearchOutput)
-    } else if let compactionBody = openAPI.value9 {
+    case .compactionBody(let compactionBody):
       self = .compactionBody(compactionBody)
-    } else if let imageGenToolCall = openAPI.value10 {
+    case .imageGenToolCall(let imageGenToolCall):
       self = .imageGenToolCall(imageGenToolCall)
-    } else if let codeInterpreterToolCall = openAPI.value11 {
+    case .codeInterpreterToolCall(let codeInterpreterToolCall):
       self = .codeInterpreterToolCall(codeInterpreterToolCall)
-    } else if let localShellToolCall = openAPI.value12 {
+    case .localShellToolCall(let localShellToolCall):
       self = .localShellToolCall(localShellToolCall)
-    } else if let functionShellCall = openAPI.value13 {
+    case .localShellToolCallOutput(let localShellToolCallOutput):
+      self = .localShellToolCallOutput(localShellToolCallOutput)
+    case .functionShellCall(let functionShellCall):
       self = .functionShellCall(functionShellCall)
-    } else if let functionShellCallOutput = openAPI.value14 {
+    case .functionShellCallOutput(let functionShellCallOutput):
       self = .functionShellCallOutput(functionShellCallOutput)
-    } else if let applyPatchToolCall = openAPI.value15 {
+    case .applyPatchToolCall(let applyPatchToolCall):
       self = .applyPatchToolCall(applyPatchToolCall)
-    } else if let applyPatchToolCallOutput = openAPI.value16 {
+    case .applyPatchToolCallOutput(let applyPatchToolCallOutput):
       self = .applyPatchToolCallOutput(applyPatchToolCallOutput)
-    } else if let mcpToolCall = openAPI.value17 {
+    case .mcpToolCall(let mcpToolCall):
       self = .mcpToolCall(mcpToolCall)
-    } else if let mcpListTools = openAPI.value18 {
+    case .mcpListTools(let mcpListTools):
       self = .mcpListTools(mcpListTools)
-    } else if let mcpApprovalRequest = openAPI.value19 {
+    case .mcpApprovalRequest(let mcpApprovalRequest):
       self = .mcpApprovalRequest(mcpApprovalRequest)
-    } else if let customToolCall = openAPI.value20 {
+    case .mcpApprovalResponseResource(let mcpApprovalResponseResource):
+      self = .mcpApprovalResponseResource(mcpApprovalResponseResource)
+    case .customToolCall(let customToolCall):
       self = .customToolCall(customToolCall)
-    } else {
-      print("Failed to parse OutputItem: \(openAPI)")
-      return nil
+    case .customToolCallOutputResource(let customToolCallOutputResource):
+      self = .customToolCallOutputResource(customToolCallOutputResource)
     }
   }
 }

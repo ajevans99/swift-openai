@@ -9,6 +9,7 @@ public struct CreateImageEditRequest: Sendable {
     case gptImage1
     case gptImage1Mini
     case gptImage1_5
+    case gptImage2
     case chatgptImageLatest
     case custom(String)
 
@@ -22,6 +23,8 @@ public struct CreateImageEditRequest: Sendable {
         "gpt-image-1-mini"
       case .gptImage1_5:
         "gpt-image-1.5"
+      case .gptImage2:
+        "gpt-image-2"
       case .chatgptImageLatest:
         "chatgpt-image-latest"
       case .custom(let value):
@@ -39,6 +42,8 @@ public struct CreateImageEditRequest: Sendable {
         self = .gptImage1Mini
       case "gpt-image-1.5":
         self = .gptImage1_5
+      case "gpt-image-2":
+        self = .gptImage2
       case "chatgpt-image-latest":
         self = .chatgptImageLatest
       default:
