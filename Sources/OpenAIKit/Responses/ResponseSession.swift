@@ -287,10 +287,13 @@ public actor ResponseSession {
           }
 
         case .computerToolCall, .fileSearchToolCall, .webSearchToolCall,
+          .functionToolCallOutputResource, .computerToolCallOutputResource,
           .toolSearchCall, .toolSearchOutput, .compactionBody, .imageGenToolCall,
-          .codeInterpreterToolCall, .localShellToolCall, .functionShellCall,
-          .functionShellCallOutput, .applyPatchToolCall, .applyPatchToolCallOutput,
-          .mcpToolCall, .mcpListTools, .mcpApprovalRequest, .customToolCall:
+          .codeInterpreterToolCall, .localShellToolCall, .localShellToolCallOutput,
+          .functionShellCall, .functionShellCallOutput, .applyPatchToolCall,
+          .applyPatchToolCallOutput, .mcpToolCall, .mcpListTools,
+          .mcpApprovalRequest, .mcpApprovalResponseResource, .customToolCall,
+          .customToolCallOutputResource:
           break
         }
       }

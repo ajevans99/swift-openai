@@ -8,6 +8,7 @@ public struct ImageGenTool: Sendable {
     case gptImage1
     case gptImage1Mini
     case gptImage1_5
+    case gptImage2
     case custom(String)
 
     public var rawValue: String {
@@ -18,6 +19,8 @@ public struct ImageGenTool: Sendable {
         "gpt-image-1-mini"
       case .gptImage1_5:
         "gpt-image-1.5"
+      case .gptImage2:
+        "gpt-image-2"
       case .custom(let value):
         value
       }
@@ -31,6 +34,8 @@ public struct ImageGenTool: Sendable {
         self = .gptImage1Mini
       case "gpt-image-1.5":
         self = .gptImage1_5
+      case "gpt-image-2":
+        self = .gptImage2
       default:
         self = .custom(rawValue)
       }
@@ -45,6 +50,8 @@ public struct ImageGenTool: Sendable {
           self = .gptImage1Mini
         case .gptImage1_5:
           self = .gptImage1_5
+        case .gptImage2:
+          self = .gptImage2
         }
         return
       }
@@ -65,6 +72,8 @@ public struct ImageGenTool: Sendable {
         Components.Schemas.ImageGenTool.ModelPayload(value2: .gptImage1Mini)
       case .gptImage1_5:
         Components.Schemas.ImageGenTool.ModelPayload(value2: .gptImage1_5)
+      case .gptImage2:
+        Components.Schemas.ImageGenTool.ModelPayload(value2: .gptImage2)
       case .custom(let value):
         Components.Schemas.ImageGenTool.ModelPayload(value1: value)
       }

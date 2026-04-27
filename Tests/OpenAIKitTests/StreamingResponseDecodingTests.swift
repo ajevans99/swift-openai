@@ -1,54 +1,53 @@
 import Foundation
-import Testing
-
 import OpenAICore
 import OpenAIFoundation
+import Testing
 
 @Suite("Streaming Response Decoding")
 struct StreamingResponseDecodingTests {
   @Test("Decodes response.created and response.in_progress with image_generation tools")
   func decodesCreatedAndInProgressEvents() throws {
     let createdPayload = #"""
-    {
-      "type": "response.created",
-      "response": {
-        "id": "resp_test_created",
-        "object": "response",
-        "created_at": 1771443518,
-        "status": "in_progress",
-        "model": "gpt-4o-2024-08-06",
-        "output": [],
-        "parallel_tool_calls": true,
-        "tools": [
-          {
-            "type": "image_generation"
-          }
-        ]
-      },
-      "sequence_number": 0
-    }
-    """#
+      {
+        "type": "response.created",
+        "response": {
+          "id": "resp_test_created",
+          "object": "response",
+          "created_at": 1771443518,
+          "status": "in_progress",
+          "model": "gpt-4o-2024-08-06",
+          "output": [],
+          "parallel_tool_calls": true,
+          "tools": [
+            {
+              "type": "image_generation"
+            }
+          ]
+        },
+        "sequence_number": 0
+      }
+      """#
 
     let inProgressPayload = #"""
-    {
-      "type": "response.in_progress",
-      "response": {
-        "id": "resp_test_in_progress",
-        "object": "response",
-        "created_at": 1771443518,
-        "status": "in_progress",
-        "model": "gpt-4o-2024-08-06",
-        "output": [],
-        "parallel_tool_calls": true,
-        "tools": [
-          {
-            "type": "image_generation"
-          }
-        ]
-      },
-      "sequence_number": 1
-    }
-    """#
+      {
+        "type": "response.in_progress",
+        "response": {
+          "id": "resp_test_in_progress",
+          "object": "response",
+          "created_at": 1771443518,
+          "status": "in_progress",
+          "model": "gpt-4o-2024-08-06",
+          "output": [],
+          "parallel_tool_calls": true,
+          "tools": [
+            {
+              "type": "image_generation"
+            }
+          ]
+        },
+        "sequence_number": 1
+      }
+      """#
 
     let createdEvent = try Self.decodeResponseStreamEvent(from: createdPayload)
     let inProgressEvent = try Self.decodeResponseStreamEvent(from: inProgressPayload)
@@ -106,16 +105,125 @@ struct StreamingResponseDecodingTests {
     }
   }
 
+  @Test("Item discriminators accept API wire type values")
+  func itemDiscriminatorsAcceptWireValues() throws {
+    let decoder = JSONDecoder()
+
+    let inputMessage = try decoder.decode(
+      Components.Schemas.Item.self,
+      from: Data(
+        #"{"type":"message","role":"user","content":[{"type":"input_text","text":"hello"}]}"#.utf8
+      )
+    )
+    guard case .inputMessage(let inputMessageValue) = inputMessage else {
+      Issue.record("Expected Item.message with user role to decode as InputMessage")
+      return
+    }
+    #expect(inputMessageValue.role == .user)
+
+    let outputMessage = try decoder.decode(
+      Components.Schemas.Item.self,
+      from: Data(
+        #"{"id":"msg_123","type":"message","role":"assistant","content":[{"type":"output_text","text":"hello","annotations":[],"logprobs":[]}],"status":"completed"}"#
+          .utf8
+      )
+    )
+    guard case .outputMessage(let outputMessageValue) = outputMessage else {
+      Issue.record("Expected Item.message with assistant role to decode as OutputMessage")
+      return
+    }
+    #expect(outputMessageValue.id == "msg_123")
+
+    let functionOutput = try decoder.decode(
+      Components.Schemas.Item.self,
+      from: Data(#"{"type":"function_call_output","call_id":"call_123","output":"{}"}"#.utf8)
+    )
+    guard case .functionCallOutputItemParam(let functionOutputValue) = functionOutput else {
+      Issue.record("Expected function_call_output to decode as FunctionCallOutputItemParam")
+      return
+    }
+    #expect(functionOutputValue.callId == "call_123")
+
+    let mcpApproval = try decoder.decode(
+      Components.Schemas.Item.self,
+      from: Data(
+        #"{"type":"mcp_approval_response","approval_request_id":"mcp_req_123","approve":true}"#.utf8
+      )
+    )
+    guard case .mcpApprovalResponse(let mcpApprovalValue) = mcpApproval else {
+      Issue.record("Expected mcp_approval_response to decode as MCPApprovalResponse")
+      return
+    }
+    #expect(mcpApprovalValue.approve)
+  }
+
+  @Test("ItemResource discriminators accept API wire type values")
+  func itemResourceDiscriminatorsAcceptWireValues() throws {
+    let decoder = JSONDecoder()
+
+    let inputMessage = try decoder.decode(
+      Components.Schemas.ItemResource.self,
+      from: Data(
+        #"{"id":"msg_in_123","type":"message","role":"user","content":[{"type":"input_text","text":"hello"}],"status":"completed"}"#
+          .utf8
+      )
+    )
+    guard case .inputMessageResource(let inputMessageValue) = inputMessage else {
+      Issue.record("Expected ItemResource.message with user role to decode as InputMessageResource")
+      return
+    }
+    #expect(inputMessageValue.value2.id == "msg_in_123")
+
+    let functionCall = try decoder.decode(
+      Components.Schemas.ItemResource.self,
+      from: Data(
+        #"{"id":"fc_123","type":"function_call","call_id":"call_123","name":"lookup","arguments":"{}","status":"completed"}"#
+          .utf8
+      )
+    )
+    guard case .functionToolCallResource(let functionCallValue) = functionCall else {
+      Issue.record("Expected function_call to decode as FunctionToolCallResource")
+      return
+    }
+    #expect(functionCallValue.value2.id == "fc_123")
+
+    let customCall = try decoder.decode(
+      Components.Schemas.ItemResource.self,
+      from: Data(
+        #"{"id":"ctc_123","type":"custom_tool_call","call_id":"call_custom","name":"parse","input":"payload","status":"completed"}"#
+          .utf8
+      )
+    )
+    guard case .customToolCallResource(let customCallValue) = customCall else {
+      Issue.record("Expected custom_tool_call to decode as CustomToolCallResource")
+      return
+    }
+    #expect(customCallValue.value2.id == "ctc_123")
+
+    let customOutput = try decoder.decode(
+      Components.Schemas.ItemResource.self,
+      from: Data(
+        #"{"id":"cto_123","type":"custom_tool_call_output","call_id":"call_custom","output":"ok","status":"completed"}"#
+          .utf8
+      )
+    )
+    guard case .customToolCallOutputResource(let customOutputValue) = customOutput else {
+      Issue.record("Expected custom_tool_call_output to decode as CustomToolCallOutputResource")
+      return
+    }
+    #expect(customOutputValue.value2.id == "cto_123")
+  }
+
   @Test("Image generation output item preserves final base64 result")
   func imageGenerationOutputItemPreservesResult() throws {
     let payload = #"""
-    {
-      "type": "image_generation_call",
-      "id": "ig_test_123",
-      "status": "completed",
-      "result": "ZmFrZV9pbWFnZV9iYXNlNjQ="
-    }
-    """#
+      {
+        "type": "image_generation_call",
+        "id": "ig_test_123",
+        "status": "completed",
+        "result": "ZmFrZV9pbWFnZV9iYXNlNjQ="
+      }
+      """#
 
     let data = Data(payload.utf8)
     let item = try JSONDecoder().decode(Components.Schemas.OutputItem.self, from: data)
@@ -132,35 +240,35 @@ struct StreamingResponseDecodingTests {
   @Test("Completed responses drop raw reasoning output items")
   func completedResponsesDropRawReasoningOutputItems() throws {
     let payload = #"""
-    {
-      "id": "resp_reasoning_privacy",
-      "object": "response",
-      "created_at": 1771443518,
-      "status": "completed",
-      "model": "gpt-4o-2024-08-06",
-      "output": [
-        {
-          "type": "reasoning",
-          "id": "rs_privacy",
-          "summary": [
-            {
-              "type": "summary_text",
-              "text": "safe provider summary"
-            }
-          ],
-          "content": [
-            {
-              "type": "reasoning_text",
-              "text": "provider-hidden-reasoning"
-            }
-          ],
-          "status": "completed"
-        }
-      ],
-      "parallel_tool_calls": true,
-      "tools": []
-    }
-    """#
+      {
+        "id": "resp_reasoning_privacy",
+        "object": "response",
+        "created_at": 1771443518,
+        "status": "completed",
+        "model": "gpt-4o-2024-08-06",
+        "output": [
+          {
+            "type": "reasoning",
+            "id": "rs_privacy",
+            "summary": [
+              {
+                "type": "summary_text",
+                "text": "safe provider summary"
+              }
+            ],
+            "content": [
+              {
+                "type": "reasoning_text",
+                "text": "provider-hidden-reasoning"
+              }
+            ],
+            "status": "completed"
+          }
+        ],
+        "parallel_tool_calls": true,
+        "tools": []
+      }
+      """#
 
     let openAPIResponse = try JSONDecoder().decode(
       Components.Schemas.Response.self,
@@ -175,8 +283,8 @@ struct StreamingResponseDecodingTests {
 
   @Test("OutputItem mapping drops raw reasoning items")
   func outputItemMappingDropsRawReasoningItems() {
-    let rawReasoningItem = Components.Schemas.OutputItem(
-      value6: Components.Schemas.ReasoningItem(
+    let rawReasoningItem = Components.Schemas.OutputItem.reasoningItem(
+      Components.Schemas.ReasoningItem(
         _type: .reasoning,
         id: "rs_privacy",
         summary: [
@@ -291,8 +399,10 @@ struct StreamingResponseDecodingTests {
       .deletingLastPathComponent()
       .deletingLastPathComponent()
 
-    let typesFile = packageRoot.appendingPathComponent("Sources/OpenAIFoundation/Generated/Types.swift")
-    let streamingFile = packageRoot.appendingPathComponent("Sources/OpenAICore/Responses/StreamingResponse.swift")
+    let typesFile = packageRoot.appendingPathComponent(
+      "Sources/OpenAIFoundation/Generated/Types.swift")
+    let streamingFile = packageRoot.appendingPathComponent(
+      "Sources/OpenAICore/Responses/StreamingResponse.swift")
 
     let typesSource = try String(contentsOf: typesFile, encoding: .utf8)
     let streamingSource = try String(contentsOf: streamingFile, encoding: .utf8)
@@ -308,7 +418,8 @@ struct StreamingResponseDecodingTests {
       return
     }
 
-    let responseStructSnippet = String(typesSource[responseStructStart.lowerBound..<responseStructEnd.lowerBound])
+    let responseStructSnippet = String(
+      typesSource[responseStructStart.lowerBound..<responseStructEnd.lowerBound])
     let generatedSlots = try Self.captureIntegers(
       pattern: #"public var value(\d+):"#,
       in: responseStructSnippet
@@ -322,7 +433,9 @@ struct StreamingResponseDecodingTests {
     #expect(generatedSlots == mappedSlots)
   }
 
-  private static func decodeResponseStreamEvent(from payload: String) throws -> Components.Schemas.ResponseStreamEvent {
+  private static func decodeResponseStreamEvent(from payload: String) throws
+    -> Components.Schemas.ResponseStreamEvent
+  {
     let data = Data(payload.utf8)
     return try JSONDecoder().decode(Components.Schemas.ResponseStreamEvent.self, from: data)
   }
@@ -330,15 +443,12 @@ struct StreamingResponseDecodingTests {
   private static func extractImageGenToolCall(
     from item: Components.Schemas.OutputItem
   ) -> Components.Schemas.ImageGenToolCall? {
-    for child in Mirror(reflecting: item).children {
-      let optionalMirror = Mirror(reflecting: child.value)
-      guard optionalMirror.displayStyle == .optional else { continue }
-      guard let wrappedValue = optionalMirror.children.first?.value else { continue }
-      if let imageCall = wrappedValue as? Components.Schemas.ImageGenToolCall {
-        return imageCall
-      }
+    switch item {
+    case .imageGenToolCall(let imageCall):
+      return imageCall
+    default:
+      return nil
     }
-    return nil
   }
 
   private static func captureIntegers(pattern: String, in source: String) throws -> Set<Int> {

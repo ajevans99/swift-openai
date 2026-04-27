@@ -71,4 +71,67 @@ apply_transform \
   's{(\n\s+ImageGenToolCall:\n.*?\n\s+result:\n)\s+anyOf:\n\s+- type: string\n\s+description: \|\n\s+The generated image encoded in base64\.\n\s+- type: '\''null'\''}{$1          type: string\n          description: |\n            The generated image encoded in base64.}s;
    s{(\n\s+ImageGenToolCall:\n.*?\n\s+required:\n\s+- type\n\s+- id\n\s+- status\n)\s+- result\n}{$1}s'
 
+SPEC_FILE="$SPEC_FILE" python3 - <<'PY'
+import os
+import re
+from pathlib import Path
+
+path = Path(os.environ["SPEC_FILE"])
+text = path.read_text()
+
+
+def exactly_one_match(name: str, pattern: str, block: str) -> re.Match[str]:
+    matches = list(re.finditer(pattern, block, flags=re.MULTILINE))
+    if len(matches) != 1:
+        raise SystemExit(f"Expected exactly one {name} match, found {len(matches)}")
+    return matches[0]
+
+
+def insert_after_anchor(name: str, section: str, anchor_pattern: str, line: str) -> None:
+    global text
+    start = text.index(section)
+    next_section = re.search(r"\n    [A-Za-z0-9_]+:\n", text[start + len(section) :])
+    if next_section:
+        section_end = start + len(section) + next_section.start()
+    else:
+        section_end = len(text)
+    block = text[start:section_end]
+    line_pattern = f"^{re.escape(line)}$"
+    if re.search(line_pattern, block, flags=re.MULTILINE):
+        print(f"• {name} (already applied)")
+        return
+    anchor_match = exactly_one_match(f"{name} anchor", anchor_pattern, block)
+    insertion_index = start + anchor_match.end()
+    text = text[:insertion_index] + f"\n{line}" + text[insertion_index:]
+    print(f"✓ {name}")
+
+
+insert_after_anchor(
+    "add GPT-5.5 model id pending upstream spec",
+    "    ModelIdsShared:\n",
+    r"^            - gpt-5\.4$",
+    "            - gpt-5.5",
+)
+insert_after_anchor(
+    "add GPT Image 2 image-generation model id pending upstream spec",
+    "    CreateImageRequest:\n",
+    r"^                - gpt-image-1\.5$",
+    "                - gpt-image-2",
+)
+insert_after_anchor(
+    "add GPT Image 2 image-edit model id pending upstream spec",
+    "    CreateImageEditRequest:\n",
+    r"^                - gpt-image-1\.5$",
+    "                - gpt-image-2",
+)
+insert_after_anchor(
+    "add GPT Image 2 response image tool model id pending upstream spec",
+    "    ImageGenTool:\n",
+    r"^                - gpt-image-1$",
+    "                - gpt-image-2",
+)
+
+path.write_text(text)
+PY
+
 echo "✅ OpenAPI transforms complete."

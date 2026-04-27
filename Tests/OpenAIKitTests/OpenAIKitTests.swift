@@ -1,13 +1,13 @@
 import Foundation
-import Testing
-
 import OpenAICore
 import OpenAIFoundation
+import Testing
 
 @Suite("Response Snapshot Tests")
 struct ResponseSnapshotTests {
   struct SnapshotCase: Sendable {
     let name: String
+    let fixtureName: String
     let model: String
     let input: String
     let expectedToken: String
@@ -17,12 +17,16 @@ struct ResponseSnapshotTests {
     case missingAPIKey
     case missingFixture(URL)
     case invalidHTTPStatus(Int, String)
+    case missingImagePayload
   }
 
   static let snapshotCases: [SnapshotCase] = [
     .init(
-      name: "hello_world_gpt5_2",
-      model: "gpt-5.2",
+      name: "hello_world_gpt5_5",
+      // The local replay fixture only proves response decoding; the live smoke below
+      // verifies GPT-5.5 against the API.
+      fixtureName: "hello_world_gpt5_2",
+      model: "gpt-5.5",
       input: "Reply with EXACTLY this token and nothing else: SNAPSHOT_OK",
       expectedToken: "SNAPSHOT_OK"
     )
@@ -71,6 +75,33 @@ struct ResponseSnapshotTests {
     #expect(json.contains("\"stream\":true"))
   }
 
+  @Test("Generated model enums include GPT-5.5 and GPT Image 2")
+  func generatedModelEnumsIncludeRequestedModels() throws {
+    #expect(Components.Schemas.ModelIdsShared.Value2Payload.gpt5_5.rawValue == "gpt-5.5")
+    #expect(CreateImageRequest.Model.gptImage2.rawValue == "gpt-image-2")
+    #expect(CreateImageEditRequest.Model.gptImage2.rawValue == "gpt-image-2")
+    #expect(ImageGenTool.Model.gptImage2.rawValue == "gpt-image-2")
+
+    let textRequest = CreateResponse(
+      responseProperties: ResponseProperties(model: .standard(.gpt5_5)),
+      inputPayload: CreateResponseInputPayload(input: .text("ping"))
+    )
+    let textJSON = String(
+      decoding: try JSONEncoder().encode(textRequest.toOpenAPI()), as: UTF8.self)
+    #expect(textJSON.contains("\"model\":\"gpt-5.5\""))
+
+    let imageRequest = CreateImageRequest(
+      prompt: "small smoke-test square",
+      model: .gptImage2,
+      n: 1,
+      quality: .low,
+      size: .size1024x1024
+    )
+    let imageJSON = String(
+      decoding: try JSONEncoder().encode(imageRequest.toOpenAPI()), as: UTF8.self)
+    #expect(imageJSON.contains("\"model\":\"gpt-image-2\""))
+  }
+
   @Test("ReasoningEffort maps all OpenAI wire values")
   func reasoningEffortMapsAllOpenAIValues() {
     let cases: [(ReasoningEffort, Components.Schemas.ReasoningEffort)] = [
@@ -94,7 +125,8 @@ struct ResponseSnapshotTests {
   @Test("Replay local fixtures decode successfully")
   func replaySnapshots() throws {
     for testCase in Self.snapshotCases {
-      let fixtureURL = Self.fixturesDirectoryURL.appendingPathComponent("\(testCase.name).json")
+      let fixtureURL = Self.fixturesDirectoryURL.appendingPathComponent(
+        "\(testCase.fixtureName).json")
       guard FileManager.default.fileExists(atPath: fixtureURL.path) else {
         throw SnapshotTestError.missingFixture(fixtureURL)
       }
@@ -131,6 +163,26 @@ struct ResponseSnapshotTests {
     }
   }
 
+  @Test("Live GPT Image 2 smoke test")
+  func liveImageSmoke() async throws {
+    guard Self.isLiveSnapshotEnabled else { return }
+
+    guard let apiKey = ProcessInfo.processInfo.environment["OPENAI_API_KEY"], !apiKey.isEmpty else {
+      throw SnapshotTestError.missingAPIKey
+    }
+
+    let data = try await Self.fetchLiveImage(apiKey: apiKey)
+    let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+    let images = json?["data"] as? [[String: Any]]
+    let firstImage = images?.first
+    let b64JSON = firstImage?["b64_json"] as? String
+
+    #expect(b64JSON?.isEmpty == false)
+    guard b64JSON?.isEmpty == false else {
+      throw SnapshotTestError.missingImagePayload
+    }
+  }
+
   static func assertSnapshot(data: Data, testCase: SnapshotCase) throws {
     let decoder = JSONDecoder()
     let openAPIResponse = try decoder.decode(Components.Schemas.Response.self, from: data)
@@ -155,14 +207,42 @@ struct ResponseSnapshotTests {
     let payload: [String: Any] = [
       "model": testCase.model,
       "input": testCase.input,
-      "temperature": 0,
       "max_output_tokens": 32,
     ]
     request.httpBody = try JSONSerialization.data(withJSONObject: payload)
 
     let (data, urlResponse) = try await URLSession.shared.data(for: request)
     let statusCode = (urlResponse as? HTTPURLResponse)?.statusCode ?? -1
-    guard (200 ..< 300).contains(statusCode) else {
+    guard (200..<300).contains(statusCode) else {
+      let body = String(data: data, encoding: .utf8) ?? "<non-utf8 body>"
+      throw SnapshotTestError.invalidHTTPStatus(statusCode, body)
+    }
+    return data
+  }
+
+  static func fetchLiveImage(apiKey: String) async throws -> Data {
+    guard let url = URL(string: "https://api.openai.com/v1/images/generations") else {
+      preconditionFailure("Invalid OpenAI image API URL")
+    }
+
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+    let payload: [String: Any] = [
+      "model": "gpt-image-2",
+      "prompt": "A tiny blue square icon on a white background.",
+      "n": 1,
+      "quality": "low",
+      "size": "1024x1024",
+    ]
+    request.httpBody = try JSONSerialization.data(withJSONObject: payload)
+
+    let (data, urlResponse) = try await URLSession.shared.data(for: request)
+    let statusCode = (urlResponse as? HTTPURLResponse)?.statusCode ?? -1
+    guard (200..<300).contains(statusCode) else {
       let body = String(data: data, encoding: .utf8) ?? "<non-utf8 body>"
       throw SnapshotTestError.invalidHTTPStatus(statusCode, body)
     }
@@ -172,7 +252,8 @@ struct ResponseSnapshotTests {
   static func normalizedSnapshotData(from data: Data) throws -> Data {
     let json = try JSONSerialization.jsonObject(with: data)
     let normalized = Self.normalize(json)
-    return try JSONSerialization.data(withJSONObject: normalized, options: [.prettyPrinted, .sortedKeys])
+    return try JSONSerialization.data(
+      withJSONObject: normalized, options: [.prettyPrinted, .sortedKeys])
   }
 
   static func normalize(_ value: Any, key: String? = nil) -> Any {
@@ -202,7 +283,9 @@ struct ResponseSnapshotTests {
   }
 
   static func envFlag(_ key: String) -> Bool {
-    guard let value = ProcessInfo.processInfo.environment[key]?.trimmingCharacters(in: .whitespacesAndNewlines),
+    guard
+      let value = ProcessInfo.processInfo.environment[key]?.trimmingCharacters(
+        in: .whitespacesAndNewlines),
       !value.isEmpty
     else {
       return false

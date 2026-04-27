@@ -261,8 +261,8 @@ public enum Components {
                 case case1(Swift.String)
                 /// - Remark: Generated from `#/components/schemas/CodeInterpreterTool/container/case2`.
                 case AutoCodeInterpreterToolParam(Components.Schemas.AutoCodeInterpreterToolParam)
-                public init(from decoder: any Decoder) throws {
-                    var errors: [any Error] = []
+                public init(from decoder: any Swift.Decoder) throws {
+                    var errors: [any Swift.Error] = []
                     do {
                         self = .case1(try decoder.decodeFromSingleValueContainer())
                         return
@@ -281,7 +281,7 @@ public enum Components {
                         errors: errors
                     )
                 }
-                public func encode(to encoder: any Encoder) throws {
+                public func encode(to encoder: any Swift.Encoder) throws {
                     switch self {
                     case let .case1(value):
                         try encoder.encodeToSingleValueContainer(value)
@@ -406,6 +406,8 @@ public enum Components {
                 case gte = "gte"
                 case lt = "lt"
                 case lte = "lte"
+                case _in = "in"
+                case nin = "nin"
             }
             /// Specifies the comparison operator: `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, `in`, `nin`.
             /// - `eq`: equals
@@ -440,8 +442,8 @@ public enum Components {
                     case case1(Swift.String)
                     /// - Remark: Generated from `#/components/schemas/ComparisonFilter/value/Case4Payload/case2`.
                     case case2(Swift.Double)
-                    public init(from decoder: any Decoder) throws {
-                        var errors: [any Error] = []
+                    public init(from decoder: any Swift.Decoder) throws {
+                        var errors: [any Swift.Error] = []
                         do {
                             self = .case1(try decoder.decodeFromSingleValueContainer())
                             return
@@ -460,7 +462,7 @@ public enum Components {
                             errors: errors
                         )
                     }
-                    public func encode(to encoder: any Encoder) throws {
+                    public func encode(to encoder: any Swift.Encoder) throws {
                         switch self {
                         case let .case1(value):
                             try encoder.encodeToSingleValueContainer(value)
@@ -473,8 +475,8 @@ public enum Components {
                 public typealias Case4Payload = [Components.Schemas.ComparisonFilter.ValuePayload.Case4PayloadPayload]
                 /// - Remark: Generated from `#/components/schemas/ComparisonFilter/value/case4`.
                 case case4(Components.Schemas.ComparisonFilter.ValuePayload.Case4Payload)
-                public init(from decoder: any Decoder) throws {
-                    var errors: [any Error] = []
+                public init(from decoder: any Swift.Decoder) throws {
+                    var errors: [any Swift.Error] = []
                     do {
                         self = .case1(try decoder.decodeFromSingleValueContainer())
                         return
@@ -505,7 +507,7 @@ public enum Components {
                         errors: errors
                     )
                 }
-                public func encode(to encoder: any Encoder) throws {
+                public func encode(to encoder: any Swift.Encoder) throws {
                     switch self {
                     case let .case1(value):
                         try encoder.encodeToSingleValueContainer(value)
@@ -542,7 +544,7 @@ public enum Components {
                 case key
                 case value
             }
-            public init(from decoder: any Decoder) throws {
+            public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
                 self._type = try container.decode(
                     Components.Schemas.ComparisonFilter._TypePayload.self,
@@ -585,7 +587,7 @@ public enum Components {
                 public enum CodingKeys: String, CodingKey {
                     case _type = "type"
                 }
-                public init(from decoder: any Decoder) throws {
+                public init(from decoder: any Swift.Decoder) throws {
                     let container = try decoder.container(keyedBy: CodingKeys.self)
                     let discriminator = try container.decode(
                         Swift.String.self,
@@ -602,7 +604,7 @@ public enum Components {
                         )
                     }
                 }
-                public func encode(to encoder: any Encoder) throws {
+                public func encode(to encoder: any Swift.Encoder) throws {
                     switch self {
                     case let .comparisonFilter(value):
                         try value.encode(to: encoder)
@@ -633,7 +635,7 @@ public enum Components {
                 case _type = "type"
                 case filters
             }
-            public init(from decoder: any Decoder) throws {
+            public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
                 self._type = try container.decode(
                     Components.Schemas.CompoundFilter._TypePayload.self,
@@ -672,7 +674,7 @@ public enum Components {
             public enum CodingKeys: String, CodingKey {
                 case _type = "type"
             }
-            public init(from decoder: any Decoder) throws {
+            public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
                 let discriminator = try container.decode(
                     Swift.String.self,
@@ -705,7 +707,7 @@ public enum Components {
                     )
                 }
             }
-            public func encode(to encoder: any Encoder) throws {
+            public func encode(to encoder: any Swift.Encoder) throws {
                 switch self {
                 case let .clickParam(value):
                     try value.encode(to: encoder)
@@ -964,15 +966,36 @@ public enum Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/ComputerToolCallOutputResource/value2/id`.
                 public var id: Swift.String
+                /// The status of the message input. One of `in_progress`, `completed`, or
+                /// `incomplete`. Populated when input items are returned via API.
+                ///
+                ///
+                /// - Remark: Generated from `#/components/schemas/ComputerToolCallOutputResource/value2/status`.
+                public var status: Components.Schemas.ComputerCallOutputStatus
+                /// The identifier of the actor that created the item.
+                ///
+                ///
+                /// - Remark: Generated from `#/components/schemas/ComputerToolCallOutputResource/value2/created_by`.
+                public var createdBy: Swift.String?
                 /// Creates a new `Value2Payload`.
                 ///
                 /// - Parameters:
                 ///   - id: The unique ID of the computer call tool output.
-                public init(id: Swift.String) {
+                ///   - status: The status of the message input. One of `in_progress`, `completed`, or
+                ///   - createdBy: The identifier of the actor that created the item.
+                public init(
+                    id: Swift.String,
+                    status: Components.Schemas.ComputerCallOutputStatus,
+                    createdBy: Swift.String? = nil
+                ) {
                     self.id = id
+                    self.status = status
+                    self.createdBy = createdBy
                 }
                 public enum CodingKeys: String, CodingKey {
                     case id
+                    case status
+                    case createdBy = "created_by"
                 }
             }
             /// - Remark: Generated from `#/components/schemas/ComputerToolCallOutputResource/value2`.
@@ -989,11 +1012,11 @@ public enum Components {
                 self.value1 = value1
                 self.value2 = value2
             }
-            public init(from decoder: any Decoder) throws {
+            public init(from decoder: any Swift.Decoder) throws {
                 self.value1 = try .init(from: decoder)
                 self.value2 = try .init(from: decoder)
             }
-            public func encode(to encoder: any Encoder) throws {
+            public func encode(to encoder: any Swift.Encoder) throws {
                 try self.value1.encode(to: encoder)
                 try self.value2.encode(to: encoder)
             }
@@ -1011,8 +1034,8 @@ public enum Components {
             case case1(Swift.String)
             /// - Remark: Generated from `#/components/schemas/ConversationParam/case2`.
             case ConversationParam2(Components.Schemas.ConversationParam2)
-            public init(from decoder: any Decoder) throws {
-                var errors: [any Error] = []
+            public init(from decoder: any Swift.Decoder) throws {
+                var errors: [any Swift.Error] = []
                 do {
                     self = .case1(try decoder.decodeFromSingleValueContainer())
                     return
@@ -1031,7 +1054,7 @@ public enum Components {
                     errors: errors
                 )
             }
-            public func encode(to encoder: any Encoder) throws {
+            public func encode(to encoder: any Swift.Encoder) throws {
                 switch self {
                 case let .case1(value):
                     try encoder.encodeToSingleValueContainer(value)
@@ -1215,6 +1238,7 @@ public enum Components {
                 /// - Remark: Generated from `#/components/schemas/CreateImageRequest/model/value2`.
                 @frozen public enum Value2Payload: String, Codable, Hashable, Sendable, CaseIterable {
                     case gptImage1_5 = "gpt-image-1.5"
+                    case gptImage2 = "gpt-image-2"
                     case dallE2 = "dall-e-2"
                     case dallE3 = "dall-e-3"
                     case gptImage1 = "gpt-image-1"
@@ -1234,8 +1258,8 @@ public enum Components {
                     self.value1 = value1
                     self.value2 = value2
                 }
-                public init(from decoder: any Decoder) throws {
-                    var errors: [any Error] = []
+                public init(from decoder: any Swift.Decoder) throws {
+                    var errors: [any Swift.Error] = []
                     do {
                         self.value1 = try decoder.decodeFromSingleValueContainer()
                     } catch {
@@ -1256,7 +1280,7 @@ public enum Components {
                         errors: errors
                     )
                 }
-                public func encode(to encoder: any Encoder) throws {
+                public func encode(to encoder: any Swift.Encoder) throws {
                     try encoder.encodeFirstNonNilValueToSingleValueContainer([
                         self.value1,
                         self.value2
@@ -1576,11 +1600,11 @@ public enum Components {
                 self.value1 = value1
                 self.value2 = value2
             }
-            public init(from decoder: any Decoder) throws {
+            public init(from decoder: any Swift.Decoder) throws {
                 self.value1 = try .init(from: decoder)
                 self.value2 = try .init(from: decoder)
             }
-            public func encode(to encoder: any Encoder) throws {
+            public func encode(to encoder: any Swift.Encoder) throws {
                 try self.value1.encode(to: encoder)
                 try self.value2.encode(to: encoder)
             }
@@ -1660,12 +1684,12 @@ public enum Components {
                 self.value2 = value2
                 self.value3 = value3
             }
-            public init(from decoder: any Decoder) throws {
+            public init(from decoder: any Swift.Decoder) throws {
                 self.value1 = try .init(from: decoder)
                 self.value2 = try .init(from: decoder)
                 self.value3 = try .init(from: decoder)
             }
-            public func encode(to encoder: any Encoder) throws {
+            public func encode(to encoder: any Swift.Encoder) throws {
                 try self.value1.encode(to: encoder)
                 try self.value2.encode(to: encoder)
                 try self.value3.encode(to: encoder)
@@ -1789,8 +1813,8 @@ public enum Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/CustomToolCallOutput/output/case2`.
                 case case2([Components.Schemas.FunctionAndCustomToolCallOutput])
-                public init(from decoder: any Decoder) throws {
-                    var errors: [any Error] = []
+                public init(from decoder: any Swift.Decoder) throws {
+                    var errors: [any Swift.Error] = []
                     do {
                         self = .case1(try decoder.decodeFromSingleValueContainer())
                         return
@@ -1809,7 +1833,7 @@ public enum Components {
                         errors: errors
                     )
                 }
-                public func encode(to encoder: any Encoder) throws {
+                public func encode(to encoder: any Swift.Encoder) throws {
                     switch self {
                     case let .case1(value):
                         try encoder.encodeToSingleValueContainer(value)
@@ -1847,6 +1871,138 @@ public enum Components {
                 case id
                 case callId = "call_id"
                 case output
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CustomToolCallOutputResource`.
+        public struct CustomToolCallOutputResource: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CustomToolCallOutputResource/value1`.
+            public var value1: Components.Schemas.CustomToolCallOutput
+            /// - Remark: Generated from `#/components/schemas/CustomToolCallOutputResource/value2`.
+            public struct Value2Payload: Codable, Hashable, Sendable {
+                /// The unique ID of the custom tool call output item.
+                ///
+                ///
+                /// - Remark: Generated from `#/components/schemas/CustomToolCallOutputResource/value2/id`.
+                public var id: Swift.String
+                /// The status of the item. One of `in_progress`, `completed`, or
+                /// `incomplete`. Populated when items are returned via API.
+                ///
+                ///
+                /// - Remark: Generated from `#/components/schemas/CustomToolCallOutputResource/value2/status`.
+                public var status: Components.Schemas.FunctionCallOutputStatusEnum
+                /// The identifier of the actor that created the item.
+                ///
+                ///
+                /// - Remark: Generated from `#/components/schemas/CustomToolCallOutputResource/value2/created_by`.
+                public var createdBy: Swift.String?
+                /// Creates a new `Value2Payload`.
+                ///
+                /// - Parameters:
+                ///   - id: The unique ID of the custom tool call output item.
+                ///   - status: The status of the item. One of `in_progress`, `completed`, or
+                ///   - createdBy: The identifier of the actor that created the item.
+                public init(
+                    id: Swift.String,
+                    status: Components.Schemas.FunctionCallOutputStatusEnum,
+                    createdBy: Swift.String? = nil
+                ) {
+                    self.id = id
+                    self.status = status
+                    self.createdBy = createdBy
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case id
+                    case status
+                    case createdBy = "created_by"
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/CustomToolCallOutputResource/value2`.
+            public var value2: Components.Schemas.CustomToolCallOutputResource.Value2Payload
+            /// Creates a new `CustomToolCallOutputResource`.
+            ///
+            /// - Parameters:
+            ///   - value1:
+            ///   - value2:
+            public init(
+                value1: Components.Schemas.CustomToolCallOutput,
+                value2: Components.Schemas.CustomToolCallOutputResource.Value2Payload
+            ) {
+                self.value1 = value1
+                self.value2 = value2
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                self.value1 = try .init(from: decoder)
+                self.value2 = try .init(from: decoder)
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                try self.value1.encode(to: encoder)
+                try self.value2.encode(to: encoder)
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CustomToolCallResource`.
+        public struct CustomToolCallResource: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CustomToolCallResource/value1`.
+            public var value1: Components.Schemas.CustomToolCall
+            /// - Remark: Generated from `#/components/schemas/CustomToolCallResource/value2`.
+            public struct Value2Payload: Codable, Hashable, Sendable {
+                /// The unique ID of the custom tool call item.
+                ///
+                ///
+                /// - Remark: Generated from `#/components/schemas/CustomToolCallResource/value2/id`.
+                public var id: Swift.String
+                /// The status of the item. One of `in_progress`, `completed`, or
+                /// `incomplete`. Populated when items are returned via API.
+                ///
+                ///
+                /// - Remark: Generated from `#/components/schemas/CustomToolCallResource/value2/status`.
+                public var status: Components.Schemas.FunctionCallStatus
+                /// The identifier of the actor that created the item.
+                ///
+                ///
+                /// - Remark: Generated from `#/components/schemas/CustomToolCallResource/value2/created_by`.
+                public var createdBy: Swift.String?
+                /// Creates a new `Value2Payload`.
+                ///
+                /// - Parameters:
+                ///   - id: The unique ID of the custom tool call item.
+                ///   - status: The status of the item. One of `in_progress`, `completed`, or
+                ///   - createdBy: The identifier of the actor that created the item.
+                public init(
+                    id: Swift.String,
+                    status: Components.Schemas.FunctionCallStatus,
+                    createdBy: Swift.String? = nil
+                ) {
+                    self.id = id
+                    self.status = status
+                    self.createdBy = createdBy
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case id
+                    case status
+                    case createdBy = "created_by"
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/CustomToolCallResource/value2`.
+            public var value2: Components.Schemas.CustomToolCallResource.Value2Payload
+            /// Creates a new `CustomToolCallResource`.
+            ///
+            /// - Parameters:
+            ///   - value1:
+            ///   - value2:
+            public init(
+                value1: Components.Schemas.CustomToolCall,
+                value2: Components.Schemas.CustomToolCallResource.Value2Payload
+            ) {
+                self.value1 = value1
+                self.value2 = value2
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                self.value1 = try .init(from: decoder)
+                self.value2 = try .init(from: decoder)
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                try self.value1.encode(to: encoder)
+                try self.value2.encode(to: encoder)
             }
         }
         /// A message input to the model with a role indicating instruction following
@@ -1888,8 +2044,8 @@ public enum Components {
                 case case1(Swift.String)
                 /// - Remark: Generated from `#/components/schemas/EasyInputMessage/content/case2`.
                 case InputMessageContentList(Components.Schemas.InputMessageContentList)
-                public init(from decoder: any Decoder) throws {
-                    var errors: [any Error] = []
+                public init(from decoder: any Swift.Decoder) throws {
+                    var errors: [any Swift.Error] = []
                     do {
                         self = .case1(try decoder.decodeFromSingleValueContainer())
                         return
@@ -1908,7 +2064,7 @@ public enum Components {
                         errors: errors
                     )
                 }
-                public func encode(to encoder: any Encoder) throws {
+                public func encode(to encoder: any Swift.Encoder) throws {
                     switch self {
                     case let .case1(value):
                         try encoder.encodeToSingleValueContainer(value)
@@ -2161,18 +2317,18 @@ public enum Components {
             public enum CodingKeys: String, CodingKey {
                 case _type = "type"
             }
-            public init(from decoder: any Decoder) throws {
+            public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
                 let discriminator = try container.decode(
                     Swift.String.self,
                     forKey: ._type
                 )
                 switch discriminator {
-                case "InputTextContent", "#/components/schemas/InputTextContent":
+                case "input_text", "InputTextContent", "#/components/schemas/InputTextContent":
                     self = .inputTextContent(try .init(from: decoder))
-                case "InputImageContent", "#/components/schemas/InputImageContent":
+                case "input_image", "InputImageContent", "#/components/schemas/InputImageContent":
                     self = .inputImageContent(try .init(from: decoder))
-                case "InputFileContent", "#/components/schemas/InputFileContent":
+                case "input_file", "InputFileContent", "#/components/schemas/InputFileContent":
                     self = .inputFileContent(try .init(from: decoder))
                 default:
                     throw Swift.DecodingError.unknownOneOfDiscriminator(
@@ -2182,7 +2338,7 @@ public enum Components {
                     )
                 }
             }
-            public func encode(to encoder: any Encoder) throws {
+            public func encode(to encoder: any Swift.Encoder) throws {
                 switch self {
                 case let .inputTextContent(value):
                     try value.encode(to: encoder)
@@ -2333,8 +2489,8 @@ public enum Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/FunctionToolCallOutput/output/case2`.
                 case case2([Components.Schemas.FunctionAndCustomToolCallOutput])
-                public init(from decoder: any Decoder) throws {
-                    var errors: [any Error] = []
+                public init(from decoder: any Swift.Decoder) throws {
+                    var errors: [any Swift.Error] = []
                     do {
                         self = .case1(try decoder.decodeFromSingleValueContainer())
                         return
@@ -2353,7 +2509,7 @@ public enum Components {
                         errors: errors
                     )
                 }
-                public func encode(to encoder: any Encoder) throws {
+                public func encode(to encoder: any Swift.Encoder) throws {
                     switch self {
                     case let .case1(value):
                         try encoder.encodeToSingleValueContainer(value)
@@ -2424,15 +2580,36 @@ public enum Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/FunctionToolCallOutputResource/value2/id`.
                 public var id: Swift.String
+                /// The status of the item. One of `in_progress`, `completed`, or
+                /// `incomplete`. Populated when items are returned via API.
+                ///
+                ///
+                /// - Remark: Generated from `#/components/schemas/FunctionToolCallOutputResource/value2/status`.
+                public var status: Components.Schemas.FunctionCallOutputStatusEnum
+                /// The identifier of the actor that created the item.
+                ///
+                ///
+                /// - Remark: Generated from `#/components/schemas/FunctionToolCallOutputResource/value2/created_by`.
+                public var createdBy: Swift.String?
                 /// Creates a new `Value2Payload`.
                 ///
                 /// - Parameters:
                 ///   - id: The unique ID of the function call tool output.
-                public init(id: Swift.String) {
+                ///   - status: The status of the item. One of `in_progress`, `completed`, or
+                ///   - createdBy: The identifier of the actor that created the item.
+                public init(
+                    id: Swift.String,
+                    status: Components.Schemas.FunctionCallOutputStatusEnum,
+                    createdBy: Swift.String? = nil
+                ) {
                     self.id = id
+                    self.status = status
+                    self.createdBy = createdBy
                 }
                 public enum CodingKeys: String, CodingKey {
                     case id
+                    case status
+                    case createdBy = "created_by"
                 }
             }
             /// - Remark: Generated from `#/components/schemas/FunctionToolCallOutputResource/value2`.
@@ -2449,11 +2626,11 @@ public enum Components {
                 self.value1 = value1
                 self.value2 = value2
             }
-            public init(from decoder: any Decoder) throws {
+            public init(from decoder: any Swift.Decoder) throws {
                 self.value1 = try .init(from: decoder)
                 self.value2 = try .init(from: decoder)
             }
-            public func encode(to encoder: any Encoder) throws {
+            public func encode(to encoder: any Swift.Encoder) throws {
                 try self.value1.encode(to: encoder)
                 try self.value2.encode(to: encoder)
             }
@@ -2469,15 +2646,36 @@ public enum Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/FunctionToolCallResource/value2/id`.
                 public var id: Swift.String
+                /// The status of the item. One of `in_progress`, `completed`, or
+                /// `incomplete`. Populated when items are returned via API.
+                ///
+                ///
+                /// - Remark: Generated from `#/components/schemas/FunctionToolCallResource/value2/status`.
+                public var status: Components.Schemas.FunctionCallStatus
+                /// The identifier of the actor that created the item.
+                ///
+                ///
+                /// - Remark: Generated from `#/components/schemas/FunctionToolCallResource/value2/created_by`.
+                public var createdBy: Swift.String?
                 /// Creates a new `Value2Payload`.
                 ///
                 /// - Parameters:
                 ///   - id: The unique ID of the function tool call.
-                public init(id: Swift.String) {
+                ///   - status: The status of the item. One of `in_progress`, `completed`, or
+                ///   - createdBy: The identifier of the actor that created the item.
+                public init(
+                    id: Swift.String,
+                    status: Components.Schemas.FunctionCallStatus,
+                    createdBy: Swift.String? = nil
+                ) {
                     self.id = id
+                    self.status = status
+                    self.createdBy = createdBy
                 }
                 public enum CodingKeys: String, CodingKey {
                     case id
+                    case status
+                    case createdBy = "created_by"
                 }
             }
             /// - Remark: Generated from `#/components/schemas/FunctionToolCallResource/value2`.
@@ -2494,11 +2692,11 @@ public enum Components {
                 self.value1 = value1
                 self.value2 = value2
             }
-            public init(from decoder: any Decoder) throws {
+            public init(from decoder: any Swift.Decoder) throws {
                 self.value1 = try .init(from: decoder)
                 self.value2 = try .init(from: decoder)
             }
-            public func encode(to encoder: any Encoder) throws {
+            public func encode(to encoder: any Swift.Encoder) throws {
                 try self.value1.encode(to: encoder)
                 try self.value2.encode(to: encoder)
             }
@@ -2817,8 +3015,8 @@ public enum Components {
                 self.value1 = value1
                 self.value2 = value2
             }
-            public init(from decoder: any Decoder) throws {
-                var errors: [any Error] = []
+            public init(from decoder: any Swift.Decoder) throws {
+                var errors: [any Swift.Error] = []
                 do {
                     self.value1 = try .init(from: decoder)
                 } catch {
@@ -2839,7 +3037,7 @@ public enum Components {
                     errors: errors
                 )
             }
-            public func encode(to encoder: any Encoder) throws {
+            public func encode(to encoder: any Swift.Encoder) throws {
                 try self.value1?.encode(to: encoder)
                 try self.value2?.encode(to: encoder)
             }
@@ -3121,8 +3319,8 @@ public enum Components {
                 self.value1 = value1
                 self.value2 = value2
             }
-            public init(from decoder: any Decoder) throws {
-                var errors: [any Error] = []
+            public init(from decoder: any Swift.Decoder) throws {
+                var errors: [any Swift.Error] = []
                 do {
                     self.value1 = try .init(from: decoder)
                 } catch {
@@ -3143,7 +3341,7 @@ public enum Components {
                     errors: errors
                 )
             }
-            public func encode(to encoder: any Encoder) throws {
+            public func encode(to encoder: any Swift.Encoder) throws {
                 try self.value1?.encode(to: encoder)
                 try self.value2?.encode(to: encoder)
             }
@@ -3175,6 +3373,7 @@ public enum Components {
                 /// - Remark: Generated from `#/components/schemas/ImageGenTool/model/value2`.
                 @frozen public enum Value2Payload: String, Codable, Hashable, Sendable, CaseIterable {
                     case gptImage1 = "gpt-image-1"
+                    case gptImage2 = "gpt-image-2"
                     case gptImage1Mini = "gpt-image-1-mini"
                     case gptImage1_5 = "gpt-image-1.5"
                 }
@@ -3195,8 +3394,8 @@ public enum Components {
                     self.value1 = value1
                     self.value2 = value2
                 }
-                public init(from decoder: any Decoder) throws {
-                    var errors: [any Error] = []
+                public init(from decoder: any Swift.Decoder) throws {
+                    var errors: [any Swift.Error] = []
                     do {
                         self.value1 = try decoder.decodeFromSingleValueContainer()
                     } catch {
@@ -3217,7 +3416,7 @@ public enum Components {
                         errors: errors
                     )
                 }
-                public func encode(to encoder: any Encoder) throws {
+                public func encode(to encoder: any Swift.Encoder) throws {
                     try encoder.encodeFirstNonNilValueToSingleValueContainer([
                         self.value1,
                         self.value2
@@ -3342,7 +3541,7 @@ public enum Components {
                     case imageUrl = "image_url"
                     case fileId = "file_id"
                 }
-                public init(from decoder: any Decoder) throws {
+                public init(from decoder: any Swift.Decoder) throws {
                     let container = try decoder.container(keyedBy: CodingKeys.self)
                     self.imageUrl = try container.decodeIfPresent(
                         Swift.String.self,
@@ -3526,8 +3725,8 @@ public enum Components {
                 self.value1 = value1
                 self.value2 = value2
             }
-            public init(from decoder: any Decoder) throws {
-                var errors: [any Error] = []
+            public init(from decoder: any Swift.Decoder) throws {
+                var errors: [any Swift.Error] = []
                 do {
                     self.value1 = try .init(from: decoder)
                 } catch {
@@ -3548,7 +3747,7 @@ public enum Components {
                     errors: errors
                 )
             }
-            public func encode(to encoder: any Encoder) throws {
+            public func encode(to encoder: any Swift.Encoder) throws {
                 try self.value1?.encode(to: encoder)
                 try self.value2?.encode(to: encoder)
             }
@@ -3738,18 +3937,18 @@ public enum Components {
             public enum CodingKeys: String, CodingKey {
                 case _type = "type"
             }
-            public init(from decoder: any Decoder) throws {
+            public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
                 let discriminator = try container.decode(
                     Swift.String.self,
                     forKey: ._type
                 )
                 switch discriminator {
-                case "InputTextContent", "#/components/schemas/InputTextContent":
+                case "input_text", "InputTextContent", "#/components/schemas/InputTextContent":
                     self = .inputTextContent(try .init(from: decoder))
-                case "InputImageContent", "#/components/schemas/InputImageContent":
+                case "input_image", "InputImageContent", "#/components/schemas/InputImageContent":
                     self = .inputImageContent(try .init(from: decoder))
-                case "InputFileContent", "#/components/schemas/InputFileContent":
+                case "input_file", "InputFileContent", "#/components/schemas/InputFileContent":
                     self = .inputFileContent(try .init(from: decoder))
                 default:
                     throw Swift.DecodingError.unknownOneOfDiscriminator(
@@ -3759,7 +3958,7 @@ public enum Components {
                     )
                 }
             }
-            public func encode(to encoder: any Encoder) throws {
+            public func encode(to encoder: any Swift.Encoder) throws {
                 switch self {
                 case let .inputTextContent(value):
                     try value.encode(to: encoder)
@@ -3781,7 +3980,7 @@ public enum Components {
             public enum CodingKeys: String, CodingKey {
                 case _type = "type"
             }
-            public init(from decoder: any Decoder) throws {
+            public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
                 let discriminator = try container.decode(
                     Swift.String.self,
@@ -3802,7 +4001,7 @@ public enum Components {
                     )
                 }
             }
-            public func encode(to encoder: any Encoder) throws {
+            public func encode(to encoder: any Swift.Encoder) throws {
                 switch self {
                 case let .easyInputMessage(value):
                     try value.encode(to: encoder)
@@ -3931,11 +4130,11 @@ public enum Components {
                 self.value1 = value1
                 self.value2 = value2
             }
-            public init(from decoder: any Decoder) throws {
+            public init(from decoder: any Swift.Decoder) throws {
                 self.value1 = try .init(from: decoder)
                 self.value2 = try .init(from: decoder)
             }
-            public func encode(to encoder: any Encoder) throws {
+            public func encode(to encoder: any Swift.Encoder) throws {
                 try self.value1.encode(to: encoder)
                 try self.value2.encode(to: encoder)
             }
@@ -3964,8 +4163,8 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/InputParam/case2`.
             case case2([Components.Schemas.InputItem])
-            public init(from decoder: any Decoder) throws {
-                var errors: [any Error] = []
+            public init(from decoder: any Swift.Decoder) throws {
+                var errors: [any Swift.Error] = []
                 do {
                     self = .case1(try decoder.decodeFromSingleValueContainer())
                     return
@@ -3984,7 +4183,7 @@ public enum Components {
                     errors: errors
                 )
             }
-            public func encode(to encoder: any Encoder) throws {
+            public func encode(to encoder: any Swift.Encoder) throws {
                 switch self {
                 case let .case1(value):
                     try encoder.encodeToSingleValueContainer(value)
@@ -4053,64 +4252,70 @@ public enum Components {
             public enum CodingKeys: String, CodingKey {
                 case _type = "type"
             }
-            public init(from decoder: any Decoder) throws {
+            public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
                 let discriminator = try container.decode(
                     Swift.String.self,
                     forKey: ._type
                 )
                 switch discriminator {
+                case "message":
+                    do {
+                        self = .inputMessage(try .init(from: decoder))
+                    } catch {
+                        self = .outputMessage(try .init(from: decoder))
+                    }
                 case "InputMessage", "#/components/schemas/InputMessage":
                     self = .inputMessage(try .init(from: decoder))
                 case "OutputMessage", "#/components/schemas/OutputMessage":
                     self = .outputMessage(try .init(from: decoder))
-                case "FileSearchToolCall", "#/components/schemas/FileSearchToolCall":
+                case "file_search_call", "FileSearchToolCall", "#/components/schemas/FileSearchToolCall":
                     self = .fileSearchToolCall(try .init(from: decoder))
-                case "ComputerToolCall", "#/components/schemas/ComputerToolCall":
+                case "computer_call", "ComputerToolCall", "#/components/schemas/ComputerToolCall":
                     self = .computerToolCall(try .init(from: decoder))
-                case "ComputerCallOutputItemParam", "#/components/schemas/ComputerCallOutputItemParam":
+                case "computer_call_output", "ComputerCallOutputItemParam", "#/components/schemas/ComputerCallOutputItemParam":
                     self = .computerCallOutputItemParam(try .init(from: decoder))
-                case "WebSearchToolCall", "#/components/schemas/WebSearchToolCall":
+                case "web_search_call", "WebSearchToolCall", "#/components/schemas/WebSearchToolCall":
                     self = .webSearchToolCall(try .init(from: decoder))
-                case "FunctionToolCall", "#/components/schemas/FunctionToolCall":
+                case "function_call", "FunctionToolCall", "#/components/schemas/FunctionToolCall":
                     self = .functionToolCall(try .init(from: decoder))
-                case "FunctionCallOutputItemParam", "#/components/schemas/FunctionCallOutputItemParam":
+                case "function_call_output", "FunctionCallOutputItemParam", "#/components/schemas/FunctionCallOutputItemParam":
                     self = .functionCallOutputItemParam(try .init(from: decoder))
-                case "ToolSearchCallItemParam", "#/components/schemas/ToolSearchCallItemParam":
+                case "tool_search_call", "ToolSearchCallItemParam", "#/components/schemas/ToolSearchCallItemParam":
                     self = .toolSearchCallItemParam(try .init(from: decoder))
-                case "ToolSearchOutputItemParam", "#/components/schemas/ToolSearchOutputItemParam":
+                case "tool_search_output", "ToolSearchOutputItemParam", "#/components/schemas/ToolSearchOutputItemParam":
                     self = .toolSearchOutputItemParam(try .init(from: decoder))
-                case "ReasoningItem", "#/components/schemas/ReasoningItem":
+                case "reasoning", "ReasoningItem", "#/components/schemas/ReasoningItem":
                     self = .reasoningItem(try .init(from: decoder))
-                case "CompactionSummaryItemParam", "#/components/schemas/CompactionSummaryItemParam":
+                case "compaction", "CompactionSummaryItemParam", "#/components/schemas/CompactionSummaryItemParam":
                     self = .compactionSummaryItemParam(try .init(from: decoder))
-                case "ImageGenToolCall", "#/components/schemas/ImageGenToolCall":
+                case "image_generation_call", "ImageGenToolCall", "#/components/schemas/ImageGenToolCall":
                     self = .imageGenToolCall(try .init(from: decoder))
-                case "CodeInterpreterToolCall", "#/components/schemas/CodeInterpreterToolCall":
+                case "code_interpreter_call", "CodeInterpreterToolCall", "#/components/schemas/CodeInterpreterToolCall":
                     self = .codeInterpreterToolCall(try .init(from: decoder))
-                case "LocalShellToolCall", "#/components/schemas/LocalShellToolCall":
+                case "local_shell_call", "LocalShellToolCall", "#/components/schemas/LocalShellToolCall":
                     self = .localShellToolCall(try .init(from: decoder))
-                case "LocalShellToolCallOutput", "#/components/schemas/LocalShellToolCallOutput":
+                case "local_shell_call_output", "LocalShellToolCallOutput", "#/components/schemas/LocalShellToolCallOutput":
                     self = .localShellToolCallOutput(try .init(from: decoder))
-                case "FunctionShellCallItemParam", "#/components/schemas/FunctionShellCallItemParam":
+                case "shell_call", "FunctionShellCallItemParam", "#/components/schemas/FunctionShellCallItemParam":
                     self = .functionShellCallItemParam(try .init(from: decoder))
-                case "FunctionShellCallOutputItemParam", "#/components/schemas/FunctionShellCallOutputItemParam":
+                case "shell_call_output", "FunctionShellCallOutputItemParam", "#/components/schemas/FunctionShellCallOutputItemParam":
                     self = .functionShellCallOutputItemParam(try .init(from: decoder))
-                case "ApplyPatchToolCallItemParam", "#/components/schemas/ApplyPatchToolCallItemParam":
+                case "apply_patch_call", "ApplyPatchToolCallItemParam", "#/components/schemas/ApplyPatchToolCallItemParam":
                     self = .applyPatchToolCallItemParam(try .init(from: decoder))
-                case "ApplyPatchToolCallOutputItemParam", "#/components/schemas/ApplyPatchToolCallOutputItemParam":
+                case "apply_patch_call_output", "ApplyPatchToolCallOutputItemParam", "#/components/schemas/ApplyPatchToolCallOutputItemParam":
                     self = .applyPatchToolCallOutputItemParam(try .init(from: decoder))
-                case "MCPListTools", "#/components/schemas/MCPListTools":
+                case "mcp_list_tools", "MCPListTools", "#/components/schemas/MCPListTools":
                     self = .mcpListTools(try .init(from: decoder))
-                case "MCPApprovalRequest", "#/components/schemas/MCPApprovalRequest":
+                case "mcp_approval_request", "MCPApprovalRequest", "#/components/schemas/MCPApprovalRequest":
                     self = .mcpApprovalRequest(try .init(from: decoder))
-                case "MCPApprovalResponse", "#/components/schemas/MCPApprovalResponse":
+                case "mcp_approval_response", "MCPApprovalResponse", "#/components/schemas/MCPApprovalResponse":
                     self = .mcpApprovalResponse(try .init(from: decoder))
-                case "MCPToolCall", "#/components/schemas/MCPToolCall":
+                case "mcp_call", "MCPToolCall", "#/components/schemas/MCPToolCall":
                     self = .mcpToolCall(try .init(from: decoder))
-                case "CustomToolCallOutput", "#/components/schemas/CustomToolCallOutput":
+                case "custom_tool_call_output", "CustomToolCallOutput", "#/components/schemas/CustomToolCallOutput":
                     self = .customToolCallOutput(try .init(from: decoder))
-                case "CustomToolCall", "#/components/schemas/CustomToolCall":
+                case "custom_tool_call", "CustomToolCall", "#/components/schemas/CustomToolCall":
                     self = .customToolCall(try .init(from: decoder))
                 default:
                     throw Swift.DecodingError.unknownOneOfDiscriminator(
@@ -4120,7 +4325,7 @@ public enum Components {
                     )
                 }
             }
-            public func encode(to encoder: any Encoder) throws {
+            public func encode(to encoder: any Swift.Encoder) throws {
                 switch self {
                 case let .inputMessage(value):
                     try value.encode(to: encoder)
@@ -4202,6 +4407,10 @@ public enum Components {
             case toolSearchCall(Components.Schemas.ToolSearchCall)
             /// - Remark: Generated from `#/components/schemas/ItemResource/ToolSearchOutput`.
             case toolSearchOutput(Components.Schemas.ToolSearchOutput)
+            /// - Remark: Generated from `#/components/schemas/ItemResource/ReasoningItem`.
+            case reasoningItem(Components.Schemas.ReasoningItem)
+            /// - Remark: Generated from `#/components/schemas/ItemResource/CompactionBody`.
+            case compactionBody(Components.Schemas.CompactionBody)
             /// - Remark: Generated from `#/components/schemas/ItemResource/ImageGenToolCall`.
             case imageGenToolCall(Components.Schemas.ImageGenToolCall)
             /// - Remark: Generated from `#/components/schemas/ItemResource/CodeInterpreterToolCall`.
@@ -4226,60 +4435,78 @@ public enum Components {
             case mcpApprovalResponseResource(Components.Schemas.MCPApprovalResponseResource)
             /// - Remark: Generated from `#/components/schemas/ItemResource/MCPToolCall`.
             case mcpToolCall(Components.Schemas.MCPToolCall)
+            /// - Remark: Generated from `#/components/schemas/ItemResource/CustomToolCallResource`.
+            case customToolCallResource(Components.Schemas.CustomToolCallResource)
+            /// - Remark: Generated from `#/components/schemas/ItemResource/CustomToolCallOutputResource`.
+            case customToolCallOutputResource(Components.Schemas.CustomToolCallOutputResource)
             public enum CodingKeys: String, CodingKey {
                 case _type = "type"
             }
-            public init(from decoder: any Decoder) throws {
+            public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
                 let discriminator = try container.decode(
                     Swift.String.self,
                     forKey: ._type
                 )
                 switch discriminator {
+                case "message":
+                    do {
+                        self = .inputMessageResource(try .init(from: decoder))
+                    } catch {
+                        self = .outputMessage(try .init(from: decoder))
+                    }
                 case "InputMessageResource", "#/components/schemas/InputMessageResource":
                     self = .inputMessageResource(try .init(from: decoder))
                 case "OutputMessage", "#/components/schemas/OutputMessage":
                     self = .outputMessage(try .init(from: decoder))
-                case "FileSearchToolCall", "#/components/schemas/FileSearchToolCall":
+                case "file_search_call", "FileSearchToolCall", "#/components/schemas/FileSearchToolCall":
                     self = .fileSearchToolCall(try .init(from: decoder))
-                case "ComputerToolCall", "#/components/schemas/ComputerToolCall":
+                case "computer_call", "ComputerToolCall", "#/components/schemas/ComputerToolCall":
                     self = .computerToolCall(try .init(from: decoder))
-                case "ComputerToolCallOutputResource", "#/components/schemas/ComputerToolCallOutputResource":
+                case "computer_call_output", "ComputerToolCallOutputResource", "#/components/schemas/ComputerToolCallOutputResource":
                     self = .computerToolCallOutputResource(try .init(from: decoder))
-                case "WebSearchToolCall", "#/components/schemas/WebSearchToolCall":
+                case "web_search_call", "WebSearchToolCall", "#/components/schemas/WebSearchToolCall":
                     self = .webSearchToolCall(try .init(from: decoder))
-                case "FunctionToolCallResource", "#/components/schemas/FunctionToolCallResource":
+                case "function_call", "FunctionToolCallResource", "#/components/schemas/FunctionToolCallResource":
                     self = .functionToolCallResource(try .init(from: decoder))
-                case "FunctionToolCallOutputResource", "#/components/schemas/FunctionToolCallOutputResource":
+                case "function_call_output", "FunctionToolCallOutputResource", "#/components/schemas/FunctionToolCallOutputResource":
                     self = .functionToolCallOutputResource(try .init(from: decoder))
-                case "ToolSearchCall", "#/components/schemas/ToolSearchCall":
+                case "tool_search_call", "ToolSearchCall", "#/components/schemas/ToolSearchCall":
                     self = .toolSearchCall(try .init(from: decoder))
-                case "ToolSearchOutput", "#/components/schemas/ToolSearchOutput":
+                case "tool_search_output", "ToolSearchOutput", "#/components/schemas/ToolSearchOutput":
                     self = .toolSearchOutput(try .init(from: decoder))
-                case "ImageGenToolCall", "#/components/schemas/ImageGenToolCall":
+                case "reasoning", "ReasoningItem", "#/components/schemas/ReasoningItem":
+                    self = .reasoningItem(try .init(from: decoder))
+                case "compaction", "CompactionBody", "#/components/schemas/CompactionBody":
+                    self = .compactionBody(try .init(from: decoder))
+                case "image_generation_call", "ImageGenToolCall", "#/components/schemas/ImageGenToolCall":
                     self = .imageGenToolCall(try .init(from: decoder))
-                case "CodeInterpreterToolCall", "#/components/schemas/CodeInterpreterToolCall":
+                case "code_interpreter_call", "CodeInterpreterToolCall", "#/components/schemas/CodeInterpreterToolCall":
                     self = .codeInterpreterToolCall(try .init(from: decoder))
-                case "LocalShellToolCall", "#/components/schemas/LocalShellToolCall":
+                case "local_shell_call", "LocalShellToolCall", "#/components/schemas/LocalShellToolCall":
                     self = .localShellToolCall(try .init(from: decoder))
-                case "LocalShellToolCallOutput", "#/components/schemas/LocalShellToolCallOutput":
+                case "local_shell_call_output", "LocalShellToolCallOutput", "#/components/schemas/LocalShellToolCallOutput":
                     self = .localShellToolCallOutput(try .init(from: decoder))
-                case "FunctionShellCall", "#/components/schemas/FunctionShellCall":
+                case "shell_call", "FunctionShellCall", "#/components/schemas/FunctionShellCall":
                     self = .functionShellCall(try .init(from: decoder))
-                case "FunctionShellCallOutput", "#/components/schemas/FunctionShellCallOutput":
+                case "shell_call_output", "FunctionShellCallOutput", "#/components/schemas/FunctionShellCallOutput":
                     self = .functionShellCallOutput(try .init(from: decoder))
-                case "ApplyPatchToolCall", "#/components/schemas/ApplyPatchToolCall":
+                case "apply_patch_call", "ApplyPatchToolCall", "#/components/schemas/ApplyPatchToolCall":
                     self = .applyPatchToolCall(try .init(from: decoder))
-                case "ApplyPatchToolCallOutput", "#/components/schemas/ApplyPatchToolCallOutput":
+                case "apply_patch_call_output", "ApplyPatchToolCallOutput", "#/components/schemas/ApplyPatchToolCallOutput":
                     self = .applyPatchToolCallOutput(try .init(from: decoder))
-                case "MCPListTools", "#/components/schemas/MCPListTools":
+                case "mcp_list_tools", "MCPListTools", "#/components/schemas/MCPListTools":
                     self = .mcpListTools(try .init(from: decoder))
-                case "MCPApprovalRequest", "#/components/schemas/MCPApprovalRequest":
+                case "mcp_approval_request", "MCPApprovalRequest", "#/components/schemas/MCPApprovalRequest":
                     self = .mcpApprovalRequest(try .init(from: decoder))
-                case "MCPApprovalResponseResource", "#/components/schemas/MCPApprovalResponseResource":
+                case "mcp_approval_response", "MCPApprovalResponseResource", "#/components/schemas/MCPApprovalResponseResource":
                     self = .mcpApprovalResponseResource(try .init(from: decoder))
-                case "MCPToolCall", "#/components/schemas/MCPToolCall":
+                case "mcp_call", "MCPToolCall", "#/components/schemas/MCPToolCall":
                     self = .mcpToolCall(try .init(from: decoder))
+                case "custom_tool_call", "CustomToolCallResource", "#/components/schemas/CustomToolCallResource":
+                    self = .customToolCallResource(try .init(from: decoder))
+                case "custom_tool_call_output", "CustomToolCallOutputResource", "#/components/schemas/CustomToolCallOutputResource":
+                    self = .customToolCallOutputResource(try .init(from: decoder))
                 default:
                     throw Swift.DecodingError.unknownOneOfDiscriminator(
                         discriminatorKey: CodingKeys._type,
@@ -4288,7 +4515,7 @@ public enum Components {
                     )
                 }
             }
-            public func encode(to encoder: any Encoder) throws {
+            public func encode(to encoder: any Swift.Encoder) throws {
                 switch self {
                 case let .inputMessageResource(value):
                     try value.encode(to: encoder)
@@ -4309,6 +4536,10 @@ public enum Components {
                 case let .toolSearchCall(value):
                     try value.encode(to: encoder)
                 case let .toolSearchOutput(value):
+                    try value.encode(to: encoder)
+                case let .reasoningItem(value):
+                    try value.encode(to: encoder)
+                case let .compactionBody(value):
                     try value.encode(to: encoder)
                 case let .imageGenToolCall(value):
                     try value.encode(to: encoder)
@@ -4333,6 +4564,10 @@ public enum Components {
                 case let .mcpApprovalResponseResource(value):
                     try value.encode(to: encoder)
                 case let .mcpToolCall(value):
+                    try value.encode(to: encoder)
+                case let .customToolCallResource(value):
+                    try value.encode(to: encoder)
+                case let .customToolCallOutputResource(value):
                     try value.encode(to: encoder)
                 }
             }
@@ -4950,7 +5185,7 @@ public enum Components {
                 case toolNames = "tool_names"
                 case readOnly = "read_only"
             }
-            public init(from decoder: any Decoder) throws {
+            public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
                 self.toolNames = try container.decodeIfPresent(
                     [Swift.String].self,
@@ -5011,8 +5246,8 @@ public enum Components {
                 self.value1 = value1
                 self.value2 = value2
             }
-            public init(from decoder: any Decoder) throws {
-                var errors: [any Error] = []
+            public init(from decoder: any Swift.Decoder) throws {
+                var errors: [any Swift.Error] = []
                 do {
                     self.value1 = try decoder.decodeFromSingleValueContainer()
                 } catch {
@@ -5033,7 +5268,7 @@ public enum Components {
                     errors: errors
                 )
             }
-            public func encode(to encoder: any Encoder) throws {
+            public func encode(to encoder: any Swift.Encoder) throws {
                 try encoder.encodeFirstNonNilValueToSingleValueContainer([
                     self.value1,
                     self.value2
@@ -5047,6 +5282,11 @@ public enum Components {
             /// - Remark: Generated from `#/components/schemas/ModelIdsShared/value2`.
             @frozen public enum Value2Payload: String, Codable, Hashable, Sendable, CaseIterable {
                 case gpt5_4 = "gpt-5.4"
+                case gpt5_5 = "gpt-5.5"
+                case gpt5_4Mini = "gpt-5.4-mini"
+                case gpt5_4Nano = "gpt-5.4-nano"
+                case gpt5_4Mini20260317 = "gpt-5.4-mini-2026-03-17"
+                case gpt5_4Nano20260317 = "gpt-5.4-nano-2026-03-17"
                 case gpt5_3ChatLatest = "gpt-5.3-chat-latest"
                 case gpt5_2 = "gpt-5.2"
                 case gpt5_220251211 = "gpt-5.2-2025-12-11"
@@ -5135,8 +5375,8 @@ public enum Components {
                 self.value1 = value1
                 self.value2 = value2
             }
-            public init(from decoder: any Decoder) throws {
-                var errors: [any Error] = []
+            public init(from decoder: any Swift.Decoder) throws {
+                var errors: [any Swift.Error] = []
                 do {
                     self.value1 = try decoder.decodeFromSingleValueContainer()
                 } catch {
@@ -5157,7 +5397,7 @@ public enum Components {
                     errors: errors
                 )
             }
-            public func encode(to encoder: any Encoder) throws {
+            public func encode(to encoder: any Swift.Encoder) throws {
                 try encoder.encodeFirstNonNilValueToSingleValueContainer([
                     self.value1,
                     self.value2
@@ -5217,7 +5457,7 @@ public enum Components {
             public enum CodingKeys: String, CodingKey {
                 case _type = "type"
             }
-            public init(from decoder: any Decoder) throws {
+            public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
                 let discriminator = try container.decode(
                     Swift.String.self,
@@ -5238,7 +5478,7 @@ public enum Components {
                     )
                 }
             }
-            public func encode(to encoder: any Encoder) throws {
+            public func encode(to encoder: any Swift.Encoder) throws {
                 switch self {
                 case let .outputTextContent(value):
                     try value.encode(to: encoder)
@@ -5250,264 +5490,178 @@ public enum Components {
             }
         }
         /// - Remark: Generated from `#/components/schemas/OutputItem`.
-        public struct OutputItem: Codable, Hashable, Sendable {
-            /// - Remark: Generated from `#/components/schemas/OutputItem/value1`.
-            public var value1: Components.Schemas.OutputMessage?
-            /// - Remark: Generated from `#/components/schemas/OutputItem/value2`.
-            public var value2: Components.Schemas.FileSearchToolCall?
-            /// - Remark: Generated from `#/components/schemas/OutputItem/value3`.
-            public var value3: Components.Schemas.FunctionToolCall?
-            /// - Remark: Generated from `#/components/schemas/OutputItem/value4`.
-            public var value4: Components.Schemas.WebSearchToolCall?
-            /// - Remark: Generated from `#/components/schemas/OutputItem/value5`.
-            public var value5: Components.Schemas.ComputerToolCall?
-            /// - Remark: Generated from `#/components/schemas/OutputItem/value6`.
-            public var value6: Components.Schemas.ReasoningItem?
-            /// - Remark: Generated from `#/components/schemas/OutputItem/value7`.
-            public var value7: Components.Schemas.ToolSearchCall?
-            /// - Remark: Generated from `#/components/schemas/OutputItem/value8`.
-            public var value8: Components.Schemas.ToolSearchOutput?
-            /// - Remark: Generated from `#/components/schemas/OutputItem/value9`.
-            public var value9: Components.Schemas.CompactionBody?
-            /// - Remark: Generated from `#/components/schemas/OutputItem/value10`.
-            public var value10: Components.Schemas.ImageGenToolCall?
-            /// - Remark: Generated from `#/components/schemas/OutputItem/value11`.
-            public var value11: Components.Schemas.CodeInterpreterToolCall?
-            /// - Remark: Generated from `#/components/schemas/OutputItem/value12`.
-            public var value12: Components.Schemas.LocalShellToolCall?
-            /// - Remark: Generated from `#/components/schemas/OutputItem/value13`.
-            public var value13: Components.Schemas.FunctionShellCall?
-            /// - Remark: Generated from `#/components/schemas/OutputItem/value14`.
-            public var value14: Components.Schemas.FunctionShellCallOutput?
-            /// - Remark: Generated from `#/components/schemas/OutputItem/value15`.
-            public var value15: Components.Schemas.ApplyPatchToolCall?
-            /// - Remark: Generated from `#/components/schemas/OutputItem/value16`.
-            public var value16: Components.Schemas.ApplyPatchToolCallOutput?
-            /// - Remark: Generated from `#/components/schemas/OutputItem/value17`.
-            public var value17: Components.Schemas.MCPToolCall?
-            /// - Remark: Generated from `#/components/schemas/OutputItem/value18`.
-            public var value18: Components.Schemas.MCPListTools?
-            /// - Remark: Generated from `#/components/schemas/OutputItem/value19`.
-            public var value19: Components.Schemas.MCPApprovalRequest?
-            /// - Remark: Generated from `#/components/schemas/OutputItem/value20`.
-            public var value20: Components.Schemas.CustomToolCall?
-            /// Creates a new `OutputItem`.
-            ///
-            /// - Parameters:
-            ///   - value1:
-            ///   - value2:
-            ///   - value3:
-            ///   - value4:
-            ///   - value5:
-            ///   - value6:
-            ///   - value7:
-            ///   - value8:
-            ///   - value9:
-            ///   - value10:
-            ///   - value11:
-            ///   - value12:
-            ///   - value13:
-            ///   - value14:
-            ///   - value15:
-            ///   - value16:
-            ///   - value17:
-            ///   - value18:
-            ///   - value19:
-            ///   - value20:
-            public init(
-                value1: Components.Schemas.OutputMessage? = nil,
-                value2: Components.Schemas.FileSearchToolCall? = nil,
-                value3: Components.Schemas.FunctionToolCall? = nil,
-                value4: Components.Schemas.WebSearchToolCall? = nil,
-                value5: Components.Schemas.ComputerToolCall? = nil,
-                value6: Components.Schemas.ReasoningItem? = nil,
-                value7: Components.Schemas.ToolSearchCall? = nil,
-                value8: Components.Schemas.ToolSearchOutput? = nil,
-                value9: Components.Schemas.CompactionBody? = nil,
-                value10: Components.Schemas.ImageGenToolCall? = nil,
-                value11: Components.Schemas.CodeInterpreterToolCall? = nil,
-                value12: Components.Schemas.LocalShellToolCall? = nil,
-                value13: Components.Schemas.FunctionShellCall? = nil,
-                value14: Components.Schemas.FunctionShellCallOutput? = nil,
-                value15: Components.Schemas.ApplyPatchToolCall? = nil,
-                value16: Components.Schemas.ApplyPatchToolCallOutput? = nil,
-                value17: Components.Schemas.MCPToolCall? = nil,
-                value18: Components.Schemas.MCPListTools? = nil,
-                value19: Components.Schemas.MCPApprovalRequest? = nil,
-                value20: Components.Schemas.CustomToolCall? = nil
-            ) {
-                self.value1 = value1
-                self.value2 = value2
-                self.value3 = value3
-                self.value4 = value4
-                self.value5 = value5
-                self.value6 = value6
-                self.value7 = value7
-                self.value8 = value8
-                self.value9 = value9
-                self.value10 = value10
-                self.value11 = value11
-                self.value12 = value12
-                self.value13 = value13
-                self.value14 = value14
-                self.value15 = value15
-                self.value16 = value16
-                self.value17 = value17
-                self.value18 = value18
-                self.value19 = value19
-                self.value20 = value20
+        @frozen public enum OutputItem: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/OutputItem/OutputMessage`.
+            case outputMessage(Components.Schemas.OutputMessage)
+            /// - Remark: Generated from `#/components/schemas/OutputItem/FileSearchToolCall`.
+            case fileSearchToolCall(Components.Schemas.FileSearchToolCall)
+            /// - Remark: Generated from `#/components/schemas/OutputItem/FunctionToolCall`.
+            case functionToolCall(Components.Schemas.FunctionToolCall)
+            /// - Remark: Generated from `#/components/schemas/OutputItem/FunctionToolCallOutputResource`.
+            case functionToolCallOutputResource(Components.Schemas.FunctionToolCallOutputResource)
+            /// - Remark: Generated from `#/components/schemas/OutputItem/WebSearchToolCall`.
+            case webSearchToolCall(Components.Schemas.WebSearchToolCall)
+            /// - Remark: Generated from `#/components/schemas/OutputItem/ComputerToolCall`.
+            case computerToolCall(Components.Schemas.ComputerToolCall)
+            /// - Remark: Generated from `#/components/schemas/OutputItem/ComputerToolCallOutputResource`.
+            case computerToolCallOutputResource(Components.Schemas.ComputerToolCallOutputResource)
+            /// - Remark: Generated from `#/components/schemas/OutputItem/ReasoningItem`.
+            case reasoningItem(Components.Schemas.ReasoningItem)
+            /// - Remark: Generated from `#/components/schemas/OutputItem/ToolSearchCall`.
+            case toolSearchCall(Components.Schemas.ToolSearchCall)
+            /// - Remark: Generated from `#/components/schemas/OutputItem/ToolSearchOutput`.
+            case toolSearchOutput(Components.Schemas.ToolSearchOutput)
+            /// - Remark: Generated from `#/components/schemas/OutputItem/CompactionBody`.
+            case compactionBody(Components.Schemas.CompactionBody)
+            /// - Remark: Generated from `#/components/schemas/OutputItem/ImageGenToolCall`.
+            case imageGenToolCall(Components.Schemas.ImageGenToolCall)
+            /// - Remark: Generated from `#/components/schemas/OutputItem/CodeInterpreterToolCall`.
+            case codeInterpreterToolCall(Components.Schemas.CodeInterpreterToolCall)
+            /// - Remark: Generated from `#/components/schemas/OutputItem/LocalShellToolCall`.
+            case localShellToolCall(Components.Schemas.LocalShellToolCall)
+            /// - Remark: Generated from `#/components/schemas/OutputItem/LocalShellToolCallOutput`.
+            case localShellToolCallOutput(Components.Schemas.LocalShellToolCallOutput)
+            /// - Remark: Generated from `#/components/schemas/OutputItem/FunctionShellCall`.
+            case functionShellCall(Components.Schemas.FunctionShellCall)
+            /// - Remark: Generated from `#/components/schemas/OutputItem/FunctionShellCallOutput`.
+            case functionShellCallOutput(Components.Schemas.FunctionShellCallOutput)
+            /// - Remark: Generated from `#/components/schemas/OutputItem/ApplyPatchToolCall`.
+            case applyPatchToolCall(Components.Schemas.ApplyPatchToolCall)
+            /// - Remark: Generated from `#/components/schemas/OutputItem/ApplyPatchToolCallOutput`.
+            case applyPatchToolCallOutput(Components.Schemas.ApplyPatchToolCallOutput)
+            /// - Remark: Generated from `#/components/schemas/OutputItem/MCPToolCall`.
+            case mcpToolCall(Components.Schemas.MCPToolCall)
+            /// - Remark: Generated from `#/components/schemas/OutputItem/MCPListTools`.
+            case mcpListTools(Components.Schemas.MCPListTools)
+            /// - Remark: Generated from `#/components/schemas/OutputItem/MCPApprovalRequest`.
+            case mcpApprovalRequest(Components.Schemas.MCPApprovalRequest)
+            /// - Remark: Generated from `#/components/schemas/OutputItem/MCPApprovalResponseResource`.
+            case mcpApprovalResponseResource(Components.Schemas.MCPApprovalResponseResource)
+            /// - Remark: Generated from `#/components/schemas/OutputItem/CustomToolCall`.
+            case customToolCall(Components.Schemas.CustomToolCall)
+            /// - Remark: Generated from `#/components/schemas/OutputItem/CustomToolCallOutputResource`.
+            case customToolCallOutputResource(Components.Schemas.CustomToolCallOutputResource)
+            public enum CodingKeys: String, CodingKey {
+                case _type = "type"
             }
-            public init(from decoder: any Decoder) throws {
-                var errors: [any Error] = []
-                do {
-                    self.value1 = try .init(from: decoder)
-                } catch {
-                    errors.append(error)
-                }
-                do {
-                    self.value2 = try .init(from: decoder)
-                } catch {
-                    errors.append(error)
-                }
-                do {
-                    self.value3 = try .init(from: decoder)
-                } catch {
-                    errors.append(error)
-                }
-                do {
-                    self.value4 = try .init(from: decoder)
-                } catch {
-                    errors.append(error)
-                }
-                do {
-                    self.value5 = try .init(from: decoder)
-                } catch {
-                    errors.append(error)
-                }
-                do {
-                    self.value6 = try .init(from: decoder)
-                } catch {
-                    errors.append(error)
-                }
-                do {
-                    self.value7 = try .init(from: decoder)
-                } catch {
-                    errors.append(error)
-                }
-                do {
-                    self.value8 = try .init(from: decoder)
-                } catch {
-                    errors.append(error)
-                }
-                do {
-                    self.value9 = try .init(from: decoder)
-                } catch {
-                    errors.append(error)
-                }
-                do {
-                    self.value10 = try .init(from: decoder)
-                } catch {
-                    errors.append(error)
-                }
-                do {
-                    self.value11 = try .init(from: decoder)
-                } catch {
-                    errors.append(error)
-                }
-                do {
-                    self.value12 = try .init(from: decoder)
-                } catch {
-                    errors.append(error)
-                }
-                do {
-                    self.value13 = try .init(from: decoder)
-                } catch {
-                    errors.append(error)
-                }
-                do {
-                    self.value14 = try .init(from: decoder)
-                } catch {
-                    errors.append(error)
-                }
-                do {
-                    self.value15 = try .init(from: decoder)
-                } catch {
-                    errors.append(error)
-                }
-                do {
-                    self.value16 = try .init(from: decoder)
-                } catch {
-                    errors.append(error)
-                }
-                do {
-                    self.value17 = try .init(from: decoder)
-                } catch {
-                    errors.append(error)
-                }
-                do {
-                    self.value18 = try .init(from: decoder)
-                } catch {
-                    errors.append(error)
-                }
-                do {
-                    self.value19 = try .init(from: decoder)
-                } catch {
-                    errors.append(error)
-                }
-                do {
-                    self.value20 = try .init(from: decoder)
-                } catch {
-                    errors.append(error)
-                }
-                try Swift.DecodingError.verifyAtLeastOneSchemaIsNotNil(
-                    [
-                        self.value1,
-                        self.value2,
-                        self.value3,
-                        self.value4,
-                        self.value5,
-                        self.value6,
-                        self.value7,
-                        self.value8,
-                        self.value9,
-                        self.value10,
-                        self.value11,
-                        self.value12,
-                        self.value13,
-                        self.value14,
-                        self.value15,
-                        self.value16,
-                        self.value17,
-                        self.value18,
-                        self.value19,
-                        self.value20
-                    ],
-                    type: Self.self,
-                    codingPath: decoder.codingPath,
-                    errors: errors
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                let discriminator = try container.decode(
+                    Swift.String.self,
+                    forKey: ._type
                 )
+                switch discriminator {
+                case "message", "OutputMessage", "#/components/schemas/OutputMessage":
+                    self = .outputMessage(try .init(from: decoder))
+                case "file_search_call", "FileSearchToolCall", "#/components/schemas/FileSearchToolCall":
+                    self = .fileSearchToolCall(try .init(from: decoder))
+                case "function_call", "FunctionToolCall", "#/components/schemas/FunctionToolCall":
+                    self = .functionToolCall(try .init(from: decoder))
+                case "function_call_output", "FunctionToolCallOutputResource", "#/components/schemas/FunctionToolCallOutputResource":
+                    self = .functionToolCallOutputResource(try .init(from: decoder))
+                case "web_search_call", "WebSearchToolCall", "#/components/schemas/WebSearchToolCall":
+                    self = .webSearchToolCall(try .init(from: decoder))
+                case "computer_call", "ComputerToolCall", "#/components/schemas/ComputerToolCall":
+                    self = .computerToolCall(try .init(from: decoder))
+                case "computer_call_output", "ComputerToolCallOutputResource", "#/components/schemas/ComputerToolCallOutputResource":
+                    self = .computerToolCallOutputResource(try .init(from: decoder))
+                case "reasoning", "ReasoningItem", "#/components/schemas/ReasoningItem":
+                    self = .reasoningItem(try .init(from: decoder))
+                case "tool_search_call", "ToolSearchCall", "#/components/schemas/ToolSearchCall":
+                    self = .toolSearchCall(try .init(from: decoder))
+                case "tool_search_output", "ToolSearchOutput", "#/components/schemas/ToolSearchOutput":
+                    self = .toolSearchOutput(try .init(from: decoder))
+                case "compaction", "CompactionBody", "#/components/schemas/CompactionBody":
+                    self = .compactionBody(try .init(from: decoder))
+                case "image_generation_call", "ImageGenToolCall", "#/components/schemas/ImageGenToolCall":
+                    self = .imageGenToolCall(try .init(from: decoder))
+                case "code_interpreter_call", "CodeInterpreterToolCall", "#/components/schemas/CodeInterpreterToolCall":
+                    self = .codeInterpreterToolCall(try .init(from: decoder))
+                case "local_shell_call", "LocalShellToolCall", "#/components/schemas/LocalShellToolCall":
+                    self = .localShellToolCall(try .init(from: decoder))
+                case "local_shell_call_output", "LocalShellToolCallOutput", "#/components/schemas/LocalShellToolCallOutput":
+                    self = .localShellToolCallOutput(try .init(from: decoder))
+                case "shell_call", "FunctionShellCall", "#/components/schemas/FunctionShellCall":
+                    self = .functionShellCall(try .init(from: decoder))
+                case "shell_call_output", "FunctionShellCallOutput", "#/components/schemas/FunctionShellCallOutput":
+                    self = .functionShellCallOutput(try .init(from: decoder))
+                case "apply_patch_call", "ApplyPatchToolCall", "#/components/schemas/ApplyPatchToolCall":
+                    self = .applyPatchToolCall(try .init(from: decoder))
+                case "apply_patch_call_output", "ApplyPatchToolCallOutput", "#/components/schemas/ApplyPatchToolCallOutput":
+                    self = .applyPatchToolCallOutput(try .init(from: decoder))
+                case "mcp_call", "MCPToolCall", "#/components/schemas/MCPToolCall":
+                    self = .mcpToolCall(try .init(from: decoder))
+                case "mcp_list_tools", "MCPListTools", "#/components/schemas/MCPListTools":
+                    self = .mcpListTools(try .init(from: decoder))
+                case "mcp_approval_request", "MCPApprovalRequest", "#/components/schemas/MCPApprovalRequest":
+                    self = .mcpApprovalRequest(try .init(from: decoder))
+                case "mcp_approval_response", "MCPApprovalResponseResource", "#/components/schemas/MCPApprovalResponseResource":
+                    self = .mcpApprovalResponseResource(try .init(from: decoder))
+                case "custom_tool_call", "CustomToolCall", "#/components/schemas/CustomToolCall":
+                    self = .customToolCall(try .init(from: decoder))
+                case "custom_tool_call_output", "CustomToolCallOutputResource", "#/components/schemas/CustomToolCallOutputResource":
+                    self = .customToolCallOutputResource(try .init(from: decoder))
+                default:
+                    throw Swift.DecodingError.unknownOneOfDiscriminator(
+                        discriminatorKey: CodingKeys._type,
+                        discriminatorValue: discriminator,
+                        codingPath: decoder.codingPath
+                    )
+                }
             }
-            public func encode(to encoder: any Encoder) throws {
-                try self.value1?.encode(to: encoder)
-                try self.value2?.encode(to: encoder)
-                try self.value3?.encode(to: encoder)
-                try self.value4?.encode(to: encoder)
-                try self.value5?.encode(to: encoder)
-                try self.value6?.encode(to: encoder)
-                try self.value7?.encode(to: encoder)
-                try self.value8?.encode(to: encoder)
-                try self.value9?.encode(to: encoder)
-                try self.value10?.encode(to: encoder)
-                try self.value11?.encode(to: encoder)
-                try self.value12?.encode(to: encoder)
-                try self.value13?.encode(to: encoder)
-                try self.value14?.encode(to: encoder)
-                try self.value15?.encode(to: encoder)
-                try self.value16?.encode(to: encoder)
-                try self.value17?.encode(to: encoder)
-                try self.value18?.encode(to: encoder)
-                try self.value19?.encode(to: encoder)
-                try self.value20?.encode(to: encoder)
+            public func encode(to encoder: any Swift.Encoder) throws {
+                switch self {
+                case let .outputMessage(value):
+                    try value.encode(to: encoder)
+                case let .fileSearchToolCall(value):
+                    try value.encode(to: encoder)
+                case let .functionToolCall(value):
+                    try value.encode(to: encoder)
+                case let .functionToolCallOutputResource(value):
+                    try value.encode(to: encoder)
+                case let .webSearchToolCall(value):
+                    try value.encode(to: encoder)
+                case let .computerToolCall(value):
+                    try value.encode(to: encoder)
+                case let .computerToolCallOutputResource(value):
+                    try value.encode(to: encoder)
+                case let .reasoningItem(value):
+                    try value.encode(to: encoder)
+                case let .toolSearchCall(value):
+                    try value.encode(to: encoder)
+                case let .toolSearchOutput(value):
+                    try value.encode(to: encoder)
+                case let .compactionBody(value):
+                    try value.encode(to: encoder)
+                case let .imageGenToolCall(value):
+                    try value.encode(to: encoder)
+                case let .codeInterpreterToolCall(value):
+                    try value.encode(to: encoder)
+                case let .localShellToolCall(value):
+                    try value.encode(to: encoder)
+                case let .localShellToolCallOutput(value):
+                    try value.encode(to: encoder)
+                case let .functionShellCall(value):
+                    try value.encode(to: encoder)
+                case let .functionShellCallOutput(value):
+                    try value.encode(to: encoder)
+                case let .applyPatchToolCall(value):
+                    try value.encode(to: encoder)
+                case let .applyPatchToolCallOutput(value):
+                    try value.encode(to: encoder)
+                case let .mcpToolCall(value):
+                    try value.encode(to: encoder)
+                case let .mcpListTools(value):
+                    try value.encode(to: encoder)
+                case let .mcpApprovalRequest(value):
+                    try value.encode(to: encoder)
+                case let .mcpApprovalResponseResource(value):
+                    try value.encode(to: encoder)
+                case let .customToolCall(value):
+                    try value.encode(to: encoder)
+                case let .customToolCallOutputResource(value):
+                    try value.encode(to: encoder)
+                }
             }
         }
         /// An output message from the model.
@@ -5603,7 +5757,7 @@ public enum Components {
             public enum CodingKeys: String, CodingKey {
                 case _type = "type"
             }
-            public init(from decoder: any Decoder) throws {
+            public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
                 let discriminator = try container.decode(
                     Swift.String.self,
@@ -5622,7 +5776,7 @@ public enum Components {
                     )
                 }
             }
-            public func encode(to encoder: any Encoder) throws {
+            public func encode(to encoder: any Swift.Encoder) throws {
                 switch self {
                 case let .outputTextContent(value):
                     try value.encode(to: encoder)
@@ -5887,12 +6041,12 @@ public enum Components {
                 self.value2 = value2
                 self.value3 = value3
             }
-            public init(from decoder: any Decoder) throws {
+            public init(from decoder: any Swift.Decoder) throws {
                 self.value1 = try .init(from: decoder)
                 self.value2 = try .init(from: decoder)
                 self.value3 = try .init(from: decoder)
             }
-            public func encode(to encoder: any Encoder) throws {
+            public func encode(to encoder: any Swift.Encoder) throws {
                 try self.value1.encode(to: encoder)
                 try self.value2.encode(to: encoder)
                 try self.value3.encode(to: encoder)
@@ -7022,10 +7176,10 @@ public enum Components {
             public init(additionalProperties: OpenAPIRuntime.OpenAPIObjectContainer = .init()) {
                 self.additionalProperties = additionalProperties
             }
-            public init(from decoder: any Decoder) throws {
+            public init(from decoder: any Swift.Decoder) throws {
                 additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [])
             }
-            public func encode(to encoder: any Encoder) throws {
+            public func encode(to encoder: any Swift.Encoder) throws {
                 try encoder.encodeAdditionalProperties(additionalProperties)
             }
         }
@@ -9305,8 +9459,8 @@ public enum Components {
                 self.value52 = value52
                 self.value53 = value53
             }
-            public init(from decoder: any Decoder) throws {
-                var errors: [any Error] = []
+            public init(from decoder: any Swift.Decoder) throws {
+                var errors: [any Swift.Error] = []
                 do {
                     self.value1 = try .init(from: decoder)
                 } catch {
@@ -9633,7 +9787,7 @@ public enum Components {
                     errors: errors
                 )
             }
-            public func encode(to encoder: any Encoder) throws {
+            public func encode(to encoder: any Swift.Encoder) throws {
                 try self.value1?.encode(to: encoder)
                 try self.value2?.encode(to: encoder)
                 try self.value3?.encode(to: encoder)
@@ -10157,8 +10311,8 @@ public enum Components {
             case TextResponseFormatJsonSchema(Components.Schemas.TextResponseFormatJsonSchema)
             /// - Remark: Generated from `#/components/schemas/TextResponseFormatConfiguration/case3`.
             case ResponseFormatJsonObject(Components.Schemas.ResponseFormatJsonObject)
-            public init(from decoder: any Decoder) throws {
-                var errors: [any Error] = []
+            public init(from decoder: any Swift.Decoder) throws {
+                var errors: [any Swift.Error] = []
                 do {
                     self = .ResponseFormatText(try .init(from: decoder))
                     return
@@ -10183,7 +10337,7 @@ public enum Components {
                     errors: errors
                 )
             }
-            public func encode(to encoder: any Encoder) throws {
+            public func encode(to encoder: any Swift.Encoder) throws {
                 switch self {
                 case let .ResponseFormatText(value):
                     try value.encode(to: encoder)
@@ -10287,7 +10441,7 @@ public enum Components {
             public enum CodingKeys: String, CodingKey {
                 case _type = "type"
             }
-            public init(from decoder: any Decoder) throws {
+            public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
                 let discriminator = try container.decode(
                     Swift.String.self,
@@ -10332,7 +10486,7 @@ public enum Components {
                     )
                 }
             }
-            public func encode(to encoder: any Encoder) throws {
+            public func encode(to encoder: any Swift.Encoder) throws {
                 switch self {
                 case let .functionTool(value):
                     try value.encode(to: encoder)
@@ -10419,10 +10573,10 @@ public enum Components {
                 public init(additionalProperties: OpenAPIRuntime.OpenAPIObjectContainer = .init()) {
                     self.additionalProperties = additionalProperties
                 }
-                public init(from decoder: any Decoder) throws {
+                public init(from decoder: any Swift.Decoder) throws {
                     additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [])
                 }
-                public func encode(to encoder: any Encoder) throws {
+                public func encode(to encoder: any Swift.Encoder) throws {
                     try encoder.encodeAdditionalProperties(additionalProperties)
                 }
             }
@@ -10623,8 +10777,8 @@ public enum Components {
             case SpecificApplyPatchParam(Components.Schemas.SpecificApplyPatchParam)
             /// - Remark: Generated from `#/components/schemas/ToolChoiceParam/case8`.
             case SpecificFunctionShellParam(Components.Schemas.SpecificFunctionShellParam)
-            public init(from decoder: any Decoder) throws {
-                var errors: [any Error] = []
+            public init(from decoder: any Swift.Decoder) throws {
+                var errors: [any Swift.Error] = []
                 do {
                     self = .ToolChoiceOptions(try decoder.decodeFromSingleValueContainer())
                     return
@@ -10679,7 +10833,7 @@ public enum Components {
                     errors: errors
                 )
             }
-            public func encode(to encoder: any Encoder) throws {
+            public func encode(to encoder: any Swift.Encoder) throws {
                 switch self {
                 case let .ToolChoiceOptions(value):
                     try encoder.encodeToSingleValueContainer(value)
@@ -11052,7 +11206,7 @@ public enum Components {
                 public enum CodingKeys: String, CodingKey {
                     case _type = "type"
                 }
-                public init(from decoder: any Decoder) throws {
+                public init(from decoder: any Swift.Decoder) throws {
                     let container = try decoder.container(keyedBy: CodingKeys.self)
                     let discriminator = try container.decode(
                         Swift.String.self,
@@ -11073,7 +11227,7 @@ public enum Components {
                         )
                     }
                 }
-                public func encode(to encoder: any Encoder) throws {
+                public func encode(to encoder: any Swift.Encoder) throws {
                     switch self {
                     case let .webSearchActionSearch(value):
                         try value.encode(to: encoder)
@@ -11600,7 +11754,7 @@ public enum Components {
             public enum CodingKeys: String, CodingKey {
                 case _type = "type"
             }
-            public init(from decoder: any Decoder) throws {
+            public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
                 let discriminator = try container.decode(
                     Swift.String.self,
@@ -11623,7 +11777,7 @@ public enum Components {
                     )
                 }
             }
-            public func encode(to encoder: any Encoder) throws {
+            public func encode(to encoder: any Swift.Encoder) throws {
                 switch self {
                 case let .fileCitationBody(value):
                     try value.encode(to: encoder)
@@ -11968,7 +12122,7 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/InputFileContent/file_url`.
             public var fileUrl: Swift.String?
-            /// The detail level of the file to be sent to the model. One of `high` or `low`. Defaults to `high`.
+            /// The detail level of the file to be sent to the model. Use `low` for the default rendering behavior, or `high` to render the file at higher quality. Defaults to `low`.
             ///
             /// - Remark: Generated from `#/components/schemas/InputFileContent/detail`.
             public var detail: Components.Schemas.FileInputDetail?
@@ -11979,7 +12133,7 @@ public enum Components {
             ///   - filename: The name of the file to be sent to the model.
             ///   - fileData: The content of the file to be sent to the model.
             ///   - fileUrl: The URL of the file to be sent to the model.
-            ///   - detail: The detail level of the file to be sent to the model. One of `high` or `low`. Defaults to `high`.
+            ///   - detail: The detail level of the file to be sent to the model. Use `low` for the default rendering behavior, or `high` to render the file at higher quality. Defaults to `low`.
             public init(
                 _type: Components.Schemas.InputFileContent._TypePayload,
                 fileId: Swift.String? = nil,
@@ -12003,6 +12157,18 @@ public enum Components {
                 case fileUrl = "file_url"
                 case detail
             }
+        }
+        /// - Remark: Generated from `#/components/schemas/FunctionCallStatus`.
+        @frozen public enum FunctionCallStatus: String, Codable, Hashable, Sendable, CaseIterable {
+            case inProgress = "in_progress"
+            case completed = "completed"
+            case incomplete = "incomplete"
+        }
+        /// - Remark: Generated from `#/components/schemas/FunctionCallOutputStatusEnum`.
+        @frozen public enum FunctionCallOutputStatusEnum: String, Codable, Hashable, Sendable, CaseIterable {
+            case inProgress = "in_progress"
+            case completed = "completed"
+            case incomplete = "incomplete"
         }
         /// - Remark: Generated from `#/components/schemas/ClickButtonType`.
         @frozen public enum ClickButtonType: String, Codable, Hashable, Sendable, CaseIterable {
@@ -12417,16 +12583,16 @@ public enum Components {
                 case id
             }
         }
+        /// - Remark: Generated from `#/components/schemas/ComputerCallOutputStatus`.
+        @frozen public enum ComputerCallOutputStatus: String, Codable, Hashable, Sendable, CaseIterable {
+            case completed = "completed"
+            case incomplete = "incomplete"
+            case failed = "failed"
+        }
         /// - Remark: Generated from `#/components/schemas/ToolSearchExecutionType`.
         @frozen public enum ToolSearchExecutionType: String, Codable, Hashable, Sendable, CaseIterable {
             case server = "server"
             case client = "client"
-        }
-        /// - Remark: Generated from `#/components/schemas/FunctionCallStatus`.
-        @frozen public enum FunctionCallStatus: String, Codable, Hashable, Sendable, CaseIterable {
-            case inProgress = "in_progress"
-            case completed = "completed"
-            case incomplete = "incomplete"
         }
         /// - Remark: Generated from `#/components/schemas/ToolSearchCall`.
         public struct ToolSearchCall: Codable, Hashable, Sendable {
@@ -12645,8 +12811,8 @@ public enum Components {
                 self.value1 = value1
                 self.value2 = value2
             }
-            public init(from decoder: any Decoder) throws {
-                var errors: [any Error] = []
+            public init(from decoder: any Swift.Decoder) throws {
+                var errors: [any Swift.Error] = []
                 do {
                     self.value1 = try .init(from: decoder)
                 } catch {
@@ -12667,7 +12833,7 @@ public enum Components {
                     errors: errors
                 )
             }
-            public func encode(to encoder: any Encoder) throws {
+            public func encode(to encoder: any Swift.Encoder) throws {
                 try self.value1?.encode(to: encoder)
                 try self.value2?.encode(to: encoder)
             }
@@ -12843,7 +13009,7 @@ public enum Components {
                 public enum CodingKeys: String, CodingKey {
                     case _type = "type"
                 }
-                public init(from decoder: any Decoder) throws {
+                public init(from decoder: any Swift.Decoder) throws {
                     let container = try decoder.container(keyedBy: CodingKeys.self)
                     let discriminator = try container.decode(
                         Swift.String.self,
@@ -12862,7 +13028,7 @@ public enum Components {
                         )
                     }
                 }
-                public func encode(to encoder: any Encoder) throws {
+                public func encode(to encoder: any Swift.Encoder) throws {
                     switch self {
                     case let .containerNetworkPolicyDisabledParam(value):
                         try value.encode(to: encoder)
@@ -12961,7 +13127,7 @@ public enum Components {
                 public enum CodingKeys: String, CodingKey {
                     case _type = "type"
                 }
-                public init(from decoder: any Decoder) throws {
+                public init(from decoder: any Swift.Decoder) throws {
                     let container = try decoder.container(keyedBy: CodingKeys.self)
                     let discriminator = try container.decode(
                         Swift.String.self,
@@ -12980,7 +13146,7 @@ public enum Components {
                         )
                     }
                 }
-                public func encode(to encoder: any Encoder) throws {
+                public func encode(to encoder: any Swift.Encoder) throws {
                     switch self {
                     case let .containerNetworkPolicyDisabledParam(value):
                         try value.encode(to: encoder)
@@ -13002,7 +13168,7 @@ public enum Components {
                 public enum CodingKeys: String, CodingKey {
                     case _type = "type"
                 }
-                public init(from decoder: any Decoder) throws {
+                public init(from decoder: any Swift.Decoder) throws {
                     let container = try decoder.container(keyedBy: CodingKeys.self)
                     let discriminator = try container.decode(
                         Swift.String.self,
@@ -13021,7 +13187,7 @@ public enum Components {
                         )
                     }
                 }
-                public func encode(to encoder: any Encoder) throws {
+                public func encode(to encoder: any Swift.Encoder) throws {
                     switch self {
                     case let .skillReferenceParam(value):
                         try value.encode(to: encoder)
@@ -13295,7 +13461,7 @@ public enum Components {
                 public enum CodingKeys: String, CodingKey {
                     case _type = "type"
                 }
-                public init(from decoder: any Decoder) throws {
+                public init(from decoder: any Swift.Decoder) throws {
                     let container = try decoder.container(keyedBy: CodingKeys.self)
                     let discriminator = try container.decode(
                         Swift.String.self,
@@ -13314,7 +13480,7 @@ public enum Components {
                         )
                     }
                 }
-                public func encode(to encoder: any Encoder) throws {
+                public func encode(to encoder: any Swift.Encoder) throws {
                     switch self {
                     case let .customTextFormatParam(value):
                         try value.encode(to: encoder)
@@ -13372,21 +13538,29 @@ public enum Components {
             }
             /// - Remark: Generated from `#/components/schemas/FunctionToolParam/type`.
             public var _type: Components.Schemas.FunctionToolParam._TypePayload
+            /// Whether this function should be deferred and discovered via tool search.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FunctionToolParam/defer_loading`.
+            public var deferLoading: Swift.Bool?
             /// Creates a new `FunctionToolParam`.
             ///
             /// - Parameters:
             ///   - name:
             ///   - _type:
+            ///   - deferLoading: Whether this function should be deferred and discovered via tool search.
             public init(
                 name: Swift.String,
-                _type: Components.Schemas.FunctionToolParam._TypePayload
+                _type: Components.Schemas.FunctionToolParam._TypePayload,
+                deferLoading: Swift.Bool? = nil
             ) {
                 self.name = name
                 self._type = _type
+                self.deferLoading = deferLoading
             }
             public enum CodingKeys: String, CodingKey {
                 case name
                 case _type = "type"
+                case deferLoading = "defer_loading"
             }
         }
         /// Groups function/custom tools under a shared namespace.
@@ -13422,7 +13596,7 @@ public enum Components {
                 public enum CodingKeys: String, CodingKey {
                     case _type = "type"
                 }
-                public init(from decoder: any Decoder) throws {
+                public init(from decoder: any Swift.Decoder) throws {
                     let container = try decoder.container(keyedBy: CodingKeys.self)
                     let discriminator = try container.decode(
                         Swift.String.self,
@@ -13441,7 +13615,7 @@ public enum Components {
                         )
                     }
                 }
-                public func encode(to encoder: any Encoder) throws {
+                public func encode(to encoder: any Swift.Encoder) throws {
                     switch self {
                     case let .functionToolParam(value):
                         try value.encode(to: encoder)
@@ -13619,12 +13793,6 @@ public enum Components {
                 case _type = "type"
             }
         }
-        /// - Remark: Generated from `#/components/schemas/FunctionCallOutputStatusEnum`.
-        @frozen public enum FunctionCallOutputStatusEnum: String, Codable, Hashable, Sendable, CaseIterable {
-            case inProgress = "in_progress"
-            case completed = "completed"
-            case incomplete = "incomplete"
-        }
         /// - Remark: Generated from `#/components/schemas/ToolSearchOutput`.
         public struct ToolSearchOutput: Codable, Hashable, Sendable {
             /// The type of the item. Always `tool_search_output`.
@@ -13687,6 +13855,57 @@ public enum Components {
                 case execution
                 case tools
                 case status
+                case createdBy = "created_by"
+            }
+        }
+        /// A compaction item generated by the [`v1/responses/compact` API](/docs/api-reference/responses/compact).
+        ///
+        /// - Remark: Generated from `#/components/schemas/CompactionBody`.
+        public struct CompactionBody: Codable, Hashable, Sendable {
+            /// The type of the item. Always `compaction`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CompactionBody/type`.
+            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case compaction = "compaction"
+            }
+            /// The type of the item. Always `compaction`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CompactionBody/type`.
+            public var _type: Components.Schemas.CompactionBody._TypePayload
+            /// The unique ID of the compaction item.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CompactionBody/id`.
+            public var id: Swift.String
+            /// The encrypted content that was produced by compaction.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CompactionBody/encrypted_content`.
+            public var encryptedContent: Swift.String
+            /// The identifier of the actor that created the item.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CompactionBody/created_by`.
+            public var createdBy: Swift.String?
+            /// Creates a new `CompactionBody`.
+            ///
+            /// - Parameters:
+            ///   - _type: The type of the item. Always `compaction`.
+            ///   - id: The unique ID of the compaction item.
+            ///   - encryptedContent: The encrypted content that was produced by compaction.
+            ///   - createdBy: The identifier of the actor that created the item.
+            public init(
+                _type: Components.Schemas.CompactionBody._TypePayload,
+                id: Swift.String,
+                encryptedContent: Swift.String,
+                createdBy: Swift.String? = nil
+            ) {
+                self._type = _type
+                self.id = id
+                self.encryptedContent = encryptedContent
+                self.createdBy = createdBy
+            }
+            public enum CodingKeys: String, CodingKey {
+                case _type = "type"
+                case id
+                case encryptedContent = "encrypted_content"
                 case createdBy = "created_by"
             }
         }
@@ -13791,10 +14010,10 @@ public enum Components {
                 public init(additionalProperties: [String: Swift.String] = .init()) {
                     self.additionalProperties = additionalProperties
                 }
-                public init(from decoder: any Decoder) throws {
+                public init(from decoder: any Swift.Decoder) throws {
                     additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [])
                 }
-                public func encode(to encoder: any Encoder) throws {
+                public func encode(to encoder: any Swift.Encoder) throws {
                     try encoder.encodeAdditionalProperties(additionalProperties)
                 }
             }
@@ -14060,7 +14279,7 @@ public enum Components {
                 public enum CodingKeys: String, CodingKey {
                     case _type = "type"
                 }
-                public init(from decoder: any Decoder) throws {
+                public init(from decoder: any Swift.Decoder) throws {
                     let container = try decoder.container(keyedBy: CodingKeys.self)
                     let discriminator = try container.decode(
                         Swift.String.self,
@@ -14079,7 +14298,7 @@ public enum Components {
                         )
                     }
                 }
-                public func encode(to encoder: any Encoder) throws {
+                public func encode(to encoder: any Swift.Encoder) throws {
                     switch self {
                     case let .functionShellCallOutputTimeoutOutcome(value):
                         try value.encode(to: encoder)
@@ -14353,7 +14572,7 @@ public enum Components {
                 public enum CodingKeys: String, CodingKey {
                     case _type = "type"
                 }
-                public init(from decoder: any Decoder) throws {
+                public init(from decoder: any Swift.Decoder) throws {
                     let container = try decoder.container(keyedBy: CodingKeys.self)
                     let discriminator = try container.decode(
                         Swift.String.self,
@@ -14374,7 +14593,7 @@ public enum Components {
                         )
                     }
                 }
-                public func encode(to encoder: any Encoder) throws {
+                public func encode(to encoder: any Swift.Encoder) throws {
                     switch self {
                     case let .applyPatchCreateFileOperation(value):
                         try value.encode(to: encoder)
@@ -14614,8 +14833,8 @@ public enum Components {
         }
         /// - Remark: Generated from `#/components/schemas/FileDetailEnum`.
         @frozen public enum FileDetailEnum: String, Codable, Hashable, Sendable, CaseIterable {
-            case high = "high"
             case low = "low"
+            case high = "high"
         }
         /// A file input to the model.
         ///
@@ -14631,7 +14850,7 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/InputFileContentParam/type`.
             public var _type: Components.Schemas.InputFileContentParam._TypePayload
-            /// The detail level of the file to be sent to the model. One of `high` or `low`. Defaults to `high`.
+            /// The detail level of the file to be sent to the model. Use `low` for the default rendering behavior, or `high` to render the file at higher quality. Defaults to `low`.
             ///
             /// - Remark: Generated from `#/components/schemas/InputFileContentParam/detail`.
             public var detail: Components.Schemas.FileDetailEnum?
@@ -14639,7 +14858,7 @@ public enum Components {
             ///
             /// - Parameters:
             ///   - _type: The type of the input item. Always `input_file`.
-            ///   - detail: The detail level of the file to be sent to the model. One of `high` or `low`. Defaults to `high`.
+            ///   - detail: The detail level of the file to be sent to the model. Use `low` for the default rendering behavior, or `high` to render the file at higher quality. Defaults to `low`.
             public init(
                 _type: Components.Schemas.InputFileContentParam._TypePayload,
                 detail: Components.Schemas.FileDetailEnum? = nil
@@ -14691,18 +14910,18 @@ public enum Components {
                     public enum CodingKeys: String, CodingKey {
                         case _type = "type"
                     }
-                    public init(from decoder: any Decoder) throws {
+                    public init(from decoder: any Swift.Decoder) throws {
                         let container = try decoder.container(keyedBy: CodingKeys.self)
                         let discriminator = try container.decode(
                             Swift.String.self,
                             forKey: ._type
                         )
                         switch discriminator {
-                        case "InputTextContentParam", "#/components/schemas/InputTextContentParam":
+                        case "input_text", "InputTextContentParam", "#/components/schemas/InputTextContentParam":
                             self = .inputTextContentParam(try .init(from: decoder))
-                        case "InputImageContentParamAutoParam", "#/components/schemas/InputImageContentParamAutoParam":
+                        case "input_image", "InputImageContentParamAutoParam", "#/components/schemas/InputImageContentParamAutoParam":
                             self = .inputImageContentParamAutoParam(try .init(from: decoder))
-                        case "InputFileContentParam", "#/components/schemas/InputFileContentParam":
+                        case "input_file", "InputFileContentParam", "#/components/schemas/InputFileContentParam":
                             self = .inputFileContentParam(try .init(from: decoder))
                         default:
                             throw Swift.DecodingError.unknownOneOfDiscriminator(
@@ -14712,7 +14931,7 @@ public enum Components {
                             )
                         }
                     }
-                    public func encode(to encoder: any Encoder) throws {
+                    public func encode(to encoder: any Swift.Encoder) throws {
                         switch self {
                         case let .inputTextContentParam(value):
                             try value.encode(to: encoder)
@@ -14731,8 +14950,8 @@ public enum Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/FunctionCallOutputItemParam/output/case2`.
                 case case2(Components.Schemas.FunctionCallOutputItemParam.OutputPayload.Case2Payload)
-                public init(from decoder: any Decoder) throws {
-                    var errors: [any Error] = []
+                public init(from decoder: any Swift.Decoder) throws {
+                    var errors: [any Swift.Error] = []
                     do {
                         self = .case1(try decoder.decodeFromSingleValueContainer())
                         return
@@ -14751,7 +14970,7 @@ public enum Components {
                         errors: errors
                     )
                 }
-                public func encode(to encoder: any Encoder) throws {
+                public func encode(to encoder: any Swift.Encoder) throws {
                     switch self {
                     case let .case1(value):
                         try encoder.encodeToSingleValueContainer(value)
@@ -15043,7 +15262,7 @@ public enum Components {
             public enum CodingKeys: String, CodingKey {
                 case _type = "type"
             }
-            public init(from decoder: any Decoder) throws {
+            public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
                 let discriminator = try container.decode(
                     Swift.String.self,
@@ -15062,7 +15281,7 @@ public enum Components {
                     )
                 }
             }
-            public func encode(to encoder: any Encoder) throws {
+            public func encode(to encoder: any Swift.Encoder) throws {
                 switch self {
                 case let .functionShellCallOutputTimeoutOutcomeParam(value):
                     try value.encode(to: encoder)
@@ -15292,7 +15511,7 @@ public enum Components {
             public enum CodingKeys: String, CodingKey {
                 case _type = "type"
             }
-            public init(from decoder: any Decoder) throws {
+            public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
                 let discriminator = try container.decode(
                     Swift.String.self,
@@ -15313,7 +15532,7 @@ public enum Components {
                     )
                 }
             }
-            public func encode(to encoder: any Encoder) throws {
+            public func encode(to encoder: any Swift.Encoder) throws {
                 switch self {
                 case let .applyPatchCreateFileOperationParam(value):
                     try value.encode(to: encoder)
@@ -15635,57 +15854,6 @@ public enum Components {
             }
             public enum CodingKeys: String, CodingKey {
                 case _type = "type"
-            }
-        }
-        /// A compaction item generated by the [`v1/responses/compact` API](/docs/api-reference/responses/compact).
-        ///
-        /// - Remark: Generated from `#/components/schemas/CompactionBody`.
-        public struct CompactionBody: Codable, Hashable, Sendable {
-            /// The type of the item. Always `compaction`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/CompactionBody/type`.
-            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case compaction = "compaction"
-            }
-            /// The type of the item. Always `compaction`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/CompactionBody/type`.
-            public var _type: Components.Schemas.CompactionBody._TypePayload
-            /// The unique ID of the compaction item.
-            ///
-            /// - Remark: Generated from `#/components/schemas/CompactionBody/id`.
-            public var id: Swift.String
-            /// The encrypted content that was produced by compaction.
-            ///
-            /// - Remark: Generated from `#/components/schemas/CompactionBody/encrypted_content`.
-            public var encryptedContent: Swift.String
-            /// The identifier of the actor that created the item.
-            ///
-            /// - Remark: Generated from `#/components/schemas/CompactionBody/created_by`.
-            public var createdBy: Swift.String?
-            /// Creates a new `CompactionBody`.
-            ///
-            /// - Parameters:
-            ///   - _type: The type of the item. Always `compaction`.
-            ///   - id: The unique ID of the compaction item.
-            ///   - encryptedContent: The encrypted content that was produced by compaction.
-            ///   - createdBy: The identifier of the actor that created the item.
-            public init(
-                _type: Components.Schemas.CompactionBody._TypePayload,
-                id: Swift.String,
-                encryptedContent: Swift.String,
-                createdBy: Swift.String? = nil
-            ) {
-                self._type = _type
-                self.id = id
-                self.encryptedContent = encryptedContent
-                self.createdBy = createdBy
-            }
-            public enum CodingKeys: String, CodingKey {
-                case _type = "type"
-                case id
-                case encryptedContent = "encrypted_content"
-                case createdBy = "created_by"
             }
         }
         /// The conversation that this response belonged to. Input items and output items from this response were automatically added to this conversation.
