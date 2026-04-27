@@ -245,16 +245,25 @@ extension OpenAI {
     logger.debug(
       "[OpenAICore] Received SSE payload event=\(eventName) id=\(eventID) type=\(payloadType) bytes=\(payload.utf8.count)"
     )
+
+    // Drop raw reasoning_text events before decoding/logging payload bodies; these may contain hidden reasoning.
+    guard !Self.isRawReasoningTextEvent(payloadType) else {
+      logger.debug(
+        "[OpenAICore] Dropping raw reasoning stream event type=\(payloadType) bytes=\(payload.utf8.count)"
+      )
+      return nil
+    }
+
     let payloadData = Data(payload.utf8)
 
     guard
       let decodedEvent = try? decoder.decode(
         Components.Schemas.ResponseStreamEvent.self,
         from: payloadData
-      )
+    )
     else {
       logger.debug(
-        "Skipping unsupported stream event payload type=\(payloadType): \(Self.truncatedStreamPayload(payload))"
+        "[OpenAICore] Skipping unsupported stream event payload type=\(payloadType) bytes=\(payload.utf8.count)"
       )
       return nil
     }
@@ -262,16 +271,16 @@ extension OpenAI {
     return StreamingResponse(openAPI: decodedEvent)
   }
 
+  private static func isRawReasoningTextEvent(_ payloadType: String) -> Bool {
+    payloadType == "response.reasoning_text.delta"
+      || payloadType == "response.reasoning_text.done"
+  }
+
   private static func streamEventType(from payload: String) -> String? {
     guard let payloadData = payload.data(using: .utf8) else { return nil }
     guard let object = try? JSONSerialization.jsonObject(with: payloadData) else { return nil }
     guard let dictionary = object as? [String: Any] else { return nil }
     return dictionary["type"] as? String
-  }
-
-  private static func truncatedStreamPayload(_ payload: String, maxLength: Int = 800) -> String {
-    guard payload.count > maxLength else { return payload }
-    return String(payload.prefix(maxLength)) + "...<truncated>"
   }
 
   // MARK: - Get Response

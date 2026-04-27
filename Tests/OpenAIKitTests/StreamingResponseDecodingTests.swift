@@ -129,6 +129,161 @@ struct StreamingResponseDecodingTests {
     #expect(imageCall.result == "ZmFrZV9pbWFnZV9iYXNlNjQ=")
   }
 
+  @Test("Completed responses drop raw reasoning output items")
+  func completedResponsesDropRawReasoningOutputItems() throws {
+    let payload = #"""
+    {
+      "id": "resp_reasoning_privacy",
+      "object": "response",
+      "created_at": 1771443518,
+      "status": "completed",
+      "model": "gpt-4o-2024-08-06",
+      "output": [
+        {
+          "type": "reasoning",
+          "id": "rs_privacy",
+          "summary": [
+            {
+              "type": "summary_text",
+              "text": "safe provider summary"
+            }
+          ],
+          "content": [
+            {
+              "type": "reasoning_text",
+              "text": "provider-hidden-reasoning"
+            }
+          ],
+          "status": "completed"
+        }
+      ],
+      "parallel_tool_calls": true,
+      "tools": []
+    }
+    """#
+
+    let openAPIResponse = try JSONDecoder().decode(
+      Components.Schemas.Response.self,
+      from: Data(payload.utf8)
+    )
+
+    let response = Response(openAPI: openAPIResponse)
+
+    #expect(response.output.isEmpty)
+    #expect(response.outputText.isEmpty)
+  }
+
+  @Test("OutputItem mapping drops raw reasoning items")
+  func outputItemMappingDropsRawReasoningItems() {
+    let rawReasoningItem = Components.Schemas.OutputItem(
+      value6: Components.Schemas.ReasoningItem(
+        _type: .reasoning,
+        id: "rs_privacy",
+        summary: [
+          Components.Schemas.SummaryTextContent(
+            _type: .summaryText,
+            text: "safe provider summary"
+          )
+        ],
+        content: [
+          Components.Schemas.ReasoningTextContent(
+            _type: .reasoningText,
+            text: "provider-hidden-reasoning"
+          )
+        ],
+        status: .completed
+      )
+    )
+
+    if OpenAICore.OutputItem(rawReasoningItem) != nil {
+      Issue.record("Expected raw reasoning output item to be dropped")
+    }
+  }
+
+  @Test("Streaming drops raw reasoning text events")
+  func streamingDropsRawReasoningTextEvents() {
+    let rawDeltaEvent = Components.Schemas.ResponseStreamEvent(
+      value29: Components.Schemas.ResponseReasoningTextDeltaEvent(
+        _type: .response_reasoningText_delta,
+        itemId: "rs_privacy",
+        outputIndex: 0,
+        contentIndex: 0,
+        delta: "provider-hidden-reasoning-delta",
+        sequenceNumber: 1
+      )
+    )
+    let rawDoneEvent = Components.Schemas.ResponseStreamEvent(
+      value30: Components.Schemas.ResponseReasoningTextDoneEvent(
+        _type: .response_reasoningText_done,
+        itemId: "rs_privacy",
+        outputIndex: 0,
+        contentIndex: 0,
+        text: "provider-hidden-reasoning-done",
+        sequenceNumber: 2
+      )
+    )
+
+    if StreamingResponse(openAPI: rawDeltaEvent) != nil {
+      Issue.record("Expected raw reasoning text delta event to be dropped")
+    }
+    if StreamingResponse(openAPI: rawDoneEvent) != nil {
+      Issue.record("Expected raw reasoning text done event to be dropped")
+    }
+  }
+
+  @Test("Streaming preserves reasoning summary text events")
+  func streamingPreservesReasoningSummaryTextEvents() {
+    let summaryDeltaEvent = Components.Schemas.ResponseStreamEvent(
+      value27: Components.Schemas.ResponseReasoningSummaryTextDeltaEvent(
+        _type: .response_reasoningSummaryText_delta,
+        itemId: "rs_privacy",
+        outputIndex: 0,
+        summaryIndex: 0,
+        delta: "safe summary delta",
+        sequenceNumber: 3
+      )
+    )
+    let summaryDoneEvent = Components.Schemas.ResponseStreamEvent(
+      value28: Components.Schemas.ResponseReasoningSummaryTextDoneEvent(
+        _type: .response_reasoningSummaryText_done,
+        itemId: "rs_privacy",
+        outputIndex: 0,
+        summaryIndex: 0,
+        text: "safe summary done",
+        sequenceNumber: 4
+      )
+    )
+
+    guard let mappedDelta = StreamingResponse(openAPI: summaryDeltaEvent) else {
+      Issue.record("Expected reasoning summary text delta event to be surfaced")
+      return
+    }
+    guard let mappedDone = StreamingResponse(openAPI: summaryDoneEvent) else {
+      Issue.record("Expected reasoning summary text done event to be surfaced")
+      return
+    }
+
+    switch mappedDelta {
+    case .reasoningSummaryText(.delta(let delta, let summaryIndex, let itemId, let outputIndex)):
+      #expect(delta == "safe summary delta")
+      #expect(summaryIndex == 0)
+      #expect(itemId == "rs_privacy")
+      #expect(outputIndex == 0)
+    default:
+      Issue.record("Expected reasoning summary text delta event")
+    }
+
+    switch mappedDone {
+    case .reasoningSummaryText(.done(let text, let summaryIndex, let itemId, let outputIndex)):
+      #expect(text == "safe summary done")
+      #expect(summaryIndex == 0)
+      #expect(itemId == "rs_privacy")
+      #expect(outputIndex == 0)
+    default:
+      Issue.record("Expected reasoning summary text done event")
+    }
+  }
+
   @Test("StreamingResponse maps all generated ResponseStreamEvent slots")
   func streamingResponseCoversGeneratedSlots() throws {
     let packageRoot = URL(fileURLWithPath: #filePath)

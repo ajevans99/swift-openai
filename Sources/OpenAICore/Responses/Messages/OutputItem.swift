@@ -4,7 +4,6 @@ public enum OutputItem: Sendable {
   case functionToolCall(Components.Schemas.FunctionToolCall)
   case webSearchToolCall(Components.Schemas.WebSearchToolCall)
   case computerToolCall(Components.Schemas.ComputerToolCall)
-  case reasoning(Components.Schemas.ReasoningItem)
   case toolSearchCall(Components.Schemas.ToolSearchCall)
   case toolSearchOutput(Components.Schemas.ToolSearchOutput)
   case compactionBody(Components.Schemas.CompactionBody)
@@ -31,8 +30,9 @@ public enum OutputItem: Sendable {
       self = .webSearchToolCall(webSearchToolCall)
     } else if let computerToolCall = openAPI.value5 {
       self = .computerToolCall(computerToolCall)
-    } else if let reasoning = openAPI.value6 {
-      self = .reasoning(reasoning)
+    } else if openAPI.value6 != nil {
+      // Intentionally drop raw reasoning items; only provider-provided summaries may be surfaced.
+      return nil
     } else if let toolSearchCall = openAPI.value7 {
       self = .toolSearchCall(toolSearchCall)
     } else if let toolSearchOutput = openAPI.value8 {

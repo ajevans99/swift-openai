@@ -77,7 +77,7 @@ struct WeatherCommand: AsyncParsableCommand {
             )
           )
         }
-      case .webSearchToolCall, .fileSearchToolCall, .computerToolCall, .reasoning,
+      case .webSearchToolCall, .fileSearchToolCall, .computerToolCall,
         .toolSearchCall, .toolSearchOutput, .compactionBody, .imageGenToolCall,
         .codeInterpreterToolCall, .localShellToolCall, .functionShellCall,
         .functionShellCallOutput, .applyPatchToolCall, .applyPatchToolCallOutput,

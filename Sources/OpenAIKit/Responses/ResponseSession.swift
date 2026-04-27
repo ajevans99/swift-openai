@@ -30,6 +30,22 @@ import OpenAICore
 public actor ResponseSession {
   public typealias Message = Item
 
+  public struct RequestOptions: Sendable {
+    public var reasoning: Reasoning?
+    public var maxOutputTokens: Int?
+    public var truncation: Truncation?
+
+    public init(
+      reasoning: Reasoning? = nil,
+      maxOutputTokens: Int? = nil,
+      truncation: Truncation? = nil
+    ) {
+      self.reasoning = reasoning
+      self.maxOutputTokens = maxOutputTokens
+      self.truncation = truncation
+    }
+  }
+
   private static let streamBufferLimit = 256
 
   private let client: OpenAI
@@ -95,13 +111,15 @@ public actor ResponseSession {
   ///   - additionalItems: Additional input items to include in the turn.
   ///   - previousResponseID: The prior response ID for conversation
   ///     continuation.
+  ///   - requestOptions: Optional request-level response creation settings.
   /// - Returns: Final concatenated assistant text for the turn.
   @discardableResult
   public func send(
     _ userText: String,
     additionalItems: [Item] = [],
     previousResponseID: String? = nil,
-    metadata: [String: String]? = nil
+    metadata: [String: String]? = nil,
+    requestOptions: RequestOptions = .init()
   ) async throws -> String {
     let item = Item.inputMessage(
       InputMessage(role: .user, content: [.text(.init(text: userText))])
@@ -110,7 +128,8 @@ public actor ResponseSession {
     return try await advance(
       newItems: [item] + additionalItems,
       previousResponseID: previousResponseID,
-      metadata: metadata
+      metadata: metadata,
+      requestOptions: requestOptions
     )
   }
 
@@ -121,6 +140,7 @@ public actor ResponseSession {
   ///   - additionalItems: Additional input items to include in the turn.
   ///   - previousResponseID: The prior response ID for conversation
   ///     continuation.
+  ///   - requestOptions: Optional request-level response creation settings.
   ///   - plugins: Plugins used to produce typed events.
   /// - Returns: A stream handle containing raw events and typed plugin
   ///   channel(s).
@@ -130,6 +150,7 @@ public actor ResponseSession {
     additionalItems: [Item] = [],
     previousResponseID: String? = nil,
     metadata: [String: String]? = nil,
+    requestOptions: RequestOptions = .init(),
     plugins: repeat each Plugin
   ) async throws -> ResponseStreamHandle<(repeat PluginChannel<each Plugin>)> {
     let item = Item.inputMessage(
@@ -140,6 +161,7 @@ public actor ResponseSession {
       items: [item] + additionalItems,
       previousResponseID: previousResponseID,
       metadata: metadata,
+      requestOptions: requestOptions,
       plugins: repeat each plugins
     )
   }
@@ -153,6 +175,7 @@ public actor ResponseSession {
     items: [Item] = [],
     previousResponseID: String? = nil,
     metadata: [String: String]? = nil,
+    requestOptions: RequestOptions = .init(),
     plugins: repeat each Plugin
   ) async throws -> ResponseStreamHandle<(repeat PluginChannel<each Plugin>)> {
     let (rawStream, rawEmitter) = Self.makeRawStream(bufferLimit: Self.streamBufferLimit)
@@ -165,6 +188,7 @@ public actor ResponseSession {
       newItems: items,
       previousResponseID: previousResponseID,
       metadata: metadata,
+      requestOptions: requestOptions,
       pluginRuntimes: pluginRuntimes,
       rawEmitter: rawEmitter
     )
@@ -180,7 +204,8 @@ public actor ResponseSession {
     _ userText: String,
     additionalItems: [Item] = [],
     previousResponseID: String? = nil,
-    metadata: [String: String]? = nil
+    metadata: [String: String]? = nil,
+    requestOptions: RequestOptions = .init()
   ) async throws -> AsyncThrowingStream<StreamingResponse, Error> {
     let item = Item.inputMessage(
       InputMessage(role: .user, content: [.text(.init(text: userText))])
@@ -188,7 +213,8 @@ public actor ResponseSession {
     return try await streamRaw(
       items: [item] + additionalItems,
       previousResponseID: previousResponseID,
-      metadata: metadata
+      metadata: metadata,
+      requestOptions: requestOptions
     )
   }
 
@@ -197,7 +223,8 @@ public actor ResponseSession {
   public func streamRaw(
     items: [Item] = [],
     previousResponseID: String? = nil,
-    metadata: [String: String]? = nil
+    metadata: [String: String]? = nil,
+    requestOptions: RequestOptions = .init()
   ) async throws -> AsyncThrowingStream<StreamingResponse, Error> {
     let (rawStream, rawEmitter) = Self.makeRawStream(bufferLimit: Self.streamBufferLimit)
 
@@ -205,6 +232,7 @@ public actor ResponseSession {
       newItems: items,
       previousResponseID: previousResponseID,
       metadata: metadata,
+      requestOptions: requestOptions,
       pluginRuntimes: [],
       rawEmitter: rawEmitter
     )
@@ -214,14 +242,18 @@ public actor ResponseSession {
   private func advance(
     newItems: [Item],
     previousResponseID: String? = nil,
-    metadata: [String: String]? = nil
+    metadata: [String: String]? = nil,
+    requestOptions: RequestOptions = .init()
   ) async throws -> String {
     let response = try await client.createResponse(
       input: .items(newItems.map { .item($0) }),
       model: model,
+      maxOutputTokens: requestOptions.maxOutputTokens,
       metadata: metadata,
       previousResponseId: previousResponseID,
-      tools: allTools
+      reasoning: requestOptions.reasoning,
+      tools: allTools,
+      truncation: requestOptions.truncation
     )
 
     var generatedText = ""
@@ -254,7 +286,7 @@ public actor ResponseSession {
             )
           }
 
-        case .computerToolCall, .fileSearchToolCall, .reasoning, .webSearchToolCall,
+        case .computerToolCall, .fileSearchToolCall, .webSearchToolCall,
           .toolSearchCall, .toolSearchOutput, .compactionBody, .imageGenToolCall,
           .codeInterpreterToolCall, .localShellToolCall, .functionShellCall,
           .functionShellCallOutput, .applyPatchToolCall, .applyPatchToolCallOutput,
@@ -272,7 +304,8 @@ public actor ResponseSession {
       return try await advance(
         newItems: toolOutputItems,
         previousResponseID: response.id,
-        metadata: metadata
+        metadata: metadata,
+        requestOptions: requestOptions
       )
     }
 
@@ -284,6 +317,7 @@ public actor ResponseSession {
     newItems: [Item],
     previousResponseID: String?,
     metadata: [String: String]?,
+    requestOptions: RequestOptions = .init(),
     pluginRuntimes: [AnyPluginRuntime],
     rawEmitter: StreamEmitter<StreamingResponse>
   ) async throws {
@@ -303,9 +337,12 @@ public actor ResponseSession {
       let stream = try await client.streamCreateResponse(
         input: .items(pendingItems.map { .item($0) }),
         model: model,
+        maxOutputTokens: requestOptions.maxOutputTokens,
         metadata: metadata,
         previousResponseId: currentPreviousResponseID,
-        tools: allTools
+        reasoning: requestOptions.reasoning,
+        tools: allTools,
+        truncation: requestOptions.truncation
       )
 
       var latestResponseID = currentPreviousResponseID
@@ -350,6 +387,7 @@ public actor ResponseSession {
     newItems: [Item],
     previousResponseID: String?,
     metadata: [String: String]?,
+    requestOptions: RequestOptions = .init(),
     pluginRuntimes: [AnyPluginRuntime],
     rawEmitter: StreamEmitter<StreamingResponse>
   ) {
@@ -359,6 +397,7 @@ public actor ResponseSession {
           newItems: newItems,
           previousResponseID: previousResponseID,
           metadata: metadata,
+          requestOptions: requestOptions,
           pluginRuntimes: pluginRuntimes,
           rawEmitter: rawEmitter
         )
