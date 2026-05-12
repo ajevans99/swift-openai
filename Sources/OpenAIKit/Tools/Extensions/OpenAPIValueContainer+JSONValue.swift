@@ -20,7 +20,7 @@ extension OpenAPIValueContainer {
       case .array(let array):
         return array.map { any(from: $0) }
       case .object(let object):
-        return object.mapValues { any(from: $0) }
+        return Dictionary(uniqueKeysWithValues: object.map { ($0.key, any(from: $0.value)) })
       }
     }
 

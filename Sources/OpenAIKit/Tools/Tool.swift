@@ -2,6 +2,7 @@ import JSONSchema
 import JSONSchemaBuilder
 import OpenAICore
 import OpenAPIRuntime
+import OrderedCollections
 
 public protocol Toolable: Sendable {
   associatedtype Component: JSONSchemaComponent
@@ -80,9 +81,10 @@ extension Toolable {
     return FunctionTool(
       name: name,
       description: description,
-      parameters: parameters.mapValues {
-        OpenAPIValueContainer(jsonValue: $0)
-      },
+      parameters: Dictionary(
+        uniqueKeysWithValues: parameters.map { key, value in
+          (key, OpenAPIValueContainer(jsonValue: value))
+        }),
       strict: strict
     )
   }
@@ -92,9 +94,9 @@ extension Toolable {
   }
 
   private static func normalizeToolSchemaObject(
-    _ schemaObject: [KeywordIdentifier: JSONValue],
+    _ schemaObject: OrderedDictionary<KeywordIdentifier, JSONValue>,
     strict: Bool
-  ) -> [KeywordIdentifier: JSONValue] {
+  ) -> OrderedDictionary<KeywordIdentifier, JSONValue> {
     var normalized = schemaObject.mapValues {
       normalizeToolSchemaValue($0, strict: strict)
     }
@@ -137,8 +139,8 @@ extension Toolable {
   }
 
   private static func collapseNullableCompositions(
-    in schemaObject: [KeywordIdentifier: JSONValue]
-  ) -> [KeywordIdentifier: JSONValue] {
+    in schemaObject: OrderedDictionary<KeywordIdentifier, JSONValue>
+  ) -> OrderedDictionary<KeywordIdentifier, JSONValue> {
     for keyword in ["oneOf", "anyOf"] {
       guard let composition = schemaObject[keyword]?.array else { continue }
 
@@ -151,7 +153,9 @@ extension Toolable {
       collapsed.removeValue(forKey: keyword)
       var nullableBranch = branchObject
       nullableBranch["type"] = appendNullType(to: branchObject["type"])
-      collapsed.merge(nullableBranch) { current, _ in current }
+      for (key, value) in nullableBranch where collapsed[key] == nil {
+        collapsed[key] = value
+      }
       return collapsed
     }
 

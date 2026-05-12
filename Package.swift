@@ -32,7 +32,8 @@ let package = Package(
     .package(url: "https://github.com/apple/swift-openapi-runtime.git", from: "1.8.2"),
     // 📦 JSON Schema Builder for tools
     .package(
-      url: "https://github.com/ajevans99/swift-json-schema.git", .upToNextMinor(from: "0.12.0")),
+      url: "https://github.com/ajevans99/swift-json-schema.git", from: "0.13.0"),
+    .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.0"),
     // 🪵 Logging
     .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
     // 🧾 Better diffs in tests
@@ -47,6 +48,7 @@ let package = Package(
         .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
         .product(name: "JSONSchema", package: "swift-json-schema"),
         .product(name: "JSONSchemaBuilder", package: "swift-json-schema"),
+        .product(name: "OrderedCollections", package: "swift-collections"),
       ]
     ),
     .testTarget(
