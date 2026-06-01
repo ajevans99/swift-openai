@@ -1,5 +1,5 @@
 {
-  "originHash" : "45e4d05dc4697fe6b72f8d63c1948c7f32d7f5fafc04d63d4ffa2ca2b2f221f9",
+  "originHash" : "0578d399be2038097f8d76a74c4aa363587c9323607f266cabd4e010411574ad",
   "pins" : [
     {
       "identity" : "openapikit",
@@ -42,8 +42,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/pointfreeco/swift-custom-dump",
       "state" : {
-        "revision" : "06c57924455064182d6b217f06ebc05d00cb2990",
-        "version" : "1.5.0"
+        "revision" : "b9b59eb58c946236d6f16305c576ad194c36444e",
+        "version" : "1.6.0"
       }
     },
     {
@@ -69,8 +69,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-log.git",
       "state" : {
-        "revision" : "a012e0ad8a8a72de92b0e008c81a9b793f70e73a",
-        "version" : "1.12.1"
+        "revision" : "2aed77ae5ec9a86d8fe42c12275e4c2653a286ee",
+        "version" : "1.13.1"
       }
     },
     {
