@@ -1,3 +1,4 @@
+import Foundation
 import Logging
 @_exported import OpenAIFoundation
 import OpenAPIRuntime
@@ -9,13 +10,15 @@ public struct OpenAI: Sendable {
   public init(
     transport: any ClientTransport,
     apiKey: String,
+    serverURL: URL? = nil,
     logger: Logger? = nil
   ) throws {
     var logger = logger ?? Logger(label: "swift-openai")
     logger.logLevel = .debug
+    let resolvedServerURL = try serverURL ?? Servers.Server1.url()
 
     openAPIClient = Client(
-      serverURL: try Servers.Server1.url(),
+      serverURL: resolvedServerURL,
       transport: transport,
       middlewares: [
         AuthenticationMiddleware(bearerToken: apiKey),

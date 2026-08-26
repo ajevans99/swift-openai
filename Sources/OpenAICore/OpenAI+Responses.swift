@@ -151,6 +151,71 @@ extension OpenAI {
   public func streamCreateResponse(_ requestData: CreateResponse) async throws
     -> any AsyncSequence<StreamingResponse, any Error>
   {
+    try await streamCreateResponseHandle(requestData)
+  }
+
+  /// Creates a cancellable Responses API event stream.
+  ///
+  /// Unlike ``streamCreateResponse(_:)``, the returned handle exposes
+  /// ``ResponseEventStream/cancel()`` so callers can explicitly terminate the
+  /// provider task and HTTP response body.
+  @available(macOS 15.0, *)
+  public func streamCreateResponseHandle(
+    input: InputPayload,
+    model: Model,
+    include: [Includable]? = nil,
+    instructions: String? = nil,
+    maxOutputTokens: Int? = nil,
+    metadata: [String: String]? = nil,
+    parallelToolCalls: Bool? = nil,
+    previousResponseId: String? = nil,
+    reasoning: Reasoning? = nil,
+    serviceTier: ServiceTier? = nil,
+    store: Bool? = nil,
+    temperature: Double? = nil,
+    text: Components.Schemas.ResponseTextParam? = nil,
+    toolChoice: Components.Schemas.ToolChoiceParam? = nil,
+    tools: [Tool]? = nil,
+    topP: Double? = nil,
+    truncation: Truncation? = nil,
+    user: String? = nil
+  ) async throws -> ResponseEventStream {
+    let requestData = CreateResponse(
+      modelProperties: CreateModelResponseProperties(
+        metadata: metadata,
+        temperature: temperature,
+        topP: topP,
+        user: user,
+        serviceTier: serviceTier
+      ),
+      responseProperties: ResponseProperties(
+        previousResponseId: previousResponseId,
+        model: model,
+        reasoning: reasoning,
+        maxOutputTokens: maxOutputTokens,
+        instructions: instructions,
+        text: text,
+        tools: tools?.map { $0.toOpenAPI() },
+        toolChoice: toolChoice,
+        truncation: truncation
+      ),
+      inputPayload: CreateResponseInputPayload(
+        input: input,
+        include: include,
+        parallelToolCalls: parallelToolCalls,
+        store: store,
+        stream: true
+      )
+    )
+    return try await streamCreateResponseHandle(requestData)
+  }
+
+  /// Creates a cancellable Responses API event stream from a prepared request.
+  @available(macOS 15.0, *)
+  public func streamCreateResponseHandle(
+    _ requestData: CreateResponse
+  ) async throws -> ResponseEventStream
+  {
     let input = Operations.CreateResponse.Input(
       headers: .init(),
       body: .json(requestData.toOpenAPI())
@@ -179,9 +244,11 @@ extension OpenAI {
       )
     }
 
-    return AsyncThrowingStream { continuation in
+    let cancellation = ResponseEventStreamCancellation()
+    let events = AsyncThrowingStream<StreamingResponse, Error> { continuation in
       let logger = self.logger
       let task = Task {
+        defer { cancellation.taskDidFinish() }
         let decoder = JSONDecoder()
         var parser = StreamingSSEParser()
 
@@ -220,9 +287,11 @@ extension OpenAI {
       }
 
       continuation.onTermination = { _ in
-        task.cancel()
+        cancellation.cancel()
       }
+      cancellation.install(task)
     }
+    return ResponseEventStream(events: events, cancellation: cancellation)
   }
 
   private static func decodeStreamingResponse(

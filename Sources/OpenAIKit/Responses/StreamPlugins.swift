@@ -29,6 +29,11 @@ public protocol ResponseStreamPlugin: Sendable {
   /// - Parameter context: Shared mutable context for cross-event coordination.
   /// - Returns: A final typed event to emit for consumers, or `nil`.
   func finish(context: inout StreamPluginContext) async throws -> Event?
+
+  /// Returns tools that this plugin needs advertised on response requests.
+  ///
+  /// Plugins that only project events can use the default empty implementation.
+  func responseTools() async -> [OpenAICore.Tool]
 }
 
 @available(macOS 15.0, *)
@@ -36,6 +41,11 @@ public extension ResponseStreamPlugin {
   /// Default no-op finish behavior.
   func finish(context: inout StreamPluginContext) async throws -> Event? {
     nil
+  }
+
+  /// Default behavior for plugins that do not own tools.
+  func responseTools() async -> [OpenAICore.Tool] {
+    []
   }
 }
 
@@ -105,22 +115,45 @@ public struct StreamPluginContext: Sendable {
 public struct PluginChannel<P: ResponseStreamPlugin>: Sendable {
   /// Asynchronous sequence of typed plugin events.
   public let events: AsyncThrowingStream<P.Event, Error>
-  private let droppedCountProvider: @Sendable () -> Int
 
-  init(
-    events: AsyncThrowingStream<P.Event, Error>,
-    droppedCountProvider: @escaping @Sendable () -> Int
-  ) {
+  init(events: AsyncThrowingStream<P.Event, Error>) {
     self.events = events
-    self.droppedCountProvider = droppedCountProvider
   }
 
-  /// Returns the number of events dropped due to bounded buffering.
-  ///
-  /// Channels use `bufferingNewest` semantics. If consumers are slower than
-  /// producers, older buffered events are dropped.
+  /// Returns zero because channels no longer silently drop events.
+  @available(*, deprecated, message: "Streams are lossless or fail with bufferOverflow.")
   public func droppedCount() -> Int {
-    droppedCountProvider()
+    0
+  }
+}
+
+/// Configures event retention for a response stream channel.
+@available(macOS 15.0, *)
+public enum ResponseStreamBufferingPolicy: Sendable, Equatable {
+  /// Retains every event until consumed. This is lossless but unconsumed
+  /// channels can grow without bound.
+  case unbounded
+  /// Retains a bounded prefix and fails the entire stream with
+  /// ``ResponseSessionError/bufferOverflow(channel:capacity:)`` rather than
+  /// silently dropping the next event.
+  case bounded(Int)
+  /// Discards all events for the channel. Use this for raw events when only
+  /// plugin projections are needed.
+  case disabled
+}
+
+/// Controls raw and plugin channel event retention.
+@available(macOS 15.0, *)
+public struct ResponseStreamOptions: Sendable, Equatable {
+  public var rawEvents: ResponseStreamBufferingPolicy
+  public var pluginEvents: ResponseStreamBufferingPolicy
+
+  public init(
+    rawEvents: ResponseStreamBufferingPolicy = .unbounded,
+    pluginEvents: ResponseStreamBufferingPolicy = .unbounded
+  ) {
+    self.rawEvents = rawEvents
+    self.pluginEvents = pluginEvents
   }
 }
 
@@ -134,25 +167,81 @@ public struct ResponseStreamHandle<PluginEvents: Sendable>: Sendable {
   public let raw: AsyncThrowingStream<StreamingResponse, Error>
   /// Typed plugin event channel(s), aligned with plugin order.
   public let pluginEvents: PluginEvents
-}
-
-final class StreamEmitter<Element: Sendable>: @unchecked Sendable {
-  private let continuation: AsyncThrowingStream<Element, Error>.Continuation
-  private let lock = NSLock()
-  private var droppedCountValue = 0
+  private let cancellation: StreamTaskCancellation
 
   init(
-    continuation: AsyncThrowingStream<Element, Error>.Continuation
+    raw: AsyncThrowingStream<StreamingResponse, Error>,
+    pluginEvents: PluginEvents,
+    cancellation: StreamTaskCancellation
   ) {
-    self.continuation = continuation
+    self.raw = raw
+    self.pluginEvents = pluginEvents
+    self.cancellation = cancellation
   }
 
-  func yield(_ element: Element) {
+  /// Cancels the provider task, HTTP stream, and all consumer channels.
+  public func cancel() {
+    cancellation.cancel()
+  }
+}
+
+/// A cancellable raw-only Responses API stream.
+@available(macOS 15.0, *)
+public struct RawResponseStreamHandle: Sendable {
+  /// Raw protocol-level events.
+  public let events: AsyncThrowingStream<StreamingResponse, Error>
+  private let cancellation: StreamTaskCancellation
+
+  init(
+    events: AsyncThrowingStream<StreamingResponse, Error>,
+    cancellation: StreamTaskCancellation
+  ) {
+    self.events = events
+    self.cancellation = cancellation
+  }
+
+  /// Cancels the provider task, HTTP stream, and raw consumer channel.
+  public func cancel() {
+    cancellation.cancel()
+  }
+}
+
+@available(macOS 15.0, *)
+final class StreamEmitter<Element: Sendable>: @unchecked Sendable {
+  private let continuation: AsyncThrowingStream<Element, Error>.Continuation
+  private let channelName: String
+  private let capacity: Int?
+  private let isDisabled: Bool
+
+  init(
+    continuation: AsyncThrowingStream<Element, Error>.Continuation,
+    channelName: String,
+    policy: ResponseStreamBufferingPolicy
+  ) {
+    self.continuation = continuation
+    self.channelName = channelName
+    switch policy {
+    case .unbounded:
+      self.capacity = nil
+      self.isDisabled = false
+    case .bounded(let capacity):
+      precondition(capacity > 0, "Bounded stream capacity must be greater than zero")
+      self.capacity = capacity
+      self.isDisabled = false
+    case .disabled:
+      self.capacity = nil
+      self.isDisabled = true
+    }
+  }
+
+  func yield(_ element: Element) throws {
+    guard !isDisabled else { return }
     switch continuation.yield(element) {
     case .dropped:
-      lock.lock()
-      droppedCountValue += 1
-      lock.unlock()
+      throw ResponseSessionError.bufferOverflow(
+        channel: channelName,
+        capacity: capacity ?? 0
+      )
     case .enqueued, .terminated:
       break
     @unknown default:
@@ -167,10 +256,35 @@ final class StreamEmitter<Element: Sendable>: @unchecked Sendable {
       continuation.finish()
     }
   }
+}
 
-  func droppedCount() -> Int {
-    lock.lock()
-    defer { lock.unlock() }
-    return droppedCountValue
+@available(macOS 15.0, *)
+final class StreamTaskCancellation: @unchecked Sendable {
+  private let lock = NSLock()
+  private var task: Task<Void, Never>?
+  private var isCancelled = false
+
+  func install(_ task: Task<Void, Never>) {
+    let shouldCancel = lock.withLock {
+      self.task = task
+      return isCancelled
+    }
+    if shouldCancel {
+      task.cancel()
+    }
+  }
+
+  func cancel() {
+    let task = lock.withLock {
+      isCancelled = true
+      return self.task
+    }
+    task?.cancel()
+  }
+
+  func taskDidFinish() {
+    lock.withLock {
+      task = nil
+    }
   }
 }
