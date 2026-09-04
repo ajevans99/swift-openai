@@ -43,6 +43,15 @@ apply_transform \
   "remove unsupported top-level webhooks section" \
   's/^webhooks:\n.*?(?=^components:\n)//ms'
 
+# swift-openapi-generator requires integer literals for integer type bounds;
+# the upstream spec may encode INT64_MIN/MAX in scientific-notation float form.
+# 9.223372036854776e+18 is the IEEE 754 double-precision representation of
+# INT64_MAX (9223372036854775807); we normalise to the exact integer literal.
+apply_transform \
+  "normalize INT64 bounds from scientific notation to integer literals" \
+  's/(\bmaximum:\s*)9\.223372036854776e\+18\b/${1}9223372036854775807/mg;
+   s/(\bminimum:\s*)-9\.223372036854776e\+18\b/${1}-9223372036854775808/mg'
+
 # swift-openapi-generator expects numeric bounds for exclusive min/max.
 apply_transform \
   "normalize exclusive numeric bounds" \
