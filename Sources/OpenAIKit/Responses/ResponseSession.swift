@@ -22,11 +22,12 @@ import OpenAICore
 /// - Prefer plugin-local tool registration on ``ToolOrchestratorPlugin`` for
 ///   streaming flows.
 ///
-/// ## Bounded buffering
+/// ## Event retention
 ///
-/// Streaming channels use a bounded `bufferingNewest` strategy. If consumers
-/// are slower than producers, older buffered events are dropped. Per-channel
-/// drop counts are exposed through ``PluginChannel/droppedCount()``.
+/// Streaming channels are lossless and unbounded by default. Consumers should
+/// drain every enabled channel concurrently or disable raw events through
+/// ``ResponseStreamOptions``. Opt-in bounded channels fail explicitly instead
+/// of silently truncating output.
 public actor ResponseSession {
   public typealias Message = Item
 
@@ -34,22 +35,26 @@ public actor ResponseSession {
     public var reasoning: Reasoning?
     public var maxOutputTokens: Int?
     public var truncation: Truncation?
+    /// Instructions used for this turn and all of its tool follow-up rounds.
+    /// When omitted, the session's durable instructions are used.
+    public var instructions: String?
 
     public init(
       reasoning: Reasoning? = nil,
       maxOutputTokens: Int? = nil,
-      truncation: Truncation? = nil
+      truncation: Truncation? = nil,
+      instructions: String? = nil
     ) {
       self.reasoning = reasoning
       self.maxOutputTokens = maxOutputTokens
       self.truncation = truncation
+      self.instructions = instructions
     }
   }
 
-  private static let streamBufferLimit = 256
-
   private let client: OpenAI
   private let model: Model
+  private let instructions: String?
   private let errorPolicy: ToolErrorPolicy
   private let toolCallMessaging: any ToolCallMessaging
 
@@ -65,16 +70,20 @@ public actor ResponseSession {
   /// - Parameters:
   ///   - client: The configured OpenAI client.
   ///   - model: The model used for all turns in this session.
+  ///   - instructions: Durable instructions resent on every response request,
+  ///     including recursive tool follow-up rounds.
   ///   - errorPolicy: Behavior to apply when function tools fail.
   ///   - toolCallMessaging: Observability hooks for tool call parsing failures.
   public init(
     client: OpenAI,
     model: Model,
+    instructions: String? = nil,
     errorPolicy: ToolErrorPolicy = .failFast,
     toolCallMessaging: any ToolCallMessaging = DefaultToolCallMessaging()
   ) {
     self.client = client
     self.model = model
+    self.instructions = instructions
     self.errorPolicy = errorPolicy
     self.toolCallMessaging = toolCallMessaging
   }
@@ -126,7 +135,27 @@ public actor ResponseSession {
     )
 
     return try await advance(
-      newItems: [item] + additionalItems,
+      newItems: [.item(item)] + additionalItems.map(InputItem.item),
+      previousResponseID: previousResponseID,
+      metadata: metadata,
+      requestOptions: requestOptions
+    )
+  }
+
+  /// Sends a non-streaming turn from full typed conversational history.
+  ///
+  /// ``InputItem/easyInputMessage(_:)`` supports user, assistant, system, and
+  /// developer messages. Tool and reasoning history can be supplied through
+  /// ``InputItem/item(_:)``.
+  @discardableResult
+  public func send(
+    inputItems: [InputItem],
+    previousResponseID: String? = nil,
+    metadata: [String: String]? = nil,
+    requestOptions: RequestOptions = .init()
+  ) async throws -> String {
+    try await advance(
+      newItems: inputItems,
       previousResponseID: previousResponseID,
       metadata: metadata,
       requestOptions: requestOptions
@@ -151,6 +180,7 @@ public actor ResponseSession {
     previousResponseID: String? = nil,
     metadata: [String: String]? = nil,
     requestOptions: RequestOptions = .init(),
+    streamOptions: ResponseStreamOptions = .init(),
     plugins: repeat each Plugin
   ) async throws -> ResponseStreamHandle<(repeat PluginChannel<each Plugin>)> {
     let item = Item.inputMessage(
@@ -158,10 +188,11 @@ public actor ResponseSession {
     )
 
     return try await stream(
-      items: [item] + additionalItems,
+      inputItems: [.item(item)] + additionalItems.map(InputItem.item),
       previousResponseID: previousResponseID,
       metadata: metadata,
       requestOptions: requestOptions,
+      streamOptions: streamOptions,
       plugins: repeat each plugins
     )
   }
@@ -176,16 +207,37 @@ public actor ResponseSession {
     previousResponseID: String? = nil,
     metadata: [String: String]? = nil,
     requestOptions: RequestOptions = .init(),
+    streamOptions: ResponseStreamOptions = .init(),
     plugins: repeat each Plugin
   ) async throws -> ResponseStreamHandle<(repeat PluginChannel<each Plugin>)> {
-    let (rawStream, rawEmitter) = Self.makeRawStream(bufferLimit: Self.streamBufferLimit)
+    try await stream(
+      inputItems: items.map(InputItem.item),
+      previousResponseID: previousResponseID,
+      metadata: metadata,
+      requestOptions: requestOptions,
+      streamOptions: streamOptions,
+      plugins: repeat each plugins
+    )
+  }
+
+  /// Starts a streaming turn from full typed conversational history.
+  @available(macOS 15.0, *)
+  public func stream<each Plugin: ResponseStreamPlugin>(
+    inputItems: [InputItem],
+    previousResponseID: String? = nil,
+    metadata: [String: String]? = nil,
+    requestOptions: RequestOptions = .init(),
+    streamOptions: ResponseStreamOptions = .init(),
+    plugins: repeat each Plugin
+  ) async throws -> ResponseStreamHandle<(repeat PluginChannel<each Plugin>)> {
+    let (rawStream, rawEmitter) = Self.makeRawStream(policy: streamOptions.rawEvents)
     let (pluginChannels, pluginRuntimes) = Self.makePluginRuntimes(
       plugins: repeat each plugins,
-      bufferLimit: Self.streamBufferLimit
+      policy: streamOptions.pluginEvents
     )
 
-    startStreamTask(
-      newItems: items,
+    let cancellation = startStreamTask(
+      newItems: inputItems,
       previousResponseID: previousResponseID,
       metadata: metadata,
       requestOptions: requestOptions,
@@ -193,7 +245,11 @@ public actor ResponseSession {
       rawEmitter: rawEmitter
     )
 
-    return ResponseStreamHandle(raw: rawStream, pluginEvents: pluginChannels)
+    return ResponseStreamHandle(
+      raw: rawStream,
+      pluginEvents: pluginChannels,
+      cancellation: cancellation
+    )
   }
 
   /// Starts a raw-only streaming turn from user text.
@@ -205,16 +261,18 @@ public actor ResponseSession {
     additionalItems: [Item] = [],
     previousResponseID: String? = nil,
     metadata: [String: String]? = nil,
-    requestOptions: RequestOptions = .init()
+    requestOptions: RequestOptions = .init(),
+    bufferingPolicy: ResponseStreamBufferingPolicy = .unbounded
   ) async throws -> AsyncThrowingStream<StreamingResponse, Error> {
     let item = Item.inputMessage(
       InputMessage(role: .user, content: [.text(.init(text: userText))])
     )
     return try await streamRaw(
-      items: [item] + additionalItems,
+      inputItems: [.item(item)] + additionalItems.map(InputItem.item),
       previousResponseID: previousResponseID,
       metadata: metadata,
-      requestOptions: requestOptions
+      requestOptions: requestOptions,
+      bufferingPolicy: bufferingPolicy
     )
   }
 
@@ -224,30 +282,90 @@ public actor ResponseSession {
     items: [Item] = [],
     previousResponseID: String? = nil,
     metadata: [String: String]? = nil,
-    requestOptions: RequestOptions = .init()
+    requestOptions: RequestOptions = .init(),
+    bufferingPolicy: ResponseStreamBufferingPolicy = .unbounded
   ) async throws -> AsyncThrowingStream<StreamingResponse, Error> {
-    let (rawStream, rawEmitter) = Self.makeRawStream(bufferLimit: Self.streamBufferLimit)
+    try await streamRaw(
+      inputItems: items.map(InputItem.item),
+      previousResponseID: previousResponseID,
+      metadata: metadata,
+      requestOptions: requestOptions,
+      bufferingPolicy: bufferingPolicy
+    )
+  }
 
-    startStreamTask(
-      newItems: items,
+  /// Starts a raw-only stream from full typed conversational history.
+  ///
+  /// Use ``streamRawHandle(inputItems:previousResponseID:metadata:requestOptions:bufferingPolicy:)``
+  /// when explicit cancellation is required.
+  @available(macOS 15.0, *)
+  public func streamRaw(
+    inputItems: [InputItem],
+    previousResponseID: String? = nil,
+    metadata: [String: String]? = nil,
+    requestOptions: RequestOptions = .init(),
+    bufferingPolicy: ResponseStreamBufferingPolicy = .unbounded
+  ) async throws -> AsyncThrowingStream<StreamingResponse, Error> {
+    let handle = try await streamRawHandle(
+      inputItems: inputItems,
+      previousResponseID: previousResponseID,
+      metadata: metadata,
+      requestOptions: requestOptions,
+      bufferingPolicy: bufferingPolicy
+    )
+    return handle.events
+  }
+
+  /// Starts an explicitly cancellable raw-only stream.
+  @available(macOS 15.0, *)
+  public func streamRawHandle(
+    inputItems: [InputItem],
+    previousResponseID: String? = nil,
+    metadata: [String: String]? = nil,
+    requestOptions: RequestOptions = .init(),
+    bufferingPolicy: ResponseStreamBufferingPolicy = .unbounded
+  ) async throws -> RawResponseStreamHandle {
+    let (rawStream, rawEmitter) = Self.makeRawStream(policy: bufferingPolicy)
+
+    let cancellation = startStreamTask(
+      newItems: inputItems,
       previousResponseID: previousResponseID,
       metadata: metadata,
       requestOptions: requestOptions,
       pluginRuntimes: [],
       rawEmitter: rawEmitter
     )
-    return rawStream
+    return RawResponseStreamHandle(events: rawStream, cancellation: cancellation)
+  }
+
+  /// Starts an explicitly cancellable raw-only stream from legacy ``Item`` values.
+  @available(macOS 15.0, *)
+  public func streamRawHandle(
+    items: [Item],
+    previousResponseID: String? = nil,
+    metadata: [String: String]? = nil,
+    requestOptions: RequestOptions = .init(),
+    bufferingPolicy: ResponseStreamBufferingPolicy = .unbounded
+  ) async throws -> RawResponseStreamHandle {
+    try await streamRawHandle(
+      inputItems: items.map(InputItem.item),
+      previousResponseID: previousResponseID,
+      metadata: metadata,
+      requestOptions: requestOptions,
+      bufferingPolicy: bufferingPolicy
+    )
   }
 
   private func advance(
-    newItems: [Item],
+    newItems: [InputItem],
     previousResponseID: String? = nil,
     metadata: [String: String]? = nil,
     requestOptions: RequestOptions = .init()
   ) async throws -> String {
     let response = try await client.createResponse(
-      input: .items(newItems.map { .item($0) }),
+      input: .items(newItems),
       model: model,
+      instructions: requestOptions.instructions ?? instructions,
       maxOutputTokens: requestOptions.maxOutputTokens,
       metadata: metadata,
       previousResponseId: previousResponseID,
@@ -305,7 +423,7 @@ public actor ResponseSession {
 
     if !toolOutputItems.isEmpty {
       return try await advance(
-        newItems: toolOutputItems,
+        newItems: toolOutputItems.map(InputItem.item),
         previousResponseID: response.id,
         metadata: metadata,
         requestOptions: requestOptions
@@ -317,7 +435,7 @@ public actor ResponseSession {
 
   @available(macOS 15.0, *)
   private func streamLoop(
-    newItems: [Item],
+    newItems: [InputItem],
     previousResponseID: String?,
     metadata: [String: String]?,
     requestOptions: RequestOptions = .init(),
@@ -337,47 +455,57 @@ public actor ResponseSession {
     )
 
     while true {
-      let stream = try await client.streamCreateResponse(
-        input: .items(pendingItems.map { .item($0) }),
+      try Task.checkCancellation()
+      let requestTools = await mergedTools(for: pluginRuntimes)
+      let stream = try await client.streamCreateResponseHandle(
+        input: .items(pendingItems),
         model: model,
+        instructions: requestOptions.instructions ?? instructions,
         maxOutputTokens: requestOptions.maxOutputTokens,
         metadata: metadata,
         previousResponseId: currentPreviousResponseID,
         reasoning: requestOptions.reasoning,
-        tools: allTools,
+        tools: requestTools,
         truncation: requestOptions.truncation
       )
 
-      var latestResponseID = currentPreviousResponseID
+      var completedResponseID: String?
+      var terminalEventObserved = false
 
-      for try await event in stream {
-        rawEmitter.yield(event)
+      try await withTaskCancellationHandler {
+        for try await event in stream {
+          try rawEmitter.yield(event)
 
-        switch event {
-        case .created(let response):
-          latestResponseID = response.id
-        case .inProgress(let response):
-          latestResponseID = response.id
-        case .completed(let response):
-          latestResponseID = response.id
-        default:
+          switch event {
+          case .completed(let response):
+            completedResponseID = response.id
+            terminalEventObserved = true
+          case .failed, .incomplete, .error:
+            terminalEventObserved = true
+          default:
+            break
+          }
+
+          for runtime in pluginRuntimes {
+            try await runtime.consume(event, &context)
+          }
+        }
+      } onCancel: {
+        stream.cancel()
+      }
+
+      try Task.checkCancellation()
+      let followUpItems = context.drainFollowUpItems()
+      guard let completedResponseID else {
+        if terminalEventObserved {
           break
         }
-
-        for runtime in pluginRuntimes {
-          try await runtime.consume(event, &context)
-        }
+        throw ResponseSessionError.missingTerminalEvent
       }
-
-      let followUpItems = context.drainFollowUpItems()
       guard !followUpItems.isEmpty else { break }
 
-      guard let latestResponseID else {
-        throw ResponseSessionError.missingResponseIDForContinuation
-      }
-
-      pendingItems = followUpItems
-      currentPreviousResponseID = latestResponseID
+      pendingItems = followUpItems.map(InputItem.item)
+      currentPreviousResponseID = completedResponseID
     }
 
     for runtime in pluginRuntimes {
@@ -387,14 +515,16 @@ public actor ResponseSession {
 
   @available(macOS 15.0, *)
   private func startStreamTask(
-    newItems: [Item],
+    newItems: [InputItem],
     previousResponseID: String?,
     metadata: [String: String]?,
     requestOptions: RequestOptions = .init(),
     pluginRuntimes: [AnyPluginRuntime],
     rawEmitter: StreamEmitter<StreamingResponse>
-  ) {
-    Task {
+  ) -> StreamTaskCancellation {
+    let cancellation = StreamTaskCancellation()
+    let task = Task {
+      defer { cancellation.taskDidFinish() }
       do {
         try await self.streamLoop(
           newItems: newItems,
@@ -416,6 +546,27 @@ public actor ResponseSession {
         }
       }
     }
+    cancellation.install(task)
+    return cancellation
+  }
+
+  @available(macOS 15.0, *)
+  private func mergedTools(for pluginRuntimes: [AnyPluginRuntime]) async -> [OpenAICore.Tool] {
+    var merged = allTools
+
+    for runtime in pluginRuntimes {
+      for pluginTool in await runtime.responseTools() {
+        if case .function(let functionTool) = pluginTool {
+          merged.removeAll { tool in
+            guard case .function(let existingFunctionTool) = tool else { return false }
+            return existingFunctionTool.name == functionTool.name
+          }
+        }
+        merged.append(pluginTool)
+      }
+    }
+
+    return merged
   }
 
   private func executeFunctionTool(
@@ -437,11 +588,11 @@ public actor ResponseSession {
 
   @available(macOS 15.0, *)
   private static func makeRawStream(
-    bufferLimit: Int
+    policy: ResponseStreamBufferingPolicy
   ) -> (AsyncThrowingStream<StreamingResponse, Error>, StreamEmitter<StreamingResponse>) {
     var continuation: AsyncThrowingStream<StreamingResponse, Error>.Continuation?
     let stream = AsyncThrowingStream<StreamingResponse, Error>(
-      bufferingPolicy: .bufferingNewest(bufferLimit)
+      bufferingPolicy: bufferingPolicy(for: policy)
     ) { createdContinuation in
       continuation = createdContinuation
     }
@@ -450,7 +601,11 @@ public actor ResponseSession {
       preconditionFailure("raw stream continuation was not initialized")
     }
 
-    let emitter = StreamEmitter(continuation: continuation)
+    let emitter = StreamEmitter(
+      continuation: continuation,
+      channelName: "raw",
+      policy: policy
+    )
     return (stream, emitter)
   }
 
@@ -458,11 +613,11 @@ public actor ResponseSession {
   private static func makePluginRuntime<P: ResponseStreamPlugin>(
     plugin: P,
     type _: P.Type,
-    bufferLimit: Int
+    policy: ResponseStreamBufferingPolicy
   ) -> (PluginChannel<P>, AnyPluginRuntime) {
     var continuation: AsyncThrowingStream<P.Event, Error>.Continuation?
     let stream = AsyncThrowingStream<P.Event, Error>(
-      bufferingPolicy: .bufferingNewest(bufferLimit)
+      bufferingPolicy: bufferingPolicy(for: policy)
     ) { createdContinuation in
       continuation = createdContinuation
     }
@@ -471,19 +626,24 @@ public actor ResponseSession {
       preconditionFailure("plugin stream continuation was not initialized")
     }
 
-    let emitter = StreamEmitter(continuation: continuation)
-    let channel = PluginChannel<P>(
-      events: stream,
-      droppedCountProvider: { emitter.droppedCount() }
+    let channelName = String(reflecting: P.self)
+    let emitter = StreamEmitter(
+      continuation: continuation,
+      channelName: channelName,
+      policy: policy
     )
+    let channel = PluginChannel<P>(events: stream)
     let runtime = AnyPluginRuntime(
+      responseTools: {
+        await plugin.responseTools()
+      },
       consume: { event, context in
         guard let pluginEvent = try await plugin.consume(event, context: &context) else { return }
-        emitter.yield(pluginEvent)
+        try emitter.yield(pluginEvent)
       },
       finishPlugin: { context in
         guard let pluginEvent = try await plugin.finish(context: &context) else { return }
-        emitter.yield(pluginEvent)
+        try emitter.yield(pluginEvent)
       },
       finishStream: { error in
         emitter.finish(throwing: error)
@@ -495,7 +655,7 @@ public actor ResponseSession {
   @available(macOS 15.0, *)
   private static func makePluginRuntimes<each Plugin: ResponseStreamPlugin>(
     plugins: repeat each Plugin,
-    bufferLimit: Int
+    policy: ResponseStreamBufferingPolicy
   ) -> ((repeat PluginChannel<each Plugin>), [AnyPluginRuntime]) {
     var runtimes: [AnyPluginRuntime] = []
 
@@ -503,7 +663,7 @@ public actor ResponseSession {
       let (channel, runtime) = Self.makePluginRuntime(
         plugin: plugin,
         type: P.self,
-        bufferLimit: bufferLimit
+        policy: policy
       )
       runtimes.append(runtime)
       return channel
@@ -512,10 +672,24 @@ public actor ResponseSession {
     let channels = (repeat makeChannel(each plugins))
     return (channels, runtimes)
   }
+
+  @available(macOS 15.0, *)
+  private static func bufferingPolicy<Element>(
+    for policy: ResponseStreamBufferingPolicy
+  ) -> AsyncThrowingStream<Element, Error>.Continuation.BufferingPolicy {
+    switch policy {
+    case .unbounded, .disabled:
+      return .unbounded
+    case .bounded(let capacity):
+      precondition(capacity > 0, "Bounded stream capacity must be greater than zero")
+      return .bufferingOldest(capacity)
+    }
+  }
 }
 
 @available(macOS 15.0, *)
 private struct AnyPluginRuntime: Sendable {
+  let responseTools: @Sendable () async -> [OpenAICore.Tool]
   let consume:
     @Sendable (
       _ event: StreamingResponse,

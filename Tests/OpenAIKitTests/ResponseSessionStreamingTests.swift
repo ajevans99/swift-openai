@@ -181,6 +181,7 @@ struct ResponseSessionStreamingTests {
 
     let requestBodies = await transport.requestBodies()
     #expect(requestBodies.count == 2)
+    #expect(requestBodies[0].contains(#""name" : "get_weather""#))
     #expect(requestBodies[1].contains(#""type" : "function_call_output""#))
     #expect(requestBodies[1].contains(#""call_id" : "call_weather_1""#))
     #expect(requestBodies[1].contains(#""previous_response_id" : "resp_tool_1""#))
@@ -472,8 +473,8 @@ struct ResponseSessionStreamingTests {
     }
   }
 
-  @Test("Plugin channels track dropped events when consumer is slower than producer")
-  func droppedCountTracking() async throws {
+  @Test("Text plugin preserves every delta when consumer starts after production")
+  func textPluginIsLosslessByDefault() async throws {
     guard #available(macOS 15.0, *) else { return }
     let deltaEvents = (0..<400).map { index in
       Self.textDeltaEvent(
@@ -506,12 +507,59 @@ struct ResponseSessionStreamingTests {
 
     let handle = try await session.stream(
       "Generate many chunks",
+      streamOptions: .init(rawEvents: .disabled),
       plugins: TextPlugin()
     )
     let textChannel = handle.pluginEvents
 
-    _ = try await Self.collectRawValues(handle.raw)
-    #expect(textChannel.droppedCount() > 0)
+    let events = try await Self.collect(textChannel.events)
+    let deltas = events.compactMap { event -> String? in
+      guard case .delta(let value) = event else { return nil }
+      return value
+    }
+    #expect(deltas == (0..<400).map { "chunk_\($0)" })
+    #expect(events.last == .completed("done"))
+  }
+
+  @Test("Bounded plugin channels fail explicitly instead of truncating")
+  func boundedPluginOverflowFailsExplicitly() async throws {
+    guard #available(macOS 15.0, *) else { return }
+    let deltaEvents = (0..<10).map { index in
+      Self.textDeltaEvent(
+        itemID: "msg_bounded",
+        outputIndex: 0,
+        contentIndex: 0,
+        delta: "chunk_\(index)",
+        sequenceNumber: index + 1
+      )
+    }
+    let transport = StreamQueueTransport(
+      payloads: [
+        Self.ssePayload(
+          [Self.createdEvent(responseID: "resp_bounded", sequenceNumber: 0)]
+            + deltaEvents
+            + [Self.completedEvent(responseID: "resp_bounded", sequenceNumber: 20)]
+        )
+      ]
+    )
+    let session = try Self.makeSession(transport: transport)
+    let handle = try await session.stream(
+      "Generate bounded chunks",
+      streamOptions: .init(rawEvents: .disabled, pluginEvents: .bounded(2)),
+      plugins: TextPlugin()
+    )
+    try await Task.sleep(for: .milliseconds(20))
+
+    do {
+      _ = try await Self.collect(handle.pluginEvents.events)
+      Issue.record("Expected bounded channel overflow")
+    } catch let error as ResponseSessionError {
+      guard case .bufferOverflow(_, let capacity) = error else {
+        Issue.record("Expected bufferOverflow, got \(error)")
+        return
+      }
+      #expect(capacity == 2)
+    }
   }
 
   @Test("Raw-only stream API emits raw response events")
@@ -572,6 +620,282 @@ struct ResponseSessionStreamingTests {
     #expect(json.contains(#""summary":"auto""#))
   }
 
+  @Test("Durable instructions are resent across streaming tool rounds")
+  func durableInstructionsAcrossStreamingToolRounds() async throws {
+    guard #available(macOS 15.0, *) else { return }
+    let transport = StreamQueueTransport(
+      payloads: [
+        Self.ssePayload([
+          Self.createdEvent(responseID: "resp_instruction_1", sequenceNumber: 0),
+          Self.functionCallOutputItemDoneEvent(
+            itemID: "fc_instruction",
+            callID: "call_instruction",
+            name: "get_weather",
+            arguments: #"{"location":"Boston"}"#,
+            outputIndex: 0,
+            sequenceNumber: 1
+          ),
+          Self.completedEvent(responseID: "resp_instruction_1", sequenceNumber: 2),
+        ]),
+        Self.ssePayload([
+          Self.createdEvent(responseID: "resp_instruction_2", sequenceNumber: 0),
+          Self.completedEvent(responseID: "resp_instruction_2", sequenceNumber: 1),
+        ]),
+      ]
+    )
+    let session = try Self.makeSession(
+      transport: transport,
+      instructions: "Always coach with concise next steps."
+    )
+    let handle = try await session.stream(
+      "Use the tool",
+      streamOptions: .init(rawEvents: .disabled),
+      plugins: ToolOrchestratorPlugin(tools: [WeatherEchoTool(prefix: "durable")])
+    )
+
+    _ = try await Self.collect(handle.pluginEvents.events)
+    let requestBodies = await transport.requestBodies()
+    #expect(requestBodies.count == 2)
+    #expect(
+      requestBodies.allSatisfy {
+        $0.contains(#""instructions" : "Always coach with concise next steps.""#)
+      })
+  }
+
+  @Test("Durable instructions are resent across non-streaming tool rounds")
+  func durableInstructionsAcrossNonStreamingToolRounds() async throws {
+    let transport = NonStreamingQueueTransport(
+      payloads: [
+        Self.jsonString(
+          Self.responseObject(
+            id: "resp_nonstream_1",
+            status: "completed",
+            output: [
+              [
+                "type": "function_call",
+                "id": "fc_nonstream",
+                "call_id": "call_nonstream",
+                "name": "get_weather",
+                "arguments": #"{"location":"Portland"}"#,
+                "status": "completed",
+              ]
+            ]
+          )
+        ),
+        Self.jsonString(
+          Self.responseObject(
+            id: "resp_nonstream_2",
+            status: "completed",
+            output: [
+              [
+                "type": "message",
+                "id": "msg_nonstream",
+                "status": "completed",
+                "role": "assistant",
+                "content": [
+                  [
+                    "type": "output_text",
+                    "text": "Coaching complete.",
+                    "annotations": [],
+                    "logprobs": [],
+                  ]
+                ],
+              ]
+            ]
+          )
+        ),
+      ]
+    )
+    let session = try Self.makeSession(
+      transport: transport,
+      instructions: "Keep the coaching plan durable."
+    )
+    await session.register(tool: WeatherEchoTool(prefix: "nonstream"))
+
+    let text = try await session.send(
+      inputItems: [
+        .easyInputMessage(.init(role: .user, content: .text("Coach me")))
+      ]
+    )
+
+    #expect(text == "Coaching complete.")
+    let requestBodies = await transport.requestBodies()
+    #expect(requestBodies.count == 2)
+    #expect(
+      requestBodies.allSatisfy {
+        $0.contains(#""instructions" : "Keep the coaching plan durable.""#)
+      })
+    #expect(requestBodies[1].contains(#""previous_response_id" : "resp_nonstream_1""#))
+  }
+
+  @Test("Typed input history accepts assistant messages")
+  func typedAssistantHistory() async throws {
+    guard #available(macOS 15.0, *) else { return }
+    let transport = StreamQueueTransport(
+      payloads: [
+        Self.ssePayload([
+          Self.createdEvent(responseID: "resp_history", sequenceNumber: 0),
+          Self.completedEvent(responseID: "resp_history", sequenceNumber: 1),
+        ])
+      ]
+    )
+    let session = try Self.makeSession(transport: transport)
+    let stream = try await session.streamRaw(
+      inputItems: [
+        .easyInputMessage(.init(role: .assistant, content: .text("Earlier answer"))),
+        .easyInputMessage(.init(role: .user, content: .text("Follow-up question"))),
+      ]
+    )
+
+    _ = try await Self.collectRawValues(stream)
+    let requestBody = try #require(await transport.requestBodies().first)
+    #expect(requestBody.contains(#""role" : "assistant""#))
+    #expect(requestBody.contains(#""content" : "Earlier answer""#))
+    #expect(requestBody.contains(#""role" : "user""#))
+  }
+
+  @Test("Lifecycle plugin emits response IDs for every recursive round")
+  func lifecyclePluginAcrossToolRounds() async throws {
+    guard #available(macOS 15.0, *) else { return }
+    let transport = StreamQueueTransport(
+      payloads: [
+        Self.ssePayload([
+          Self.createdEvent(responseID: "resp_lifecycle_1", sequenceNumber: 0),
+          Self.functionCallOutputItemDoneEvent(
+            itemID: "fc_lifecycle",
+            callID: "call_lifecycle",
+            name: "get_weather",
+            arguments: #"{"location":"Miami"}"#,
+            outputIndex: 0,
+            sequenceNumber: 1
+          ),
+          Self.completedEvent(responseID: "resp_lifecycle_1", sequenceNumber: 2),
+        ]),
+        Self.ssePayload([
+          Self.createdEvent(responseID: "resp_lifecycle_2", sequenceNumber: 0),
+          Self.completedEvent(responseID: "resp_lifecycle_2", sequenceNumber: 1),
+        ]),
+      ]
+    )
+    let session = try Self.makeSession(transport: transport)
+    let handle = try await session.stream(
+      "Track lifecycle",
+      streamOptions: .init(rawEvents: .disabled),
+      plugins:
+        ResponseLifecyclePlugin(),
+        ToolOrchestratorPlugin(tools: [WeatherEchoTool(prefix: "lifecycle")])
+    )
+    let (lifecycleChannel, toolChannel) = handle.pluginEvents
+
+    let lifecycleEvents = try await Self.collect(lifecycleChannel.events)
+    _ = try await Self.collect(toolChannel.events)
+    #expect(lifecycleEvents.map(\.responseID) == [
+      "resp_lifecycle_1",
+      "resp_lifecycle_1",
+      "resp_lifecycle_2",
+      "resp_lifecycle_2",
+    ])
+    #expect(lifecycleEvents.map(\.isTerminal) == [false, true, false, true])
+  }
+
+  @Test("Lifecycle plugin distinguishes failed and incomplete terminals")
+  func lifecyclePluginTerminalStates() async throws {
+    guard #available(macOS 15.0, *) else { return }
+    let failedTransport = StreamQueueTransport(
+      payloads: [
+        Self.ssePayload([
+          Self.createdEvent(responseID: "resp_failed", sequenceNumber: 0),
+          Self.failedEvent(responseID: "resp_failed", sequenceNumber: 1),
+        ])
+      ]
+    )
+    let failedSession = try Self.makeSession(transport: failedTransport)
+    let failedHandle = try await failedSession.stream(
+      "Fail",
+      streamOptions: .init(rawEvents: .disabled),
+      plugins: ResponseLifecyclePlugin()
+    )
+    let failedEvents = try await Self.collect(failedHandle.pluginEvents.events)
+    guard case .failed(let failedResponse) = try #require(failedEvents.last) else {
+      Issue.record("Expected failed lifecycle event")
+      return
+    }
+    #expect(failedResponse.id == "resp_failed")
+
+    let incompleteTransport = StreamQueueTransport(
+      payloads: [
+        Self.ssePayload([
+          Self.createdEvent(responseID: "resp_incomplete", sequenceNumber: 0),
+          Self.incompleteEvent(responseID: "resp_incomplete", sequenceNumber: 1),
+        ])
+      ]
+    )
+    let incompleteSession = try Self.makeSession(transport: incompleteTransport)
+    let incompleteHandle = try await incompleteSession.stream(
+      "Incomplete",
+      streamOptions: .init(rawEvents: .disabled),
+      plugins: ResponseLifecyclePlugin()
+    )
+    let incompleteEvents = try await Self.collect(incompleteHandle.pluginEvents.events)
+    guard case .incomplete(let incompleteResponse) = try #require(incompleteEvents.last) else {
+      Issue.record("Expected incomplete lifecycle event")
+      return
+    }
+    #expect(incompleteResponse.id == "resp_incomplete")
+  }
+
+  @Test("OpenAI client forwards an injected server URL")
+  func injectedServerURL() async throws {
+    guard #available(macOS 15.0, *) else { return }
+    let transport = StreamQueueTransport(
+      payloads: [
+        Self.ssePayload([
+          Self.createdEvent(responseID: "resp_url", sequenceNumber: 0),
+          Self.completedEvent(responseID: "resp_url", sequenceNumber: 1),
+        ])
+      ]
+    )
+    let serverURL = try #require(URL(string: "http://127.0.0.1:8787/v1"))
+    let client = try OpenAI(
+      transport: transport,
+      apiKey: "test-key",
+      serverURL: serverURL
+    )
+    let stream = try await client.streamCreateResponse(
+      input: .text("Hello"),
+      model: .custom("gpt-5.2")
+    )
+
+    for try await _ in stream {}
+    #expect(await transport.baseURLs() == [serverURL])
+  }
+
+  @Test("Explicit cancellation terminates the provider HTTP body")
+  func explicitCancellationTerminatesProviderBody() async throws {
+    guard #available(macOS 15.0, *) else { return }
+    let probe = CancellationProbe()
+    let transport = CancellationAwareTransport(probe: probe)
+    let session = try Self.makeSession(transport: transport)
+    let handle = try await session.stream(
+      "Keep streaming",
+      streamOptions: .init(rawEvents: .disabled),
+      plugins: ResponseLifecyclePlugin()
+    )
+    var iterator = handle.pluginEvents.events.makeAsyncIterator()
+    let first = try await iterator.next()
+    #expect(first?.responseID == "resp_cancel")
+
+    handle.cancel()
+    do {
+      _ = try await iterator.next()
+      Issue.record("Expected plugin channel cancellation")
+    } catch is CancellationError {
+      // Expected.
+    }
+    try await Task.sleep(for: .milliseconds(20))
+    #expect(await probe.wasCancelled())
+  }
+
   @Test("Raw reasoning SSE decode failures do not log hidden payload text")
   func rawReasoningSSEDecodeFailuresDoNotLogHiddenPayloadText() async throws {
     guard #available(macOS 15.0, *) else { return }
@@ -619,12 +943,14 @@ struct ResponseSessionStreamingTests {
 extension ResponseSessionStreamingTests {
   private static func makeSession(
     transport: some ClientTransport,
+    instructions: String? = nil,
     errorPolicy: ToolErrorPolicy = .failFast
   ) throws -> ResponseSession {
     let client = try OpenAI(transport: transport, apiKey: "test-key")
     return ResponseSession(
       client: client,
       model: .custom("gpt-5.2"),
+      instructions: instructions,
       errorPolicy: errorPolicy
     )
   }
@@ -647,11 +973,11 @@ extension ResponseSessionStreamingTests {
     return values
   }
 
-  private static func ssePayload(_ events: [String]) -> String {
+  fileprivate static func ssePayload(_ events: [String]) -> String {
     events.map { "data: \($0)\n\n" }.joined()
   }
 
-  private static func createdEvent(responseID: String, sequenceNumber: Int) -> String {
+  fileprivate static func createdEvent(responseID: String, sequenceNumber: Int) -> String {
     jsonString([
       "type": "response.created",
       "response": responseObject(id: responseID, status: "in_progress"),
@@ -663,6 +989,22 @@ extension ResponseSessionStreamingTests {
     jsonString([
       "type": "response.completed",
       "response": responseObject(id: responseID, status: "completed"),
+      "sequence_number": sequenceNumber,
+    ])
+  }
+
+  private static func failedEvent(responseID: String, sequenceNumber: Int) -> String {
+    jsonString([
+      "type": "response.failed",
+      "response": responseObject(id: responseID, status: "failed"),
+      "sequence_number": sequenceNumber,
+    ])
+  }
+
+  private static func incompleteEvent(responseID: String, sequenceNumber: Int) -> String {
+    jsonString([
+      "type": "response.incomplete",
+      "response": responseObject(id: responseID, status: "incomplete"),
       "sequence_number": sequenceNumber,
     ])
   }
@@ -791,20 +1133,24 @@ extension ResponseSessionStreamingTests {
     ])
   }
 
-  private static func responseObject(id: String, status: String) -> [String: Any] {
+  fileprivate static func responseObject(
+    id: String,
+    status: String,
+    output: [[String: Any]] = []
+  ) -> [String: Any] {
     [
       "id": id,
       "object": "response",
       "created_at": 1_771_443_518,
       "status": status,
       "model": "gpt-5.2",
-      "output": [],
+      "output": output,
       "parallel_tool_calls": true,
       "tools": [],
     ]
   }
 
-  private static func jsonString(_ object: [String: Any]) -> String {
+  fileprivate static func jsonString(_ object: [String: Any]) -> String {
     let data = try! JSONSerialization.data(withJSONObject: object, options: [.sortedKeys])
     return String(decoding: data, as: UTF8.self)
   }
@@ -835,7 +1181,10 @@ private struct StreamQueueTransport: ClientTransport {
       requestBody = ""
     }
 
-    let payload = try await state.consumeNextPayload(requestBody: requestBody)
+    let payload = try await state.consumeNextPayload(
+      requestBody: requestBody,
+      baseURL: baseURL
+    )
 
     var response = HTTPResponse(status: .ok)
     response.headerFields[.contentType] = "text/event-stream"
@@ -845,9 +1194,79 @@ private struct StreamQueueTransport: ClientTransport {
   func requestBodies() async -> [String] {
     await state.requestBodies()
   }
+
+  func baseURLs() async -> [URL] {
+    await state.baseURLs()
+  }
 }
 
 private actor StreamQueueState {
+  private var payloads: [String]
+  private var capturedRequestBodies: [String] = []
+  private var capturedBaseURLs: [URL] = []
+
+  init(payloads: [String]) {
+    self.payloads = payloads
+  }
+
+  func consumeNextPayload(requestBody: String, baseURL: URL) throws -> String {
+    capturedRequestBodies.append(requestBody)
+    capturedBaseURLs.append(baseURL)
+    guard !payloads.isEmpty else {
+      throw StreamQueueStateError.missingQueuedResponse
+    }
+    return payloads.removeFirst()
+  }
+
+  func requestBodies() -> [String] {
+    capturedRequestBodies
+  }
+
+  func baseURLs() -> [URL] {
+    capturedBaseURLs
+  }
+}
+
+private enum StreamQueueStateError: Error {
+  case missingQueuedResponse
+  case unexpectedOperation(String)
+}
+
+private struct NonStreamingQueueTransport: ClientTransport {
+  private let state: NonStreamingQueueState
+
+  init(payloads: [String]) {
+    state = NonStreamingQueueState(payloads: payloads)
+  }
+
+  func send(
+    _ request: HTTPRequest,
+    body: HTTPBody?,
+    baseURL: URL,
+    operationID: String
+  ) async throws -> (HTTPResponse, HTTPBody?) {
+    guard operationID == "createResponse" else {
+      throw StreamQueueStateError.unexpectedOperation(operationID)
+    }
+    let requestBody: String
+    if let body {
+      let data = try await Data(collecting: body, upTo: .max)
+      requestBody = String(decoding: data, as: UTF8.self)
+    } else {
+      requestBody = ""
+    }
+    let payload = try await state.consumeNextPayload(requestBody: requestBody)
+    var response = HTTPResponse(status: .ok)
+    response.headerFields[.contentType] = "application/json"
+    return (response, HTTPBody(payload))
+  }
+
+  func requestBodies() async -> [String] {
+    await state.requestBodies()
+  }
+}
+
+private actor NonStreamingQueueState {
   private var payloads: [String]
   private var capturedRequestBodies: [String] = []
 
@@ -868,9 +1287,49 @@ private actor StreamQueueState {
   }
 }
 
-private enum StreamQueueStateError: Error {
-  case missingQueuedResponse
-  case unexpectedOperation(String)
+private struct CancellationAwareTransport: ClientTransport {
+  let probe: CancellationProbe
+
+  func send(
+    _ request: HTTPRequest,
+    body: HTTPBody?,
+    baseURL: URL,
+    operationID: String
+  ) async throws -> (HTTPResponse, HTTPBody?) {
+    let stream = AsyncThrowingStream<String, Error> { continuation in
+      continuation.yield(
+        ResponseSessionStreamingTests.ssePayload([
+          ResponseSessionStreamingTests.createdEvent(
+            responseID: "resp_cancel",
+            sequenceNumber: 0
+          )
+        ])
+      )
+      continuation.onTermination = { _ in
+        Task {
+          await probe.recordCancellation()
+        }
+      }
+    }
+    var response = HTTPResponse(status: .ok)
+    response.headerFields[.contentType] = "text/event-stream"
+    return (
+      response,
+      HTTPBody(stream, length: .unknown)
+    )
+  }
+}
+
+private actor CancellationProbe {
+  private var cancelled = false
+
+  func recordCancellation() {
+    cancelled = true
+  }
+
+  func wasCancelled() -> Bool {
+    cancelled
+  }
 }
 
 private final class CapturingLogStorage: @unchecked Sendable {
