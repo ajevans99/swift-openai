@@ -458,7 +458,7 @@ public actor ResponseSession {
 
     while true {
       try Task.checkCancellation()
-      let requestTools = await mergedTools(for: pluginRuntimes)
+      let requestTools = try await mergedTools(for: pluginRuntimes)
       let stream = try await client.streamCreateResponseHandle(
         input: .items(pendingItems),
         model: model,
@@ -553,11 +553,11 @@ public actor ResponseSession {
   }
 
   @available(macOS 15.0, *)
-  private func mergedTools(for pluginRuntimes: [AnyPluginRuntime]) async -> [OpenAICore.Tool] {
-    var merged = allTools
+  private func mergedTools(for pluginRuntimes: [AnyPluginRuntime]) async throws -> [OpenAICore.Tool] {
+    var merged = try allTools
 
     for runtime in pluginRuntimes {
-      for pluginTool in await runtime.responseTools() {
+      for pluginTool in try await runtime.responseTools() {
         if case .function(let functionTool) = pluginTool {
           merged.removeAll { tool in
             guard case .function(let existingFunctionTool) = tool else { return false }
@@ -637,7 +637,7 @@ public actor ResponseSession {
     let channel = PluginChannel<P>(events: stream)
     let runtime = AnyPluginRuntime(
       responseTools: {
-        await plugin.responseTools()
+        try await plugin.responseTools()
       },
       consume: { event, context in
         guard let pluginEvent = try await plugin.consume(event, context: &context) else { return }
@@ -691,7 +691,7 @@ public actor ResponseSession {
 
 @available(macOS 15.0, *)
 private struct AnyPluginRuntime: Sendable {
-  let responseTools: @Sendable () async -> [OpenAICore.Tool]
+  let responseTools: @Sendable () async throws -> [OpenAICore.Tool]
   let consume:
     @Sendable (
       _ event: StreamingResponse,

@@ -154,8 +154,8 @@ public struct ToolOrchestratorPlugin: ResponseStreamPlugin {
     return self
   }
 
-  public func responseTools() async -> [OpenAICore.Tool] {
-    await registry.allTools()
+  public func responseTools() async throws -> [OpenAICore.Tool] {
+    try await registry.allTools()
   }
 
   public func consume(
@@ -270,7 +270,7 @@ private actor FunctionToolRegistry {
     return tools[name]
   }
 
-  func allTools() -> [OpenAICore.Tool] {
-    tools.values.map { $0.toTool() }
+  func allTools() throws -> [OpenAICore.Tool] {
+    try tools.values.map { try $0.toTool() }
   }
 }

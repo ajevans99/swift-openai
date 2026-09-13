@@ -52,6 +52,97 @@ struct ResponseSessionStreamingTests {
     expectNoDifference(requestBodies, [])
   }
 
+  @Test(
+    "Plugin-local unsupported numbers fail every channel before making a request",
+    arguments: ["1.0000000000000000001", "1e999", "1e-999"]
+  )
+  func pluginLocalStreamsRejectUnsupportedNumbers(literal: String) async throws {
+    guard #available(macOS 15.0, *) else { return }
+    let transport = StreamQueueTransport(payloads: [])
+    let session = try Self.makeSession(transport: transport)
+    let number = try JSONNumberLiteral(literal)
+    let orchestrator = ToolOrchestratorPlugin(
+      tools: [LiteralSchemaTool(schema: .object(["minimum": .numberLiteral(number)]))]
+    )
+
+    let handle = try await session.stream("Hello", plugins: TextPlugin(), orchestrator)
+    await #expect(throws: ToolSchemaConversionError.unsupportedNumber(number)) {
+      try await Self.collectRawValues(handle.raw)
+    }
+    await #expect(throws: ToolSchemaConversionError.unsupportedNumber(number)) {
+      try await Self.collect(handle.pluginEvents.0.events)
+    }
+    await #expect(throws: ToolSchemaConversionError.unsupportedNumber(number)) {
+      try await Self.collect(handle.pluginEvents.1.events)
+    }
+    let requestBodies = await transport.requestBodies()
+    expectNoDifference(requestBodies, [])
+  }
+
+  @Test("Plugin-local boolean root schemas fail both channels before requests", arguments: [true, false])
+  func pluginLocalStreamsRejectBooleanRoots(value: Bool) async throws {
+    guard #available(macOS 15.0, *) else { return }
+    let transport = StreamQueueTransport(payloads: [])
+    let session = try Self.makeSession(transport: transport)
+    let orchestrator = ToolOrchestratorPlugin(
+      tools: [LiteralSchemaTool(schema: .boolean(value))]
+    )
+
+    let handle = try await session.stream("Hello", plugins: orchestrator)
+    await #expect(throws: ToolSchemaConversionError.unsupportedRootSchema) {
+      try await Self.collectRawValues(handle.raw)
+    }
+    await #expect(throws: ToolSchemaConversionError.unsupportedRootSchema) {
+      try await Self.collect(handle.pluginEvents.events)
+    }
+    let requestBodies = await transport.requestBodies()
+    expectNoDifference(requestBodies, [])
+  }
+
+  @Test("Plugin-local valid schema constraints are advertised without losing precision")
+  func pluginLocalSchemaParametersRoundTrip() async throws {
+    guard #available(macOS 15.0, *) else { return }
+    let transport = StreamQueueTransport(payloads: [
+      Self.ssePayload([
+        Self.createdEvent(responseID: "resp_schema", sequenceNumber: 0),
+        Self.completedEvent(responseID: "resp_schema", sequenceNumber: 1),
+      ])
+    ])
+    let session = try Self.makeSession(transport: transport)
+    let parameters: [String: JSONValue] = [
+      "minimum": .numberLiteral(try JSONNumberLiteral("9007199254740993")),
+      "multipleOf": .numberLiteral(try JSONNumberLiteral("0.1")),
+    ]
+    let orchestrator = ToolOrchestratorPlugin(
+      tools: [LiteralSchemaTool(schema: .object(.init(uniqueKeysWithValues: parameters)))]
+    )
+
+    let handle = try await session.stream("Hello", plugins: orchestrator)
+    let pluginEvents = try await Self.collect(handle.pluginEvents.events)
+    let rawEvents = try await Self.collectRawValues(handle.raw)
+    expectNoDifference(pluginEvents, [])
+    expectNoDifference(
+      rawEvents,
+      ["response.created", "response.completed"]
+    )
+    let requestBodies = await transport.requestBodies()
+    expectNoDifference(requestBodies.count, 1)
+    let body = try #require(requestBodies.first)
+    guard case .object(let request) = try JSONValue.parse(Data(body.utf8)),
+      case .array(let tools) = request["tools"]
+    else {
+      Issue.record("Expected advertised tools in the response request")
+      return
+    }
+    expectNoDifference(tools.count, 1)
+    guard case .object(let tool) = try #require(tools.first) else {
+      Issue.record("Expected a function tool object")
+      return
+    }
+    expectNoDifference(tool["name"], .string("literal-schema"))
+    expectNoDifference(tool["parameters"], .object(.init(uniqueKeysWithValues: parameters)))
+  }
+
   @Test("Text plugin receives deltas/completion while raw stream remains available")
   func textPluginAndRawStream() async throws {
     guard #available(macOS 15.0, *) else { return }

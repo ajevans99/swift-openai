@@ -33,7 +33,8 @@ public protocol ResponseStreamPlugin: Sendable {
   /// Returns tools that this plugin needs advertised on response requests.
   ///
   /// Plugins that only project events can use the default empty implementation.
-  func responseTools() async -> [OpenAICore.Tool]
+  /// Errors finish both raw and plugin channels before sending the request.
+  func responseTools() async throws -> [OpenAICore.Tool]
 }
 
 @available(macOS 15.0, *)
