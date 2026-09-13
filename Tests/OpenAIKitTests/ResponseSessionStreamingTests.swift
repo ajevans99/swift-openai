@@ -11,6 +11,47 @@ import Testing
 
 @Suite("ResponseSession Streaming")
 struct ResponseSessionStreamingTests {
+  @Test("Send propagates schema conversion errors before making a request")
+  func sendRejectsUnsupportedSchema() async throws {
+    let transport = StreamQueueTransport(payloads: [])
+    let session = try Self.makeSession(transport: transport)
+    let number = try JSONNumberLiteral("1.0000000000000000001")
+    await session.register(
+      tool: LiteralSchemaTool(schema: .object(["minimum": .numberLiteral(number)]))
+    )
+
+    await #expect(throws: ToolSchemaConversionError.unsupportedNumber(number)) {
+      try await session.send("Hello")
+    }
+    let requestBodies = await transport.requestBodies()
+    expectNoDifference(requestBodies, [])
+  }
+
+  @Test("Raw and plugin streams propagate schema conversion errors before making a request")
+  func streamsRejectUnsupportedSchema() async throws {
+    guard #available(macOS 15.0, *) else { return }
+    let transport = StreamQueueTransport(payloads: [])
+    let session = try Self.makeSession(transport: transport)
+    let number = try JSONNumberLiteral("1e999")
+    await session.register(
+      tool: LiteralSchemaTool(schema: .object(["minimum": .numberLiteral(number)]))
+    )
+
+    let handle = try await session.stream("Hello", plugins: TextPlugin())
+    await #expect(throws: ToolSchemaConversionError.unsupportedNumber(number)) {
+      try await Self.collectRawValues(handle.raw)
+    }
+    await #expect(throws: ToolSchemaConversionError.unsupportedNumber(number)) {
+      try await Self.collect(handle.pluginEvents.events)
+    }
+    let raw = try await session.streamRaw("Hello")
+    await #expect(throws: ToolSchemaConversionError.unsupportedNumber(number)) {
+      try await Self.collectRawValues(raw)
+    }
+    let requestBodies = await transport.requestBodies()
+    expectNoDifference(requestBodies, [])
+  }
+
   @Test("Text plugin receives deltas/completion while raw stream remains available")
   func textPluginAndRawStream() async throws {
     guard #available(macOS 15.0, *) else { return }

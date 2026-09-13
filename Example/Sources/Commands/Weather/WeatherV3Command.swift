@@ -33,7 +33,7 @@ struct WeatherV3Command: AsyncParsableCommand {
     let stream = try await client.streamCreateResponse(
       input: .text(prompt),
       model: .standard(.gpt4o),
-      tools: tools.map { $0.toTool() }
+      tools: tools.map { try $0.toTool() }
     )
 
     for try await event in stream {
