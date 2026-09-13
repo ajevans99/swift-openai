@@ -36,6 +36,62 @@ public struct TextPlugin: ResponseStreamPlugin {
   }
 }
 
+/// Emits typed response creation and terminal lifecycle metadata.
+@available(macOS 15.0, *)
+public struct ResponseLifecyclePlugin: ResponseStreamPlugin {
+  /// Response lifecycle events, including all terminal outcomes.
+  public enum Event: Sendable {
+    case created(Response)
+    case completed(Response)
+    case incomplete(Response)
+    case failed(Response)
+    case error(message: String, code: String?, parameter: String?)
+
+    /// The response ID when the event carries response metadata.
+    public var responseID: String? {
+      switch self {
+      case .created(let response), .completed(let response),
+        .incomplete(let response), .failed(let response):
+        response.id
+      case .error:
+        nil
+      }
+    }
+
+    /// Whether this event terminates a provider response round.
+    public var isTerminal: Bool {
+      switch self {
+      case .created:
+        false
+      case .completed, .incomplete, .failed, .error:
+        true
+      }
+    }
+  }
+
+  public init() {}
+
+  public func consume(
+    _ event: StreamingResponse,
+    context: inout StreamPluginContext
+  ) async throws -> Event? {
+    switch event {
+    case .created(let response):
+      .created(response)
+    case .completed(let response):
+      .completed(response)
+    case .incomplete(let response):
+      .incomplete(response)
+    case .failed(let response):
+      .failed(response)
+    case .error(let message, let code, let parameter):
+      .error(message: message, code: code, parameter: parameter)
+    default:
+      nil
+    }
+  }
+}
+
 /// Handles function tool calls and emits tool execution lifecycle events.
 ///
 /// `ToolOrchestratorPlugin` can execute tools from its own plugin-local
@@ -96,6 +152,10 @@ public struct ToolOrchestratorPlugin: ResponseStreamPlugin {
   public func registering(tool: any Toolable) async -> Self {
     await register(tool: tool)
     return self
+  }
+
+  public func responseTools() async -> [OpenAICore.Tool] {
+    await registry.allTools()
   }
 
   public func consume(
@@ -208,5 +268,9 @@ private actor FunctionToolRegistry {
 
   func tool(named name: String) -> (any Toolable)? {
     return tools[name]
+  }
+
+  func allTools() -> [OpenAICore.Tool] {
+    tools.values.map { $0.toTool() }
   }
 }

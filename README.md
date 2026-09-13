@@ -125,12 +125,24 @@ let orchestrator = ToolOrchestratorPlugin(
 If a tool is not found locally, it can fall back to session-level registration (`session.register(tool:)`) for compatibility.
 When set, the orchestrator's `errorPolicy` override is also applied on that fallback path.
 
-### Backpressure visibility
+### Lossless streams and cancellation
 
-Each plugin channel uses bounded buffering (`bufferingNewest`). If a consumer is too slow:
+Semantic channels are unbounded and lossless by default, so text deltas are never silently truncated. Consume every enabled channel concurrently, or disable unused raw capture:
 
-- older buffered events can be dropped,
-- and you can inspect loss with `channel.droppedCount()`.
+```swift
+let handle = try await session.stream(
+  "Coach me through the next step",
+  streamOptions: .init(rawEvents: .disabled),
+  plugins: ResponseLifecyclePlugin(), TextPlugin(), ToolOrchestratorPlugin()
+)
+
+// Explicitly cancels the provider task, HTTP body, and all channels.
+handle.cancel()
+```
+
+For bounded memory, select `.bounded(256)`; overflow fails explicitly instead of dropping data.
+
+`ResponseLifecyclePlugin` exposes created, completed, incomplete, and failed responses with their IDs. Full stateless conversation history can be submitted with `stream(inputItems:)` or `send(inputItems:)`, including assistant-role `EasyInputMessage` values.
 
 ### Raw-only mode
 

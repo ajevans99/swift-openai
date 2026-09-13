@@ -20,6 +20,7 @@ Use a single plugin for focused event handling:
 ```swift
 let handle = try await session.stream(
   "Summarize this log file",
+  streamOptions: .init(rawEvents: .disabled),
   plugins: TextPlugin()
 )
 
@@ -45,6 +46,34 @@ let handle = try await session.stream(
 )
 
 let (textChannel, imageChannel) = handle.pluginEvents
+```
+
+Consume every enabled channel concurrently. Channels are independent, so
+reading one channel does not drain another.
+
+## Response lifecycle
+
+Use ``ResponseLifecyclePlugin`` to observe response IDs and terminal states
+without matching raw SSE event names:
+
+```swift
+let handle = try await session.stream(
+  inputItems: history,
+  streamOptions: .init(rawEvents: .disabled),
+  plugins: ResponseLifecyclePlugin(), TextPlugin()
+)
+
+let (lifecycle, text) = handle.pluginEvents
+for try await event in lifecycle.events {
+  switch event {
+  case .created(let response), .completed(let response):
+    print(response.id)
+  case .failed(let response), .incomplete(let response):
+    print("Terminal response:", response.id)
+  case .error(let message, _, _):
+    print(message)
+  }
+}
 ```
 
 ## Tool orchestration
@@ -82,16 +111,27 @@ For protocol-level handling, use:
 
 - ``ResponseSession/streamRaw(_:additionalItems:previousResponseID:)``
 - ``ResponseSession/streamRaw(items:previousResponseID:)``
+- ``ResponseSession/streamRawHandle(inputItems:previousResponseID:metadata:requestOptions:bufferingPolicy:)``
 
 This is useful when implementing custom plugin behavior outside of
 `OpenAIKit`.
 
-## Buffering and drops
+## Cancellation
 
-Raw and plugin channels use bounded `bufferingNewest` semantics. If a consumer
-falls behind, older buffered events are dropped.
+Call `handle.cancel()` to explicitly stop the response task, underlying HTTP
+body, and every raw/plugin channel. Cancelled channels terminate with
+`CancellationError`.
 
-Use ``PluginChannel/droppedCount()`` to inspect loss for each plugin channel.
+## Event retention
+
+Raw and plugin channels are unbounded and lossless by default. This avoids
+corrupting semantic streams such as text deltas, but an enabled channel that is
+never consumed can retain memory for the duration of the response.
+
+Use ``ResponseStreamOptions`` to disable unused raw events. Bounded channels are
+also available; they terminate the entire response with
+``ResponseSessionError/bufferOverflow(channel:capacity:)`` if their capacity is
+exceeded, rather than silently dropping events.
 
 ## Error behavior
 
