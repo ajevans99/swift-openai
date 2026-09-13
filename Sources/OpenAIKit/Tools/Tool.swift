@@ -71,9 +71,10 @@ extension Toolable {
 }
 
 extension Toolable {
-  public func toFunctionTool() -> FunctionTool {
+  /// Converts the schema, throwing if its root or numeric precision is unsupported.
+  public func toFunctionTool() throws -> FunctionTool {
     guard case .object(let rawParameters) = parameters.schemaValue else {
-      fatalError("Boolean schemas are not supported at root level for tools")
+      throw ToolSchemaConversionError.unsupportedRootSchema
     }
 
     let parameters = Self.normalizeToolSchemaObject(rawParameters, strict: strict)
@@ -82,15 +83,16 @@ extension Toolable {
       name: name,
       description: description,
       parameters: Dictionary(
-        uniqueKeysWithValues: parameters.map { key, value in
-          (key, OpenAPIValueContainer(jsonValue: value))
+        uniqueKeysWithValues: try parameters.map { key, value in
+          (key, try OpenAPIValueContainer(jsonValue: value))
         }),
       strict: strict
     )
   }
 
-  public func toTool() -> OpenAICore.Tool {
-    .function(toFunctionTool())
+  /// Converts the schema, propagating errors from ``toFunctionTool()``.
+  public func toTool() throws -> OpenAICore.Tool {
+    .function(try toFunctionTool())
   }
 
   private static func normalizeToolSchemaObject(
