@@ -21,33 +21,6 @@ A modern Swift package for interacting with [OpenAI’s API]((https://platform.o
 
 ## **`OpenAIKit`**
 
-### Migrating to swift-json-schema 0.14
-
-This package now requires `swift-json-schema` 0.14.0 or later. Numeric `JSONValue`
-patterns use `.numberLiteral(JSONNumberLiteral)` instead of `.integer` / `.number`.
-
-`Toolable.toFunctionTool()` and `toTool()` now throw; add `try` and propagate or
-handle conversion errors:
-
-```swift
-let function = try tool.toFunctionTool()
-let tools = try implementations.map { try $0.toTool() }
-```
-
-Conversion prefers an exact `Int`, otherwise a finite `Double` only if converting
-it back to `JSONNumberLiteral` equals the original number. Ordinary decimals such
-as `0.1` are supported; rounding, overflow, and nonzero underflow are rejected.
-OpenAPI's value container does not support `Decimal`, so even Decimal-representable
-values throw `ToolSchemaConversionError.unsupportedNumber` if neither supported
-representation is lossless. Numeric spelling (such as `1.0` versus `1`) and the
-sign of zero are not preserved. Boolean root schemas throw
-`ToolSchemaConversionError.unsupportedRootSchema` rather than trapping.
-
-Session tool registration remains nonthrowing. Conversion errors propagate from
-`send` or through the raw and plugin streams before a request is sent.
-
-### Getting started
-
 1. Define your tools, conforming to the `Tool` protocol.
 
 2. Register your tools
