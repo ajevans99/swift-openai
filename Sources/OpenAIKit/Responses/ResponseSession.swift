@@ -62,7 +62,9 @@ public actor ResponseSession {
   private var openAITools: [OpenAICore.Tool] = []
 
   var allTools: [OpenAICore.Tool] {
-    functionTools.values.map { $0.toTool() } + openAITools
+    get throws {
+      try functionTools.values.map { try $0.toTool() } + openAITools
+    }
   }
 
   /// Creates a new response session.

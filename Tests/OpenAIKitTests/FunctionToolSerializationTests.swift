@@ -51,8 +51,8 @@ struct FunctionToolSerializationTests {
   }
 
   @Test("Toolable zero-arg object schema includes empty properties")
-  func toolableZeroArgSchemaIncludesProperties() {
-    let tool = NoArgumentsTool().toFunctionTool().toOpenAPI()
+  func toolableZeroArgSchemaIncludesProperties() throws {
+    let tool = try NoArgumentsTool().toFunctionTool().toOpenAPI()
     let schema = tool.parameters?.value
     let properties = schema?["properties"] as? [String: Any]
 
@@ -62,8 +62,8 @@ struct FunctionToolSerializationTests {
   }
 
   @Test("Strict Toolable schemas normalize nullable unions and set additionalProperties false recursively")
-  func strictToolableSchemaNormalizesNullableUnions() {
-    let tool = StrictNestedArgumentsTool().toFunctionTool().toOpenAPI()
+  func strictToolableSchemaNormalizesNullableUnions() throws {
+    let tool = try StrictNestedArgumentsTool().toFunctionTool().toOpenAPI()
     let schema = tool.parameters?.value
     let rootAdditionalProperties = schema?["additionalProperties"] as? Bool
     let rootRequired = schema?["required"] as? [String]
