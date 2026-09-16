@@ -52,6 +52,28 @@ struct ResponseSessionStreamingTests {
     expectNoDifference(requestBodies, [])
   }
 
+  @Test("Plugin-local schema conversion fails every channel before transport")
+  func pluginLocalToolsRejectUnsupportedSchema() async throws {
+    guard #available(macOS 15.0, *) else { return }
+    let transport = StreamQueueTransport(payloads: [])
+    let session = try Self.makeSession(transport: transport)
+    let number = try JSONNumberLiteral("1.0000000000000000001")
+    let plugin = ToolOrchestratorPlugin(
+      tools: [LiteralSchemaTool(schema: .object(["minimum": .numberLiteral(number)]))],
+      errorPolicy: .returnAsMessage
+    )
+
+    let handle = try await session.stream("Hello", plugins: plugin)
+    await #expect(throws: ToolSchemaConversionError.unsupportedNumber(number)) {
+      try await Self.collectRawValues(handle.raw)
+    }
+    await #expect(throws: ToolSchemaConversionError.unsupportedNumber(number)) {
+      try await Self.collect(handle.pluginEvents.events)
+    }
+    let requestBodies = await transport.requestBodies()
+    expectNoDifference(requestBodies, [])
+  }
+
   @Test("Text plugin receives deltas/completion while raw stream remains available")
   func textPluginAndRawStream() async throws {
     guard #available(macOS 15.0, *) else { return }

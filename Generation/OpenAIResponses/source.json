@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "repository": "https://github.com/openai/openai-openapi",
+  "revision": "4bb21ba8e9213c3d955b69dc3f76dd7537439828",
+  "specification": {
+    "path": "openapi.json",
+    "url": "https://raw.githubusercontent.com/openai/openai-openapi/4bb21ba8e9213c3d955b69dc3f76dd7537439828/openapi.json",
+    "sha256": "3d6223349eadfd937624b9e6b8abf596ec2f680a1a367889cf6a6f924e568127"
+  },
+  "license": {
+    "path": "openapi.LICENSE",
+    "url": "https://raw.githubusercontent.com/openai/openai-openapi/4bb21ba8e9213c3d955b69dc3f76dd7537439828/LICENSE",
+    "sha256": "bcba3de214851cce46ed5af42d6698044616eeace887c3231bc7a20474ab639e"
+  }
+}

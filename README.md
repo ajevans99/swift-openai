@@ -4,6 +4,22 @@
 > This project is in active development and does not support many endpoints yet.
 > Public API is likely to have major breaking changes.
 
+## Toolchain and migration compatibility
+
+The package now requires **Swift 6.1 or newer**. Existing `OpenAIFoundation`,
+`OpenAICore`, `OpenAIKit`, and their tests retain Swift 5 language mode; the
+experimental `OpenAIResponses` target uses Swift 6 language mode. This is a
+package-wide toolchain requirement: selecting a legacy product does not restore
+the previous Swift tools 5.10 manifest floor. The macOS 14 deployment floor and
+macOS 15 availability of existing streaming APIs are unchanged.
+
+`ResponseStreamPlugin.responseTools()` is now `async throws`, correcting an
+existing compile failure after tool schema conversion became throwing.
+Nonthrowing plugin implementations still conform. Direct callers must use
+`try await plugin.responseTools()`. Conversion failures propagate to the raw
+and plugin streams before transport; tool execution error policies do not
+silently replace invalid schemas with empty tools.
+
 [![CI](https://github.com/ajevans99/swift-openai/actions/workflows/swift.yml/badge.svg)](https://github.com/ajevans99/swift-openai/actions/workflows/swift.yml)
 
 A modern Swift package for interacting with [OpenAI’s API]((https://platform.openai.com/docs/api-reference)), built on top of the official OpenAI *OpenAPI* spec.
@@ -190,6 +206,158 @@ To ensure generated code remains buildable against fast-moving upstream changes,
 | To apply the necessary transforms       | `make patches`   |
 | To generate the Swift types             | `make generate`  |
 | To fetch, patch, and generate           | `make all`       |
+
+### Experimental typed Responses client
+
+`OpenAIResponses` is an opt-in product/module, **not** part of the `OpenAI`
+umbrella. Its generated `OpenAIResponsesAPI` namespace supports the first typed
+nonstreaming `createResponse` slice through an injected Apple `ClientTransport`.
+Text requests, function tools/calls/replies, typed 429/503 error responses, and
+permitted unknown-field roundtrips are covered by offline recording tests.
+Existing generated sources, wrappers, streaming, tool orchestration, and
+multipart image operations remain on the original generation pipeline.
+
+The default dependency graph uses JSON Schema **0.14.1 or newer** and the
+immutable OpenAPI generator/runtime revision
+`1418f16c89d9a8d41193b21455c5339ec1e22aba`. That published commit supplies the
+pre-body media-validation hook; maintainer generation uses released JSON Schema
+Codegen **0.3.0**. No local dependency overrides or unpublished working files
+are required. This remains an experimental, explicitly selected slice, not a
+replacement for all existing SDK features.
+
+```swift
+import OpenAIResponses
+import OpenAPIRuntime
+
+func respond(transport: any ClientTransport, apiKey: String) async throws {
+  let client = try OpenAIResponsesAPI.Client(transport: transport, apiKey: apiKey)
+  let request = OpenAIResponsesAPI.Models.CreateResponse(
+    input: "Hello", model: "gpt-5.5"
+  )
+  switch try await client.createResponse(.init(body: request)) {
+  case .status200(let response, _):
+    print(response.outputText)
+  case .status429(let error, _), .status503(let error, _):
+    print(error.error.message)
+  }
+}
+```
+
+`outputText` concatenates typed output-text content in message order; the full
+generated response remains available. Use the generated request initializer for
+tools and other fields. Nullable optional fields distinguish omission (`nil`)
+from explicit JSON null (`.some(nil)`).
+
+The new pipeline uses pristine `Generation/OpenAIResponses/openapi.json` and
+`openapi.LICENSE`, pinned by upstream revision, URL, and SHA256 in `source.json`.
+The specification is not passed through either legacy patch script.
+`profile.json` explicitly selects `createResponse` with JSON request/response
+media and constrains `stream` to omitted or `false`. This adds a separate
+request constraint; it does not remove SSE from the official specification or
+claim streaming support. The generated client rejects `stream: true` and
+explicit null before transport, and rejects actual SSE media before iterating
+the response body. Cancellation propagates before transport and while collecting
+the response body. No new streaming, multipart, or binary operation is provided.
+
+The profile also opts into `preserveUnknownFields` for the shared model
+namespace. This requests retention of schema-allowed extra fields as `JSONValue`,
+including nested fields, exact numeric literals, and nulls; it does not weaken
+the original schema's constraints. Declared numeric properties still use the
+generator's existing `Double`/`Int` projections: this is not a claim of arbitrary
+precision or lexical round-trip fidelity for every declared numeric property.
+
+Maintainers need Python 3.9+, Swift, and a checkout of
+[`swift-openapi-schema-codegen`](https://github.com/ajevans99/swift-openapi-schema-codegen).
+SDK consumers do not run generation. Only its `OpenAPIJSONRuntime` product is
+linked by the new target; the generator is not an SDK target dependency.
+The package graph still contains legacy generator/schema-builder dependencies,
+so this is not a promise of a completely SwiftSyntax-free dependency graph.
+
+```sh
+# Offline verification of committed inputs; no generator or API credentials.
+make responses-inputs
+
+# Explicitly re-fetch the same immutable inputs, verifying hashes before writing.
+python3 Scripts/generate-responses.py --fetch-inputs
+
+# Use a fresh checkout of the recorded immutable generator revision.
+unset OPENAI_RESPONSES_RUNTIME_PATH JSON_SCHEMA_RUNTIME_PATH JSON_SCHEMA_CODEGEN_PATH OPENAPI_SCHEMA_PATH
+mkdir -p .build/generation-tools
+git clone https://github.com/ajevans99/swift-openapi-schema-codegen.git \
+  .build/generation-tools/swift-openapi-schema-codegen
+generator="$PWD/.build/generation-tools/swift-openapi-schema-codegen"
+git -C "$generator" checkout --detach 1418f16c89d9a8d41193b21455c5339ec1e22aba
+swift package --package-path "$generator" --scratch-path .build/responses-generator resolve
+make responses-generate RESPONSES_GENERATOR_PACKAGE="$generator"
+make responses-check RESPONSES_GENERATOR_PACKAGE="$generator"
+
+# Test maintainer input/provenance safeguards without network access.
+python3 -B -m unittest discover -s Scripts/tests
+```
+
+Generation writes Swift source under `Sources/OpenAIResponses/Generated` and a
+`Generation/OpenAIResponses/generation.json` record containing generator revision,
+relative source-file hashes (including untracked helpers), source/dependency-lock
+digest, driver digest, profile digest, input hashes, and output hash.
+Drift checks regenerate in a temporary directory and compare both artifacts
+without overwriting them. Generated source is not postprocessed.
+The manual formatter excludes this generated directory; generation owns its
+formatting as well as its contents.
+Resolved checkout paths, the compiler version, and the invocation are recorded
+separately in ignored `.build/responses-generation-local.json`. Checkout paths
+are checked for mid-run changes but do not affect portable source fingerprints
+or drift checks. Generator builds use an SDK-owned scratch directory and one
+job by default; `--scratch-path`, `--jobs`, and `--build-system` can override this.
+
+The checked-in provenance records a clean generator checkout, its committed
+dependency lock, and no dependency overrides. If resolution changes that lock,
+review the toolchain/dependency difference rather than using the uncommitted
+development flag to make a release check pass. Source, lock, driver, and input
+changes during generation fail explicitly.
+
+For deliberate generator development only, `--allow-uncommitted-generator`
+records dirty source hashes instead of pretending they are published.
+`JSON_SCHEMA_CODEGEN_PATH`, `OPENAPI_SCHEMA_PATH`, `JSON_SCHEMA_RUNTIME_PATH`,
+and `OPENAI_RESPONSES_RUNTIME_PATH` overrides are fingerprinted separately.
+Keep them unset when verifying the checked-in release-based artifact. SwiftPM
+uses local directory basenames as package identities; an experimental override
+with a noncanonical worktree name needs an ignored canonical symlink, not a
+source copy. These development overrides are not part of the supported default
+dependency graph.
+
+For bounded local verification:
+
+```sh
+OPENAI_LIVE_SNAPSHOT=0 OPENAI_RECORD_SNAPSHOTS=0 \
+  swift test --build-system native --jobs 1 \
+  --filter 'ResponsesIntegrationTests|ResponsesCredentialsTests|ResponseFixtureTests|StreamingSSEParserTests|StreamingResponseDecodingTests|ResponseSessionStreamingTests|ImageEditTransportTests|InputImageContentDecodingTests|FunctionToolSerializationTests|ToolSchemaConversionTests|ToolCallMessagingTests|ResponseSnapshotTests/(createResponseSerializesReasoningSettings|generatedModelEnumsIncludeRequestedModels|reasoningEffortMapsAllOpenAIValues|replaySnapshots)'
+swift build --package-path Example --build-system native --jobs 1 --product OpenAIExample
+```
+
+Local release-based verification used Swift 6.4 on macOS: 75 selected offline
+tests passed, the existing Example compiled without execution, and real
+regeneration/drift matched the generated bytes with all overrides unset.
+CI separately exercises Swift 6.1 on macOS; this is not a Linux SDK support
+claim. The serial native backend keeps local cold dependency compilation within
+the tested 3 GiB process-tree budget, but is deprecated in Swift 6.4. Generation
+accepts `RESPONSES_GENERATOR_FLAGS="--build-system native --jobs 1"` for the same
+bounded local setup. No unsafe compiler flags, live API calls, or hand-edited
+generated output are needed.
+
+#### Pinned schema limitation: compound filters
+
+The original OpenAI `CompoundFilter` schema contains legacy `$recursiveAnchor`
+and `$recursiveRef` keywords inside an OpenAPI 3.1 / JSON Schema 2020-12 document.
+The current JSON Schema runtime treats those keywords as inactive in this
+dialect. That leaves one branch of `filters.items.oneOf` unconstrained: a valid
+comparison filter matches both branches and is rejected, while arbitrary
+strings and some malformed nested filters are accepted.
+
+JSON Schema 0.14.1 aligns typed projection with those same 2020-12
+validation semantics; it does **not** implement older-dialect recursive reference
+behavior or repair the official schema. This SDK slice does not claim correctly
+typed recursive filters or support for their intended semantics. The pinned
+source is preserved unchanged rather than silently rewritten.
 
 ## Snapshot Tests
 

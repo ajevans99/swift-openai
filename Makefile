@@ -1,4 +1,4 @@
-.PHONY: format lint fetch patches generated-patches generate build test test-live-snapshots record-snapshots all clean check
+.PHONY: format lint fetch patches generated-patches generate build test test-live-snapshots record-snapshots all clean check responses-inputs responses-generate responses-check
 
 GIT_ROOT := $(shell git rev-parse --show-toplevel)
 
@@ -17,10 +17,20 @@ CHECK_SCRIPT   := $(GIT_ROOT)/Scripts/check-openapi-up-to-date.sh
 RECORD_SNAPSHOTS_SCRIPT := $(GIT_ROOT)/Scripts/record-response-snapshots.sh
 
 SWIFT_FORMAT_CONFIG = .swift-format.json
+SWIFT_FORMAT ?= swift-format
 
 check:
 	@echo "▶ check-openapi-up-to-date"
 	@bash $(CHECK_SCRIPT)
+
+responses-inputs:
+	@python3 Scripts/generate-responses.py --verify-inputs
+
+responses-generate:
+	@python3 Scripts/generate-responses.py --generator-package "$(RESPONSES_GENERATOR_PACKAGE)" $(RESPONSES_GENERATOR_FLAGS)
+
+responses-check:
+	@python3 Scripts/generate-responses.py --check --generator-package "$(RESPONSES_GENERATOR_PACKAGE)" $(RESPONSES_GENERATOR_FLAGS)
 
 fetch:
 	@echo "▶ fetch-openapi"
@@ -63,9 +73,9 @@ clean:
 	@rm -f $(SPEC_COMMIT_FILE)
 
 format:
-	@swift-format --in-place Sources/ Tests/ Example/Sources/ --recursive --parallel --configuration $(SWIFT_FORMAT_CONFIG)
+	@find Sources Tests Example/Sources -type f -name '*.swift' ! -path 'Sources/OpenAIResponses/Generated/*' -print0 | xargs -0 $(SWIFT_FORMAT) --in-place --parallel --configuration $(SWIFT_FORMAT_CONFIG)
 	@echo "✅ Swift files formatted."
 
 lint:
-	@swift-format lint Sources/ Tests/ Example/Sources/ --recursive --parallel --configuration $(SWIFT_FORMAT_CONFIG)
+	@find Sources Tests Example/Sources -type f -name '*.swift' ! -path 'Sources/OpenAIResponses/Generated/*' -print0 | xargs -0 $(SWIFT_FORMAT) lint --parallel --configuration $(SWIFT_FORMAT_CONFIG)
 	@echo "✅ Swift files linted."

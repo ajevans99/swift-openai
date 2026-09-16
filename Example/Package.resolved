@@ -24,8 +24,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-argument-parser.git",
       "state" : {
-        "revision" : "41982a3656a71c768319979febd796c6fd111d5c",
-        "version" : "1.5.0"
+        "revision" : "6a52f3251125d74daf04fcbd5e6f08a75d074382",
+        "version" : "1.8.2"
       }
     },
     {
@@ -42,8 +42,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-collections.git",
       "state" : {
-        "revision" : "671108c96644956dddcd89dd59c203dcdb36cec7",
-        "version" : "1.1.4"
+        "revision" : "a0cb0954ecb21e4e31b0070e6ed5674e8556685a",
+        "version" : "1.6.0"
       }
     },
     {
@@ -69,8 +69,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-http-types",
       "state" : {
-        "revision" : "a0a57e949a8903563aba4615869310c0ebf14c03",
-        "version" : "1.4.0"
+        "revision" : "bff4b6903cdc99dda49649dd52f46c11cfd3ed50",
+        "version" : "1.8.0"
       }
     },
     {
@@ -78,8 +78,17 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/ajevans99/swift-json-schema.git",
       "state" : {
-        "revision" : "88abaf2e821f55f7c3c04eb53385b3c0dd2fbf8f",
-        "version" : "0.14.0"
+        "revision" : "1514dd27fd55dbd36eec40c60e40ac8bfe0a22f4",
+        "version" : "0.14.1"
+      }
+    },
+    {
+      "identity" : "swift-json-schema-codegen",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ajevans99/swift-json-schema-codegen.git",
+      "state" : {
+        "revision" : "2937926f4def9885ced02b31bcb0155248c612ef",
+        "version" : "0.3.0"
       }
     },
     {
@@ -159,8 +168,25 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-openapi-runtime.git",
       "state" : {
-        "revision" : "8f33cc5dfe81169fb167da73584b9c72c3e8bc23",
-        "version" : "1.8.2"
+        "revision" : "9e53df53e043b53046a371b31aaf0a1e26eef946",
+        "version" : "1.12.1"
+      }
+    },
+    {
+      "identity" : "swift-openapi-schema",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ajevans99/swift-openapi-schema.git",
+      "state" : {
+        "revision" : "1ba371ebcc1ff370c89d8deafdbaf92798537c98",
+        "version" : "0.2.0"
+      }
+    },
+    {
+      "identity" : "swift-openapi-schema-codegen",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ajevans99/swift-openapi-schema-codegen",
+      "state" : {
+        "revision" : "1418f16c89d9a8d41193b21455c5339ec1e22aba"
       }
     },
     {

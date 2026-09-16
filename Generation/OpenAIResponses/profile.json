@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "preserveUnknownFields": true,
+  "operations": {
+    "createResponse": {
+      "requestMediaType": "application/json",
+      "responseMediaType": "application/json",
+      "requestConstraint": {
+        "properties": {
+          "stream": { "const": false }
+        }
+      }
+    }
+  }
+}
