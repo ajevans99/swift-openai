@@ -1,0 +1,44 @@
+{
+  "id": "resp_recording",
+  "object": "response",
+  "status": "completed",
+  "created_at": 1771443518.125,
+  "error": null,
+  "incomplete_details": null,
+  "instructions": null,
+  "model": "gpt-5.5",
+  "tools": [],
+  "output": [
+    {
+      "id": "msg_recording",
+      "type": "message",
+      "role": "assistant",
+      "status": "completed",
+      "future_message": {
+        "precise": 1.0000000000000000001,
+        "empty": null
+      },
+      "content": [
+        {
+          "type": "output_text",
+          "text": "Hello \u4e16\u754c",
+          "annotations": [],
+          "logprobs": [],
+          "future_content": {
+            "unicode": "\u00e9 / e\u0301",
+            "precise": 1.0000000000000000001,
+            "empty": null
+          }
+        }
+      ]
+    }
+  ],
+  "parallel_tool_calls": false,
+  "metadata": {},
+  "tool_choice": "auto",
+  "temperature": 1,
+  "top_p": 1,
+  "future_integer": 123456789012345678901234567890,
+  "future_decimal": 1.0000000000000000001,
+  "future_null": null
+}

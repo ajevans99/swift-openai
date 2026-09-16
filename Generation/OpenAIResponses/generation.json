@@ -1,0 +1,130 @@
+{
+  "version": 2,
+  "driverSHA256": "e0b5014051855695e0001abf169e6a87a0ba63cb1117dccfc12e3710717f2bf8",
+  "generator": {
+    "repository": "https://github.com/ajevans99/swift-openapi-schema-codegen",
+    "revision": "1418f16c89d9a8d41193b21455c5339ec1e22aba",
+    "uncommittedSources": false,
+    "sourceFiles": {
+      "Package.swift": "ce0d863dd3ede7d301d317260eadc346a9b629a9de242069583921050302e1a5",
+      "Sources/OpenAPICodegen/OpenAPICodegen.swift": "cefcf11513591876077162c25cbfc96af5b9bda626d0d320b259288e59747826",
+      "Sources/OpenAPICodegen/OpenAPIOperationProfile.swift": "a94221ae9bb8b2b2cecd762063d041be4bd0c3deeb564b436c29c68a732b1b8c",
+      "Sources/OpenAPICodegen/OperationSource.swift": "0fa8fe878a439dd1056d71b19cf8d7017ed27b1e2aa0dd8f5067ec79113b8421",
+      "Sources/OpenAPICodegenCLI/main.swift": "208c48949e1c984fe1a26c90f27b9295434490964250bbae92b9870d46a1b768",
+      "Sources/OpenAPIJSONRuntime/OpenAPIJSONRuntime.swift": "da14269e562f61e3a78abcf52e1c12dc8ed9db39a810ac8f56ad683aa0f73758"
+    },
+    "sourceSHA256": "d2239dd96809c3814d046ddeca73cc80fe2730a7c063c552e72beec7008f1588",
+    "committedDependencyLock": {
+      "sha256": "5eec708ff3662bc0ab45a82c7cda4000d94d8617188c35832888c7d949f6c489",
+      "contents": {
+        "originHash": "ce0d863dd3ede7d301d317260eadc346a9b629a9de242069583921050302e1a5",
+        "pins": [
+          {
+            "identity": "swift-argument-parser",
+            "kind": "remoteSourceControl",
+            "location": "https://github.com/apple/swift-argument-parser.git",
+            "state": {
+              "revision": "6a52f3251125d74daf04fcbd5e6f08a75d074382",
+              "version": "1.8.2"
+            }
+          },
+          {
+            "identity": "swift-collections",
+            "kind": "remoteSourceControl",
+            "location": "https://github.com/apple/swift-collections.git",
+            "state": {
+              "revision": "a0cb0954ecb21e4e31b0070e6ed5674e8556685a",
+              "version": "1.6.0"
+            }
+          },
+          {
+            "identity": "swift-custom-dump",
+            "kind": "remoteSourceControl",
+            "location": "https://github.com/pointfreeco/swift-custom-dump",
+            "state": {
+              "revision": "4fb9e7cbb4b8f5a7354005db39447f570d6b3e19",
+              "version": "1.7.3"
+            }
+          },
+          {
+            "identity": "swift-http-types",
+            "kind": "remoteSourceControl",
+            "location": "https://github.com/apple/swift-http-types.git",
+            "state": {
+              "revision": "bff4b6903cdc99dda49649dd52f46c11cfd3ed50",
+              "version": "1.8.0"
+            }
+          },
+          {
+            "identity": "swift-issue-reporting",
+            "kind": "remoteSourceControl",
+            "location": "https://github.com/pointfreeco/swift-issue-reporting",
+            "state": {
+              "revision": "71c7c9a761d1ca6ed4ccb6ced040fe1c1a39e8e7",
+              "version": "2.1.0"
+            }
+          },
+          {
+            "identity": "swift-json-schema",
+            "kind": "remoteSourceControl",
+            "location": "https://github.com/ajevans99/swift-json-schema.git",
+            "state": {
+              "revision": "1514dd27fd55dbd36eec40c60e40ac8bfe0a22f4",
+              "version": "0.14.1"
+            }
+          },
+          {
+            "identity": "swift-json-schema-codegen",
+            "kind": "remoteSourceControl",
+            "location": "https://github.com/ajevans99/swift-json-schema-codegen.git",
+            "state": {
+              "revision": "2937926f4def9885ced02b31bcb0155248c612ef",
+              "version": "0.3.0"
+            }
+          },
+          {
+            "identity": "swift-openapi-runtime",
+            "kind": "remoteSourceControl",
+            "location": "https://github.com/apple/swift-openapi-runtime.git",
+            "state": {
+              "revision": "9e53df53e043b53046a371b31aaf0a1e26eef946",
+              "version": "1.12.1"
+            }
+          },
+          {
+            "identity": "swift-openapi-schema",
+            "kind": "remoteSourceControl",
+            "location": "https://github.com/ajevans99/swift-openapi-schema.git",
+            "state": {
+              "revision": "1ba371ebcc1ff370c89d8deafdbaf92798537c98",
+              "version": "0.2.0"
+            }
+          },
+          {
+            "identity": "swift-syntax",
+            "kind": "remoteSourceControl",
+            "location": "https://github.com/swiftlang/swift-syntax.git",
+            "state": {
+              "revision": "79e4b74a295b6eb74a8b585e3a39d29e70c1dbd1",
+              "version": "603.0.2"
+            }
+          }
+        ],
+        "version": 3
+      }
+    },
+    "dependencyOverrides": {},
+    "sdkRuntimeOverride": null
+  },
+  "specificationSHA256": "3d6223349eadfd937624b9e6b8abf596ec2f680a1a367889cf6a6f924e568127",
+  "licenseSHA256": "bcba3de214851cce46ed5af42d6698044616eeace887c3231bc7a20474ab639e",
+  "profileSHA256": "1803bc8ac09aece484b9442173b91a69bf16c18815999c2b154d47d63b77a929",
+  "namespace": "OpenAIResponsesAPI",
+  "operationIDs": [
+    "createResponse"
+  ],
+  "output": {
+    "path": "Sources/OpenAIResponses/Generated/OpenAIResponsesAPI.swift",
+    "sha256": "90009fda885fea03bc79e3aa6ae6d94c178e9997d8c2aad2783dfe426d15ba9e"
+  }
+}

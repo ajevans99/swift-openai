@@ -8,17 +8,21 @@ on:
 
 jobs:
   build:
+    name: Example / Swift 6.1
     runs-on: macos-15
+    timeout-minutes: 30
 
     steps:
     - uses: actions/checkout@v7
 
-    - name: Xcode setup
-      shell: bash
-      run: |
-        sudo xcode-select -s /Applications/Xcode_16.3.app
+    - uses: swift-actions/setup-swift@7ca6abe6b3b0e8b5421b88be48feee39cbf52c6a
+      with:
+        swift-version: "6.1.3"
+
+    - name: Verify supported toolchain
+      run: swift --version | tee /dev/stderr | grep -E 'Swift version 6\.1(\.| )'
 
     - name: Build
       run: |
         cd Example
-        swift build -v
+        swift build --jobs 2 --product OpenAIExample
