@@ -297,23 +297,30 @@ python3 -B -m unittest discover -s Scripts/tests
 
 Generation writes Swift source under `Sources/OpenAIResponses/Generated` and a
 `Generation/OpenAIResponses/generation.json` record containing generator revision,
-relative source-file hashes (including untracked helpers), source/dependency-lock
-digest, driver digest, profile digest, input hashes, and output hash.
+relative source/manifest hashes (including untracked helpers), the published
+generator's committed dependency lock and its digest, driver digest, profile
+digest, input hashes, and output hash.
 Drift checks regenerate in a temporary directory and compare both artifacts
 without overwriting them. Generated source is not postprocessed.
 The manual formatter excludes this generated directory; generation owns its
 formatting as well as its contents.
-Resolved checkout paths, the compiler version, and the invocation are recorded
-separately in ignored `.build/responses-generation-local.json`. Checkout paths
+The actual SwiftPM-resolved lock contents and digest, verified dependency graph,
+resolved checkout paths, compiler version, and invocation are recorded separately
+in ignored `.build/responses-generation-local.json` and uploaded by CI. Checkout paths
 are checked for mid-run changes but do not affect portable source fingerprints
 or drift checks. Generator builds use an SDK-owned scratch directory and one
 job by default; `--scratch-path`, `--jobs`, and `--build-system` can override this.
 
-The checked-in provenance records a clean generator checkout, its committed
-dependency lock, and no dependency overrides. If resolution changes that lock,
-review the toolchain/dependency difference rather than using the uncommitted
-development flag to make a release check pass. Source, lock, driver, and input
-changes during generation fail explicitly.
+The checked-in provenance records clean published generator sources/manifests,
+their committed dependency lock, and no overrides. SwiftPM may legitimately
+resolve a different transitive graph on different toolchains: CustomDump uses
+`swift-issue-reporting` on Swift 6.4 and `xctest-dynamic-overlay` on Swift 6.1.
+Only the working `Package.resolved` is treated separately from authored inputs.
+Every resolved dependency's URL, version, clean checkout, and revision must match
+that run's actual lock. The required JSONSchema, JSONSchemaCodegen, and OpenAPI
+importer pins must still exactly match the published generator's committed lock.
+Source, manifest, resolved lock/graph, toolchain, driver, and input changes during
+generation fail explicitly. CI never uses the uncommitted development flag.
 
 For deliberate generator development only, `--allow-uncommitted-generator`
 records dirty source hashes instead of pretending they are published.

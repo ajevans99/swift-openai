@@ -1,6 +1,8 @@
+import copy
 import importlib.util
 import json
 from pathlib import Path
+import subprocess
 import tempfile
 from types import SimpleNamespace
 import unittest
@@ -106,6 +108,11 @@ class GenerationWorkflowTests(InputFixture):
         )
         self.generator_provenance = provenance.start()
         self.addCleanup(provenance.stop)
+        resolution = patch.object(
+            generation, "resolution_provenance", return_value={"lockSHA256": "resolved-lock"}
+        )
+        self.resolution_provenance = resolution.start()
+        self.addCleanup(resolution.stop)
 
         def emit_fixture(command, **_):
             Path(command[command.index("--output") + 1]).write_bytes(b"// Generated test fixture\n")
@@ -172,6 +179,27 @@ class GenerationWorkflowTests(InputFixture):
                 self.assertFalse(self.output.exists())
                 self.assertFalse(self.provenance.exists())
 
+    def test_toolchain_resolution_is_audited_without_portable_source_drift(self):
+        generation.generate(self.args, self.source)
+        first = self.provenance.read_bytes()
+        self.resolution_provenance.return_value = {
+            "lockSHA256": "swift-6.1-resolved-lock", "swiftToolchain": "Swift 6.1",
+        }
+        self.args.check = True
+        generation.generate(self.args, self.source)
+        self.assertEqual(self.provenance.read_bytes(), first)
+        local = json.loads(generation.LOCAL_PROVENANCE.read_text())
+        self.assertEqual(local["resolution"], self.resolution_provenance.return_value)
+
+    def test_resolution_change_during_run_writes_no_artifacts(self):
+        for key in ("lockSHA256", "dependencies", "swiftToolchain"):
+            with self.subTest(changed=key):
+                self.resolution_provenance.side_effect = [{key: "before"}, {key: "after"}]
+                with self.assertRaisesRegex(RuntimeError, "changed during generation"):
+                    generation.generate(self.args, self.source)
+                self.assertFalse(self.output.exists())
+                self.assertFalse(self.provenance.exists())
+
     def test_driver_change_during_run_writes_no_artifacts(self):
         driver = self.inputs / "driver.py"
         driver.write_bytes(b"before")
@@ -200,6 +228,14 @@ class GenerationWorkflowTests(InputFixture):
 
 
 class GeneratorProvenanceTests(unittest.TestCase):
+    def setUp(self):
+        lock = patch.object(
+            generation, "committed_dependency_lock",
+            return_value={"sha256": "committed-lock", "contents": {"pins": []}},
+        )
+        lock.start()
+        self.addCleanup(lock.stop)
+
     def test_canonical_alias_records_real_path_and_untracked_source_bytes(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -263,6 +299,162 @@ class GeneratorProvenanceTests(unittest.TestCase):
                 generation.repository_provenance(
                     Path("/example/generator"), generation.GENERATOR_REPOSITORY, False
                 )
+
+
+class PublishedSourceTests(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.package = Path(temporary.name)
+        (self.package / "Sources").mkdir()
+        (self.package / "Sources" / "Client.swift").write_text("// Client\n")
+        (self.package / "Package.swift").write_text("// Manifest\n")
+        self.lock = b'{"version":3,"pins":[]}\n'
+        (self.package / "Package.resolved").write_bytes(self.lock)
+        for arguments in (
+            ["init", "--quiet"],
+            ["remote", "add", "origin", generation.GENERATOR_REPOSITORY],
+            ["add", "."],
+            ["-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+             "commit", "--quiet", "-m", "Fixture"],
+        ):
+            subprocess.run(["git", "-C", str(self.package), *arguments], check=True)
+        environment = patch.dict(generation.os.environ, {}, clear=True)
+        environment.start()
+        self.addCleanup(environment.stop)
+
+    def test_lock_only_resolution_keeps_exact_committed_source_identity(self):
+        before = generation.generator_provenance(self.package, False)
+        (self.package / "Package.resolved").write_text('{"version":3,"pins":[],"originHash":"resolved"}')
+        after = generation.generator_provenance(self.package, False)
+        self.assertEqual(before, after)
+        self.assertFalse(after["uncommittedSources"])
+        self.assertEqual(after["committedDependencyLock"]["sha256"], generation.sha256(self.lock))
+        self.assertEqual(after["committedDependencyLock"]["contents"], json.loads(self.lock))
+
+    def test_source_and_manifest_changes_remain_rejected(self):
+        for name in ("Sources/Client.swift", "Package.swift", "Package@swift-6.1.swift"):
+            with self.subTest(file=name):
+                path = self.package / name
+                original = path.read_bytes() if path.exists() else None
+                path.write_bytes(b"changed")
+                with self.assertRaisesRegex(ValueError, "uncommitted changes"):
+                    generation.generator_provenance(self.package, False)
+                if original is None:
+                    path.unlink()
+                else:
+                    path.write_bytes(original)
+
+
+class ResolutionTests(unittest.TestCase):
+    def setUp(self):
+        self.package = Path("/example/generator")
+        self.pins = {
+            identity: {
+                "identity": identity, "kind": "remoteSourceControl",
+                "location": f"https://example.invalid/{identity}.git",
+                "state": {"revision": "a" * 40, "version": "1.0.0"},
+            }
+            for identity in sorted(generation.REQUIRED_DEPENDENCIES | {"transitive"})
+        }
+        self.lock = {"version": 3, "pins": list(self.pins.values())}
+        self.tree = {
+            "path": str(self.package),
+            "dependencies": [
+                {
+                    "identity": identity, "path": str(self.package / identity),
+                    "url": pin["location"], "version": pin["state"]["version"],
+                    "dependencies": [],
+                }
+                for identity, pin in self.pins.items()
+            ],
+        }
+        git = patch.object(
+            generation, "git",
+            side_effect=lambda _, *args: "a" * 40 if args == ("rev-parse", "HEAD") else "",
+        )
+        self.git = git.start()
+        self.addCleanup(git.stop)
+
+    def test_graph_matches_every_remote_pin_and_checkout(self):
+        generation.verify_required_pins(self.pins, self.pins, {})
+        dependencies = generation.verify_resolved_graph(self.tree, self.lock, self.package, {})
+        self.assertEqual(set(dependencies), set(self.pins))
+
+    def test_required_dependency_changes_or_missing_pins_fail(self):
+        for identity in generation.REQUIRED_DEPENDENCIES:
+            for field in ("revision", "version", "location", "kind", "missing"):
+                with self.subTest(identity=identity, field=field):
+                    changed = copy.deepcopy(self.pins)
+                    if field == "missing":
+                        del changed[identity]
+                    elif field in ("revision", "version"):
+                        changed[identity]["state"][field] = "unexpected"
+                    else:
+                        changed[identity][field] = "unexpected"
+                    with self.assertRaisesRegex(ValueError, "required dependency|Required dependency"):
+                        generation.verify_required_pins(changed, self.pins, {})
+
+    def test_transitive_resolution_may_differ_but_must_match_actual_lock(self):
+        changed = copy.deepcopy(self.pins)
+        changed["transitive"]["state"]["version"] = "2.0.0"
+        generation.verify_required_pins(changed, self.pins, {})
+        lock = {"pins": list(changed.values())}
+        with self.assertRaisesRegex(ValueError, "does not match its lock"):
+            generation.verify_resolved_graph(self.tree, lock, self.package, {})
+        next(node for node in self.tree["dependencies"] if node["identity"] == "transitive")["version"] = "2.0.0"
+        generation.verify_resolved_graph(self.tree, lock, self.package, {})
+
+    def test_toolchain_can_replace_a_transitive_package_identity(self):
+        changed = copy.deepcopy(self.pins)
+        replacement = changed.pop("transitive")
+        replacement["identity"] = "toolchain-alternative"
+        replacement["location"] = "https://example.invalid/toolchain-alternative.git"
+        changed[replacement["identity"]] = replacement
+        generation.verify_required_pins(changed, self.pins, {})
+        node = next(node for node in self.tree["dependencies"] if node["identity"] == "transitive")
+        node["identity"] = replacement["identity"]
+        node["url"] = replacement["location"]
+        generation.verify_resolved_graph(self.tree, {"pins": list(changed.values())}, self.package, {})
+
+    def test_wrong_checkout_revision_and_dirty_dependencies_fail(self):
+        self.git.side_effect = lambda _, *args: "b" * 40 if args == ("rev-parse", "HEAD") else ""
+        with self.assertRaisesRegex(ValueError, "does not match its lock"):
+            generation.verify_resolved_graph(self.tree, self.lock, self.package, {})
+        self.git.side_effect = lambda _, *args: "a" * 40 if args == ("rev-parse", "HEAD") else " M Package.swift"
+        with self.assertRaisesRegex(ValueError, "checkout is modified"):
+            generation.verify_resolved_graph(self.tree, self.lock, self.package, {})
+
+    def test_graph_must_include_exact_lock_identities_and_required_dependencies(self):
+        self.tree["dependencies"].pop()
+        with self.assertRaisesRegex(ValueError, "different identities"):
+            generation.verify_resolved_graph(self.tree, self.lock, self.package, {})
+        self.tree["dependencies"] = []
+        with self.assertRaisesRegex(ValueError, "missing required"):
+            generation.verify_resolved_graph(self.tree, self.lock, self.package, {})
+
+    def test_unapproved_local_override_is_rejected(self):
+        self.tree["dependencies"][0]["url"] = "/unexpected/local/checkout"
+        with self.assertRaisesRegex(ValueError, "does not match its lock"):
+            generation.verify_resolved_graph(self.tree, self.lock, self.package, {})
+
+    def test_capture_retains_literal_lock_hash_contents_graph_and_toolchain(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            package = Path(temporary)
+            self.tree["path"] = str(package)
+            data = (json.dumps(self.lock, indent=2) + "\n").encode()
+            (package / "Package.resolved").write_bytes(data)
+            args = SimpleNamespace(scratch_path=package / "build")
+            generator = {"committedDependencyLock": {"contents": self.lock}}
+            with patch.dict(generation.os.environ, {}, clear=True), patch.object(
+                generation.subprocess, "check_output",
+                side_effect=[json.dumps(self.tree), "Swift 6.1\n"],
+            ):
+                result = generation.resolution_provenance(package, args, generator)
+        self.assertEqual(result["lockSHA256"], generation.sha256(data))
+        self.assertEqual(result["lock"], self.lock)
+        self.assertEqual(set(result["dependencies"]), set(self.pins))
+        self.assertEqual(result["swiftToolchain"], "Swift 6.1")
 
 
 if __name__ == "__main__":

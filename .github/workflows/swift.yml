@@ -63,3 +63,13 @@ jobs:
         generator="$GITHUB_WORKSPACE/.build/generation-tools/swift-openapi-schema-codegen"
         swift package --package-path "$generator" --scratch-path .build/responses-generator resolve
         make responses-check RESPONSES_GENERATOR_PACKAGE="$generator" RESPONSES_GENERATOR_FLAGS="--jobs 2"
+
+    - name: Upload actual generation resolution evidence
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      with:
+        name: responses-generation-swift-6.1
+        path: |
+          .build/responses-generation-local.json
+          .build/generation-tools/swift-openapi-schema-codegen/Package.resolved
+        include-hidden-files: true
+        if-no-files-found: error
